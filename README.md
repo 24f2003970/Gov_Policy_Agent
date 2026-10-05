@@ -1,4 +1,4 @@
-# Multilingual Government Policy Assistant
+## Multilingual Government Policy Assistant
 
 **GOV-CS-028** · B.Tech project · Part 2 PostgreSQL and authentication
 

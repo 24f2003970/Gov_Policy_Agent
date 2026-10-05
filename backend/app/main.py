@@ -1,5 +1,6 @@
-"""Part 1: health, configuration, request tracing and consistent errors."""
+"""Preserved foundation with Part 2 database readiness and authentication."""
 import logging
+from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -8,8 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 
 from .config import Settings
+from .database import install_database, schema_ready
+from .auth import router, clear_cookie
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +31,16 @@ class ReadyResponse(LiveResponse):
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
-    app = FastAPI(title=settings.app_name, version="0.1.0")
+    @asynccontextmanager
+    async def lifespan(application):
+        yield
+        if application.state.engine is not None:
+            application.state.engine.dispose()
+
+    app = FastAPI(title=settings.app_name, version="0.2.0", lifespan=lifespan)
     app.state.settings = settings
+    install_database(app, settings)
+    app.include_router(router)
 
     def error_response(request: Request, status: int, code: str, message: str) -> JSONResponse:
         request_id = request.state.request_id
@@ -44,9 +56,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         request.state.request_id = str(uuid4())
         try:
             response = await call_next(request)
-        except Exception:
-            logger.exception("Unhandled request error id=%s", request.state.request_id)
+        except Exception as exc:
+            logger.error("Unhandled error type=%s id=%s", type(exc).__name__, request.state.request_id)
             response = error_response(request, 500, "internal_error", "An unexpected error occurred")
+        if request.url.path == "/auth/refresh" and response.status_code == 401:
+            clear_cookie(response, settings)
         response.headers["X-Request-ID"] = request.state.request_id
         response.headers["Cache-Control"] = "no-store"
         return response
@@ -63,26 +77,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # Do not reflect submitted values or potentially sensitive validation input.
         return error_response(request, 422, "validation_error", "Request validation failed")
 
+    @app.exception_handler(SQLAlchemyError)
+    async def database_error(request: Request, exc: SQLAlchemyError):
+        return error_response(request, 503, "database_unavailable", "Database service is unavailable")
+
     @app.get("/health/live", response_model=LiveResponse)
     async def live():
-        return LiveResponse(status="alive", project_id="GOV-CS-028", phase=1)
+        return LiveResponse(status="alive", project_id="GOV-CS-028", phase=2)
 
     @app.get("/health/ready", response_model=ReadyResponse)
-    async def ready():
-        # Successful app construction validates the only current prerequisite.
-        # These future services are not probed and do not gate Part 1 readiness.
-        return ReadyResponse(
-            status="ready", project_id="GOV-CS-028", phase=1,
-            required_dependencies={"configuration": "validated"},
-            optional_services={"postgresql": "not_required_in_part_1",
-                               "chroma": "not_required_in_part_1",
-                               "ollama": "not_required_in_part_1"},
-        )
+    def ready():
+        database_ok = schema_ready(app.state.engine)
+        auth_ok = settings.jwt_secret is not None
+        data = ReadyResponse(
+            status="ready" if database_ok and auth_ok else "not_ready", project_id="GOV-CS-028", phase=2,
+            required_dependencies={"configuration": "validated",
+                                   "postgresql": "connected_schema_current" if database_ok else "unavailable_or_migrations_missing",
+                                   "authentication": "configured" if auth_ok else "unconfigured"},
+            optional_services={"chroma": "not_required_in_part_2", "ollama": "not_required_in_part_2"})
+        return JSONResponse(status_code=200 if database_ok and auth_ok else 503, content=data.model_dump())
 
     # Keep CORS outermost so even error responses have the allowed CORS headers.
     app.add_middleware(
-        CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=False,
-        allow_methods=["GET"], allow_headers=["Accept", "Content-Type"],
+        CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=True,
+        allow_methods=["GET", "POST", "PATCH"], allow_headers=["Accept", "Content-Type", "Authorization", "X-CSRF-Protection"],
         expose_headers=["X-Request-ID"],
     )
     return app

@@ -6,3 +6,9 @@ pydantic-settings==2.13.1
 uvicorn==0.41.0
 httpx==0.28.1
 pytest==9.0.2
+SQLAlchemy==2.0.48
+psycopg[binary]==3.3.3
+alembic==1.18.4
+pwdlib[argon2]==0.3.0
+PyJWT==2.12.1
+email-validator==2.3.0

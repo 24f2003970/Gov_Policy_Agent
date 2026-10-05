@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -12,21 +12,62 @@ ROOT = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GOV_", env_file=ROOT / ".env", env_file_encoding="utf-8",
-        extra="forbid",
+        extra="forbid", hide_input_in_errors=True,
     )
     app_name: str = Field(default="Government Policy Assistant", min_length=1, max_length=100)
-    environment: Literal["development", "test"] = "development"
-    cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    environment: Literal["development", "test", "production"] = "development"
+    cors_origins: list[str] = ["http://127.0.0.1:5173"]
+    db_host: Literal["127.0.0.1", "localhost"] = "127.0.0.1"
+    db_port: int = Field(default=5432, ge=1, le=65535)
+    db_name: str = "gov_policy"
+    db_user: str = "gov_app"
+    db_password: SecretStr | None = None
+    test_db_name: str = "gov_policy_test"
+    test_db_user: str = "gov_test"
+    test_db_password: SecretStr | None = None
+    jwt_secret: SecretStr | None = None
+    jwt_issuer: str = "gov-cs-028"
+    jwt_audience: str = "gov-policy-web"
+    access_minutes: int = Field(default=10, ge=1, le=30)
+    refresh_days: int = Field(default=7, ge=1, le=30)
+    cookie_secure: bool = False
+    login_limit: int = Field(default=5, ge=2, le=20)
+    throttle_seconds: int = Field(default=900, ge=10, le=3600)
 
     @field_validator("cors_origins")
     @classmethod
-    def local_origins_only(cls, origins: list[str]) -> list[str]:
+    def local_origins_only(cls, origins: list[str], info: ValidationInfo) -> list[str]:
         if not origins:
             raise ValueError("At least one explicit local origin is required")
         for origin in origins:
             parsed = urlsplit(origin)
-            if (parsed.scheme != "http" or parsed.hostname not in {"localhost", "127.0.0.1"}
-                    or parsed.username or parsed.password or parsed.path or parsed.query
-                    or parsed.fragment or parsed.port is None):
-                raise ValueError("CORS origins must be loopback HTTP origins with explicit ports")
+            production = info.data.get("environment") == "production"
+            allowed = (parsed.scheme == "https" and parsed.hostname is not None) if production else (
+                parsed.scheme == "http" and parsed.hostname == "127.0.0.1" and parsed.port is not None)
+            if (not allowed or parsed.username or parsed.password or parsed.path or parsed.query
+                    or parsed.fragment):
+                raise ValueError("Use explicit HTTPS production origins or 127.0.0.1 HTTP development origins")
         return list(dict.fromkeys(origins))
+
+    @field_validator("db_name", "db_user", "test_db_name", "test_db_user")
+    @classmethod
+    def identifiers(cls, value: str) -> str:
+        import re
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,62}", value):
+            raise ValueError("Use lowercase PostgreSQL identifiers")
+        return value
+
+    @field_validator("jwt_secret")
+    @classmethod
+    def strong_secret(cls, value: SecretStr | None):
+        if value is not None and len(value.get_secret_value()) < 32:
+            raise ValueError("JWT secret must contain at least 32 characters")
+        return value
+
+    @model_validator(mode="after")
+    def secure_production(self):
+        if self.environment == "production" and not self.cookie_secure:
+            raise ValueError("Production requires Secure cookies and HTTPS")
+        if self.db_name == self.test_db_name:
+            raise ValueError("Test database must differ from application database")
+        return self

@@ -1,5 +1,7 @@
 # Windows PowerShell setup
 
+**Part 1 historical environment/setup record.** Current Part 2 adds a required PostgreSQL database, credentialed 127.0.0.1-only CORS and authentication. Follow [SETUP_PART2.md](SETUP_PART2.md) for current configuration, migrations, admin bootstrap, startup and tests; old phase-1 readiness assumptions below no longer apply.
+
 ## What was detected on 2026-10-05
 
 | Item | Result | Needed when |

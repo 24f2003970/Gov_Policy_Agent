@@ -1,18 +1,18 @@
 # Multilingual Government Policy Assistant
 
-**GOV-CS-028** · B.Tech project · Part 1 runnable foundation
+**GOV-CS-028** · B.Tech project · Part 2 PostgreSQL and authentication
 
 A local application being developed to answer English, Hindi and practical Hinglish policy questions from verified official evidence. The final system will support grounded RAG, claim-level citations and an experimental evidence-quality index. These capabilities are **planned**, not implemented or measured yet.
 
-Part 1 provides a FastAPI backend and a responsive React/TypeScript/Tailwind screen that calls the real readiness endpoint. It includes validated environment settings, restricted local CORS, request IDs, consistent application errors and health tests. There are no policy answers, corpus documents, authentication or AI model downloads in this phase.
+The Part 1 foundation is preserved. Part 2 adds PostgreSQL persistence, explicit Alembic migrations, registration/login, rotating refresh sessions, protected profiles and server-enforced user/admin roles. Access tokens stay in frontend memory; refresh tokens use HttpOnly cookies. Database integration and browser verification status is recorded in [PROGRESS.md](PROGRESS.md). There are no policy answers, corpus documents or AI model downloads yet.
 
 ## Start on Windows PowerShell
 
-From the repository root, after the one-time setup in [docs/SETUP.md](docs/SETUP.md):
+From the repository root, after private PostgreSQL setup in [docs/SETUP_PART2.md](docs/SETUP_PART2.md):
 
 ```powershell
 # Terminal 1
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-proxy-headers
 ```
 
 ```powershell
@@ -25,7 +25,7 @@ Open http://127.0.0.1:5173. The status should show **Connected · Foundation rea
 
 ```powershell
 # Run from the repository root
-.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider
 Set-Location frontend
 npm.cmd run build
 ```
@@ -33,16 +33,17 @@ npm.cmd run build
 ## Layout
 
 ```text
-backend/app/     configuration and FastAPI application
-frontend/src/    React screen and real health client
+backend/app/     FastAPI, configuration, database and authentication
+backend/migrations/ explicit Alembic schema revisions
+frontend/src/    foundation screen, health client and auth pages
 docs/           setup, architecture, verification and beginner explanations
 scripts/        PowerShell startup and verification helpers
-tests/          backend health, CORS, errors and configuration tests
+tests/          foundation/security tests and real PostgreSQL auth tests
 ```
 
 ## Project records
 
-- [Setup and missing prerequisites](docs/SETUP.md)
+- [Current PostgreSQL/auth setup](docs/SETUP_PART2.md) and [Part 1 environment record](docs/SETUP.md)
 - [Architecture and planned relational design](docs/ARCHITECTURE.md)
 - [Beginner code walkthrough and viva](docs/WALKTHROUGH.md)
 - [Roadmap](PROJECT_PLAN.md), [progress](PROGRESS.md), [decisions](DECISIONS.md)

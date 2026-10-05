@@ -1,11 +1,11 @@
 # Incremental project plan
 
-Only Part 1 is authorized in this session. Start each later part only after its prompt; update progress, decisions, requirement mapping and verification after each part. No fixed deadline is assumed.
+Parts 1 and 2 are authorized through their respective prompts. Current scope is Part 2 only. Start each later part only after its prompt; update progress, decisions, requirement mapping and verification after each part. No fixed deadline is assumed.
 
 | Part | Scope | Completion evidence |
 | --- | --- | --- |
 | 1 | Foundation and environment | Health tests, frontend type checking/build, actual browser connection, reviewed commit/push |
-| 2 | Database, authentication and roles | PostgreSQL + SQLAlchemy + Alembic, migration roundtrip, secure login/logout, role enforcement |
+| 2 | Database, authentication and roles | Real PostgreSQL migration from empty + repeated upgrade, secure auth, browser flows, process persistence, role enforcement |
 | 3 | Document upload, extraction and durable ingestion | Admin upload, validated originals, page text, retryable persisted jobs, source manifest |
 | 4 | Multilingual embeddings and retrieval | One replaceable Sentence-Transformers model, persistent Chroma, measured retrieval over verified corpus |
 | 5 | Local LLM and grounded RAG | Benchmarked Ollama model, context-only answers, clarification/abstention, resource/latency evidence |

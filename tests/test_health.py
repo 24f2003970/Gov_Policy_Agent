@@ -18,16 +18,16 @@ def client():
 def test_live_without_models_or_database(client):
     response = client.get("/health/live")
     assert response.status_code == 200
-    assert response.json() == {"status": "alive", "project_id": "GOV-CS-028", "phase": 1}
+    assert response.json() == {"status": "alive", "project_id": "GOV-CS-028", "phase": 2}
     UUID(response.headers["x-request-id"])
 
 
 def test_ready_reports_only_current_dependencies(client):
     response = client.get("/health/ready")
-    assert response.status_code == 200
-    assert response.json()["status"] == "ready"
-    assert response.json()["required_dependencies"] == {"configuration": "validated"}
-    assert set(response.json()["optional_services"].values()) == {"not_required_in_part_1"}
+    assert response.status_code == 503
+    assert response.json()["status"] == "not_ready"
+    assert response.json()["required_dependencies"]["postgresql"] == "unavailable_or_migrations_missing"
+    assert set(response.json()["optional_services"].values()) == {"not_required_in_part_2"}
 
 
 def test_request_ids_are_unique_and_client_input_is_not_trusted(client):
@@ -45,7 +45,7 @@ def test_not_found_has_consistent_error_and_request_id(client):
     assert response.json()["error"]["code"] == "http_error"
 
 
-@pytest.mark.parametrize("origin", ["http://localhost:5173", "http://127.0.0.1:5173"])
+@pytest.mark.parametrize("origin", ["http://127.0.0.1:5173"])
 def test_allowed_browser_origin(client, origin):
     response = client.get("/health/ready", headers={"Origin": origin})
     assert response.headers["access-control-allow-origin"] == origin
@@ -59,10 +59,10 @@ def test_unapproved_origin_gets_no_permission(client):
 
 def test_cors_preflight(client):
     response = client.options("/health/ready", headers={
-        "Origin": "http://localhost:5173", "Access-Control-Request-Method": "GET",
+        "Origin": "http://127.0.0.1:5173", "Access-Control-Request-Method": "GET",
     })
     assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
     denied = client.options("/health/ready", headers={
         "Origin": "https://untrusted.example", "Access-Control-Request-Method": "GET",
     })
@@ -99,10 +99,10 @@ def test_error_paths_do_not_leak_input_or_internal_details():
         invalid = client.get("/test/validate?value=private-input")
         assert invalid.status_code == 422
         assert "private-input" not in invalid.text
-        failed = client.get("/test/fail", headers={"Origin": "http://localhost:5173"})
+        failed = client.get("/test/fail", headers={"Origin": "http://127.0.0.1:5173"})
         assert failed.status_code == 500
         assert "private-internal-detail" not in failed.text
-        assert failed.headers["access-control-allow-origin"] == "http://localhost:5173"
+        assert failed.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
         assert failed.json()["error"]["request_id"] == failed.headers["x-request-id"]
         limited = client.get("/test/http")
         assert limited.status_code == 429

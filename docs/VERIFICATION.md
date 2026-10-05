@@ -1,5 +1,7 @@
 # Part 1 verification record
 
+Part 1 evidence below is historical. Current Part 2 verification is recorded at the end; Part 2 is not considered complete until required real PostgreSQL/browser checks pass.
+
 Date: 2026-10-05, Windows 11 / PowerShell 7.6.5. Python 3.12.14 in project .venv; Node 24.12.0 / npm 11.6.2.
 
 | Executed check | Observed result |
@@ -36,3 +38,25 @@ All required Part 1 technical checks passed; no unrun check is counted as passin
 No PostgreSQL/Chroma/Ollama integration, GPU inference, OCR, authentication, RAG, policy citations, score calibration or corpus quality evaluation was executed. No AI dependencies were downloaded. Swagger UI uses the framework's default external assets; health and frontend work locally after dependency installation.
 
 The health indicator reports the last user-triggered check, not ongoing background monitoring. Loading and five-second timeout handling exist in the code; distinct delayed-response timeout behavior has not yet been exercised in the browser.
+
+## Part 2 executed verification (2026-10-05)
+
+- Existing repository/docs/code inspected; no applicable AGENTS.md found. Origin matched requested repository; fetch showed no remote changes; clean initial main.
+- PostgreSQL initially absent in PATH, services, standard install folders and registry. User's initial installation report was checked and corrected; no false DB completion claimed.
+- Trusted winget selected PostgreSQL 18.6-5 from official EDB URL. Delivery Optimization download stalled; same 414,966,472-byte installer downloaded directly. SHA256 exactly matched the trusted manifest and Authenticode reported valid EnterpriseDB signer before launch.
+- Native installation verified at C:\Program Files\PostgreSQL\18; psql reports PostgreSQL 18.6. Private configure saved localhost-only settings, and the service was restarted through Windows UAC. postgresql-x64-18 is running; actual listeners are 127.0.0.1 and ::1 only on port 5432. pg_isready reports accepting connections. Authenticated application/test connections were subsequently verified; no extra Stack Builder packages are required.
+- Existing bundled-Python .venv preserved; pinned auth/DB dependencies installed; pip check passed; complete requirements.lock regenerated.
+- Final complete suite: 32 passed in 7.44 seconds, including 16 foundation/config/security checks and 16 real PostgreSQL cases. One upstream Starlette/anyio BlockingPortal deprecation warning remains. Added Alembic path_separator=os to resolve its config warning, then reran the complete suite.
+- Frontend tsc/build passed (32 modules); package-lock unchanged. First build found Web Locks generic typing issue; fixed and passing build rerun.
+- Private configure succeeded; independent authenticated checks confirmed gov_policy/gov_app and gov_policy_test/gov_test, no SUPERUSER/CREATEDB/CREATEROLE/REPLICATION, localhost-only server settings and current schemas. Exactly one private first admin exists, created through hidden-input CLI by the user.
+- Application Alembic upgrade head, repeated upgrade and current succeeded: 0001_auth (head). Test fixture migrated from empty dedicated test DB and repeated upgrade. No application DB reset, SQLite or mocked auth completion.
+- Real PostgreSQL tests passed: normalization/duplicates, Argon2id/no response secrets, password/input/role validation, login/profile/current role checks, expired/tampered/wrong issuer/audience/algorithm/missing claims, transactional concurrent rotation/replay, logout/revocation, disabled/expired sessions, CSRF/cookie flags, durable throttle and app recreation, missing migration and unreachable DB readiness.
+- Browser: registered a synthetic normal user, observed wrong-password error, successful login and account details, saved Hinglish preference, reloaded and restored session/preference. Admin navigation was absent; direct #admin returned Admin role required. Logout removed authenticated navigation and direct #account showed Sign in required.
+- Actual process restart: stopped this project's backend PID 22712, started PID 13620 with --no-proxy-headers, then reloaded the browser. Persisted session restored; protected requests succeeded. This is separate from TestClient app recreation tests.
+- User privately entered first-admin credentials in browser. Admin navigation appeared and #admin visibly returned Admin access confirmed by the backend. Local screenshots runtime/screenshots/part2-user-admin-denied.png and part2-admin-confirmed.png are ignored and contain no password/token.
+- Current /health/ready returns HTTP 200 with connected_schema_current and authentication configured; Chroma/Ollama not required. The unavailable/missing-schema tests return 503 while liveness remains 200.
+- Final frontend typecheck and production build passed (32 modules). A sandbox esbuild directory-access failure was resolved by an approved elevated rerun; no code workaround required. npm package-lock is unchanged. pip check reports no broken requirements.
+
+## Part 2 publication review
+
+Required database/browser checks passed before publication. Exactly 34 intended files staged; whitespace check passed. Review excludes .env, PDFs, installer, runtime screenshots/scripts, dependency directories and dist; these stay ignored. An in-memory comparison against private configuration/admin identity confirmed those values are absent from staged source/docs. Remote main was refetched and matched HEAD before the release commit. The release is published to main without force; use git log -1 and the independently checked remote main ref for the resulting release hash.

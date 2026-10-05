@@ -1,6 +1,6 @@
 # Architecture and initial relational data design
 
-## Current Part 1
+## Part 1 foundation, preserved
 
 ```mermaid
 flowchart LR
@@ -8,7 +8,7 @@ flowchart LR
   API --> CONFIG[Validated environment configuration]
 ```
 
-Only configuration and health routes are implemented. `/health/live` proves process responsiveness without AI. `/health/ready` reports configuration validated, the only current required dependency. PostgreSQL, Chroma and Ollama are explicitly not required and are not probed. Add real dependency checks with failure status/503 only when their phase makes them required. A dependency name appearing in readiness is not proof of connectivity.
+In the historical Part 1 release, only configuration and health routes were implemented. `/health/live` proved process responsiveness without AI. `/health/ready` reported configuration validated, then the only required dependency. PostgreSQL, Chroma and Ollama were not required or probed. Current Part 2 readiness checks are described below. A dependency name appearing in readiness is not proof of connectivity.
 
 Application errors use `{ "error": { "code": "...", "message": "...", "request_id": "..." } }`. Each request gets a server-generated UUID in X-Request-ID; submitted request IDs are not trusted. Unexpected exception text is not exposed to clients. Framework-level CORS preflight denial uses CORSMiddleware's own 400 response and is separate from the application error envelope. No credentials/cookies are allowed by Part 1 CORS. The backend binds loopback; it has no authentication and is not intended for public exposure.
 
@@ -16,9 +16,19 @@ Application errors use `{ "error": { "code": "...", "message": "...", "request_i
 
 React pages will call one FastAPI API. Internal modules will handle auth/users, document ingestion, retrieval, generation, citations, scoring and analytics. PostgreSQL owns transactional metadata and job state; Chroma owns replaceable derived embeddings; local storage holds immutable originals and extraction artifacts. Ollama inference remains local and replaceable. Ingestion work must be durable and resource-bounded, with processing initiated from persisted jobs rather than relying solely on in-memory background tasks.
 
-No models, migrations, schema classes, vector stores or future API endpoints are implemented in Part 1.
+Part 1 implemented no database models/migrations. Part 2 now implements only users, auth_sessions and auth_throttles; vector stores and all future document/RAG entities remain planned.
 
-## Initial relational design — planned only
+## Current Part 2 authentication architecture
+
+React hash routes preserve the foundation screen and add registration, login, protected account/profile and an admin access page. One FastAPI process uses synchronous SQLAlchemy 2 + psycopg 3 from worker-thread endpoints/dependencies. Alembic creates the schema explicitly. App startup only prepares a connection pool; it never creates tables or needs a DB connection for liveness.
+
+`users` has normalized unique email/username, Argon2id password hash, constrained user/admin role and en/hi/hinglish preference, active flag and timezone-aware timestamps. Public registration rejects extra fields and always sets role=user. `auth_sessions` has a UUID user FK, current refresh SHA256 digest, bounded consumed digests, absolute expiry, revocation and rotation timestamps. `auth_throttles` has HMAC account/IP keys, a fixed window and attempt count. No plaintext password/refresh token is persisted.
+
+Every protected request validates HS256 access JWT claims and checks live session/user records; the database role/active flag are authoritative. Rotation row-locks the session, consumes one digest and installs a new digest atomically; reuse revokes the session. Logout revokes before clearing the cookie. Admin authorization returns 401 without a session and 403 with a normal user. Profile updates only accept language preference.
+
+Only 127.0.0.1 is used in development. CORS permits credentials for exact approved origins; all auth mutations verify Origin plus a custom CSRF header. Cookie is HttpOnly, Strict and path=/auth; Secure is mandatory for production. Frontend tokens are memory-only, with single-flight/Web Locks rotation and one bounded refresh retry. PostgreSQL is now required for readiness; Ollama/Chroma remain optional. See [SETUP_PART2.md](SETUP_PART2.md) for limits and production prerequisites. The earlier Part 1 description above is historical.
+
+## Relational roadmap — auth delivered, other entities planned
 
 All primary keys UUID unless stated; foreign keys and uniqueness constraints enforced in PostgreSQL. Use timezone-aware timestamps and explicit ownership. Do not log passwords/tokens or unnecessary question text. Retention/export/deletion behavior is defined before history is implemented.
 

@@ -37,7 +37,7 @@ export default function App() {
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-teal-900 text-white" aria-hidden="true">GP</span>
           Policy Assistant
         </a>
-        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">GOV-CS-028 · Part 1</span>
+        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">GOV-CS-028 · Part 2</span>
       </header>
       <main className="mx-auto max-w-6xl px-6 pb-14 pt-8 md:pt-16">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr] lg:gap-16">
@@ -48,7 +48,7 @@ export default function App() {
             <div className="mt-7 flex flex-wrap gap-2" aria-label="Planned languages">
               {['English', 'हिन्दी', 'Hinglish'].map((language) => <span key={language} className="rounded-full bg-teal-50 px-4 py-2 text-sm text-teal-900">{language}</span>)}
             </div>
-            <p className="mt-8 max-w-xl border-l-2 border-teal-700 pl-4 text-sm leading-relaxed text-slate-600">This phase establishes the application connection. Policy search, answers and document processing will be added in later parts.</p>
+            <p className="mt-8 max-w-xl border-l-2 border-teal-700 pl-4 text-sm leading-relaxed text-slate-600">The foundation now includes persistent accounts and role-based access. Policy search, answers and document processing will be added in later parts.</p>
           </section>
           <section className="self-start rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8" aria-labelledby="connection-title">
             <p className="eyebrow">Live system check</p>
@@ -59,11 +59,11 @@ export default function App() {
                 <strong>{connected ? 'Connected · Foundation ready' : connection.state === 'loading' ? 'Checking backend…' : 'Disconnected'}</strong>
               </div>
               {connection.state === 'connected' && <div className="mt-5 space-y-3 text-sm text-slate-600">
-                <p>Configuration validated. No database or AI service is required for Part 1.</p>
+                <p>PostgreSQL connected and authentication schema current. AI services are planned for later parts.</p>
                 <p>Last checked: <span className="font-medium text-slate-800">{connection.checkedAt}</span></p>
                 <p className="break-all text-xs">Request ID: {connection.requestId}</p>
               </div>}
-              {connection.state === 'disconnected' && <div className="mt-5 space-y-3 text-sm text-slate-600"><p>{connection.message}</p><p>Start the FastAPI backend, confirm the API URL and check the allowed CORS origin, then retry.</p></div>}
+              {connection.state === 'disconnected' && <div className="mt-5 space-y-3 text-sm text-slate-600"><p>{connection.message}</p><p>Check backend startup, private configuration, PostgreSQL and migrations. Confirm the API URL and allowed CORS origin, then retry.</p></div>}
               {connection.state === 'loading' && <p className="mt-5 text-sm text-slate-600">Contacting the actual backend readiness endpoint.</p>}
             </div>
             <p className="mt-6 break-all rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-500">GET {healthUrl}</p>
@@ -77,7 +77,7 @@ export default function App() {
           </div>
         </section>
       </main>
-      <footer className="mx-auto max-w-6xl px-6 pb-8 text-xs text-slate-500">Academic prototype · Foundation only · Not an official government service</footer>
+      <footer className="mx-auto max-w-6xl px-6 pb-8 text-xs text-slate-500">Academic prototype · Foundation and authentication · Not an official government service</footer>
     </div>
   )
 }

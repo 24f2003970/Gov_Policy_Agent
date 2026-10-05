@@ -17,8 +17,8 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | S5 admin corpus/system dashboard; pp.14,22 | 3,9–10 | Planned; durable statuses and real counts |
 | S6 MLflow/model monitoring; pp.14,30 | 10–11 | Reproducible experiment records planned; MLflow optional only if useful |
 | S7 research publication; pp.14,31 | 12 | Optional future research; no acceptance promise |
-| User management/profile/guest-user-admin; p.19 | 2,9 | Planned; server-enforced roles, guest behavior to define in Part 2 |
-| OAuth2/JWT/login/logout/refresh/brute-force limits; p.19 | 2,11 | Planned; review secure library/hash/token choices then |
+| User management/profile/guest-user-admin; p.19 | 2,9 | Part 2 verified with real PostgreSQL and browser: user/admin, protected language profile; guest access limited to health/public registration/login |
+| OAuth2/JWT/login/logout/refresh/brute-force limits; p.19 | 2,11 | Part 2 verified: Argon2id, JWT bearer (no third-party OAuth login), rotating/revocable cookie sessions, persistent throttling |
 | Admin drag/drop upload, formats/size/virus scan; p.19 | 3,9,11 | Planned; 50 MB proposed cap to review; disclose unavailable malware scanner |
 | Scanned PDF detection/Tesseract eng+hin/300 DPI; pp.19–20 | 7 | Planned; bounded per-page OCR, measured quality and preserved page references |
 | PDF text/headings/tables/metadata PyMuPDF; p.20 | 3 | Planned; uncertain extraction/dates flagged; tables handled explicitly |
@@ -31,15 +31,15 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | Personal dashboard/history/saved answers/trust timeline; p.22 | 2,9 | Schema design only; unavailable scores absent |
 | Admin analytics/topics/P@5/feedback/error rates; p.22 | 10–11 | Actual persisted events and labeled evaluation only; feedback ≠ accuracy |
 | Feedback ratings/comments/review flags; p.22 | 10 | Planned with ownership, privacy and moderation |
-| PostgreSQL users/documents/chunks/queries/citations/trust/feedback; pp.23–27 | 2–10 | Initial relational design documented; migrations start Part 2 |
+| PostgreSQL users/documents/chunks/queries/citations/trust/feedback; pp.23–27 | 2–10 | Part 2 users/sessions/throttles and explicit migration verified against PostgreSQL 18.6; other entities remain planned |
 | Source versioning/amendments/supersession; pp.10,12 | 3–6 | Planned verified relationships; publication/ingestion/verification separate |
 | Swagger/OpenAPI; p.15 | 1 | Implemented at /docs and /openapi.json |
 | React/Tailwind/FastAPI layered architecture; pp.3,16–18 | 1 | Implemented starter, modular monolith; TypeScript/Vite added |
-| Restricted CORS/config/errors/request IDs/health (user additions) | 1 | Implemented and tested; AI-free liveness, phase-aware readiness |
+| Restricted CORS/config/errors/request IDs/health (user additions) | 1–2 | Foundation retained; Part 2 credentialed CORS, DB/schema readiness and sanitized 503 added; AI-free liveness |
 | Real browser connectivity/loading/error/retry (user additions) | 1 | Implemented; readiness endpoint checked, no fake answers/stats |
 | Pinned dependencies/lockfiles/local setup (user additions) | 1 | requirements.lock and package-lock.json, PowerShell instructions |
 | Source legitimacy/rights/provenance; pp.15,32 | 3,11 | Verify official source and rights; do not assume public availability grants unrestricted reuse |
-| Security/JWT/TLS/rate limiting; pp.4,19,30 | 2,11–12 | Local loopback HTTP now; auth/rate limits later; TLS if exposed later |
+| Security/JWT/TLS/rate limiting; pp.4,19,30 | 2,11–12 | Local loopback HTTP, JWT/cookie auth and durable throttling verified in Part 2; public TLS/security review remain later |
 | Resource profiling/performance/OWASP review; p.30 | 11 | Hardware inventory only now; no throughput claims |
 | Reproducible test set/BLEU/ROUGE/BERTScore; pp.30–31 | 11 | Test set/quality metrics planned; prioritize evidence support and abstention |
 | Full report/demo/video/viva and public code; pp.30–31 | 1,12 | Beginner foundation docs now; final report/demo later |

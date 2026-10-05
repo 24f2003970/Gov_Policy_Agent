@@ -1,5 +1,23 @@
 # Beginner walkthrough (Hinglish)
 
+Part 1 flow below is historical. Part 2 mein database readiness required hai aur [SETUP_PART2.md](SETUP_PART2.md) current commands deta hai.
+
+## Part 2 ko simple words mein samjhein
+
+Password database mein plaintext nahi jaata: Argon2id uska salted hash banata hai. Login verify hone par short-lived JWT memory mein milta hai aur random refresh token HttpOnly cookie mein. Backend refresh token ka sirf SHA256 hash save karta hai, kyunki token already unpredictable random data hai; human passwords ke liye Argon2 zaroori hai.
+
+JWT valid hone par bhi DB session/user check hota hai: logout, disabled account ya changed role immediately respected hota hai. Refresh rotation ek database transaction mein row lock leti hai, taaki do requests same token ko successful consume na kar sakein. Used token repeat ho toh session revoke hota hai.
+
+Alembic migration schema ka versioned change hai. Server startup tables silently create nahi karta; explicit upgrade command use hota hai. Disposable test DB normal application data se alag hai. Browser navigation hide karna permission enforcement nahi—admin endpoint khud role check karta hai.
+
+Five Part 2 viva questions:
+
+1. **Password hash aur encryption alag kyun?** Hash one-way password verification ke liye hai; plaintext recover karne ki zaroorat nahi.
+2. **Access aur refresh token kyun?** Access short-lived API permission deta hai; refresh carefully controlled session renewal deta hai.
+3. **Logout JWT ko kaise rokta hai?** Backend every protected request par DB session revocation check karta hai.
+4. **Migration kya hai?** Version-controlled explicit database schema change; fresh setup repeatable hota hai.
+5. **401 aur 403 ka difference?** 401 valid session missing/expired; 403 valid user ke paas required permission nahi.
+
 ## Request ka flow
 
 1. `frontend/src/main.tsx` React screen ko browser ke root element mein mount karta hai.

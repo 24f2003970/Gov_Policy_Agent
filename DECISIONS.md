@@ -22,6 +22,18 @@ Recorded 2026-10-05, after reading all 34 physical PDF pages. Page numbers below
 | D16 | Proposal and source files stay outside public Git | Treat proposal as requirements only. Verify official sources and rights later rather than adopting p.15's blanket copyright assumption. |
 | D17 | Fully pinned tested dependencies | npm package-lock includes integrity; backend requirements.lock pins the full resolved set for Python 3.12/Windows. Starlette 0.52.1 retains the documented httpx testing generation; resolver initially selected 1.7 with a migration warning. Upgrades require compatibility tests. |
 
+## Part 2 decisions (2026-10-05)
+
+- D18: Native PostgreSQL 18/current minor, dedicated gov_app/gov_policy plus isolated gov_test/gov_policy_test; no Docker prerequisite. Verify service/binaries before claiming installation.
+- D19: Sync SQLAlchemy 2 + psycopg 3, explicit Alembic migrations; FastAPI sync endpoints move blocking DB/password work to worker threads. Preserve requirements.in/lock workflow.
+- D20: Argon2id via pwdlib and HS256 PyJWT with required claims; 10-minute access and seven-day absolute refresh defaults. Passwords 12–128 characters, never truncated.
+- D21: Server-authoritative session revocation/user status/roles on every protected access; no roles trusted from submitted signup data or stale JWT payloads.
+- D22: HttpOnly host-only Strict /auth refresh cookie, memory-only access token, verified Origin + CSRF header, credentialed 127.0.0.1 CORS; production Secure/HTTPS mandatory.
+- D23: Transactional row-locked refresh rotation; consumed-token reuse revokes the session. At most 256 consumed digests per session. Web Locks serialize same-origin browser tabs; unsupported browsers may need login after a rotation race. No grace window that silently accepts replay.
+- D24: Persistent bounded fixed-window throttle, HMAC account/IP keys, five account attempts/15 minutes by default; Uvicorn proxy headers disabled. All login attempts count and limits expire, avoiding permanent locks.
+- D25: Hidden-input local provisioning/admin CLI; generated per-install credentials, no default admin, only first admin bootstrap. Hash routes avoid an unnecessary frontend routing dependency.
+- D26: Real PostgreSQL migrations/auth tests only. Required DB tests fail when prerequisites are missing; no SQLite/mocked completion. Frontend/backend verification and publication remain gated on actual results.
+
 ## Six proposed trust dimensions
 
 | Dimension | Proposal weight (unvalidated) | Planned interpretation / availability |

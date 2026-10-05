@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI", "Nirmala UI", system-ui, sans-serif;
+}
+
+body { margin: 0; background: #f7faf9; color: #0f172a; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.eyebrow { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #527069; }

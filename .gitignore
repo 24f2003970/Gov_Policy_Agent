@@ -1,0 +1,43 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+# Dependencies and build artifacts
+.venv/
+.venv-*/
+venv/
+node_modules/
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.tsbuildinfo
+# Local proposal/reference material is NEVER chatbot evidence
+*.pdf
+references/
+uploads/
+storage/
+data/
+runtime/
+logs/
+*.log
+*.sqlite*
+*.db
+chroma/
+models/
+*.gguf
+*.safetensors
+*.pt
+*.pth
+# Machine-specific files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+test-results/
+playwright-report/

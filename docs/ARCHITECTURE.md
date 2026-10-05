@@ -1,6 +1,6 @@
 # Architecture
 
-One React frontend calls a modular FastAPI application. PostgreSQL stores authentication, source metadata and durable jobs. A separate worker runs bounded parser child processes. Originals are private local files; no public static mount exists.
+One React frontend calls a modular FastAPI application. PostgreSQL stores authentication, source metadata, exact passages and durable jobs. Separate ingestion and single-owner indexing processes handle parsing and embeddings. Originals are private local files; no public static mount exists.
 
 ```mermaid
 flowchart LR
@@ -11,6 +11,10 @@ flowchart LR
   FILES --> PARSER[Parser child]
   WORKER --> PARSER
   WORKER --> DB
+  API --> INDEX[Private loopback index service]
+  DB --> INDEX
+  INDEX --> MODEL[Offline pinned E5-small CPU]
+  INDEX --> VECTOR[(Persistent Chroma)]
 ```
 
 ## Authentication
@@ -31,8 +35,11 @@ UUID keys, foreign keys, constraints and timezone-aware timestamps are defined i
 | version_relationships | Explicitly verified amendments/supersession with evidence and scope |
 | extracted_pages, chunks | Physical-page text, exact offsets, flags and replaceable chunk profile |
 | ingestion_jobs | One persisted job per version, state, attempt count, progress and lease ownership |
+| eligibility_reviews | Append-only evidence/reason/scope/reviewer decisions, separate from immutable originals |
+| index_generations, index_state | Pinned model/chunk spec, reviewed source snapshot, durable lease/progress and atomic active pointer |
+| index_passages | Generation-scoped exact page/text spans; old provisional chunks remain intact |
 
-Alembic revisions `0001_auth` and `0002_documents` are explicit. Startup does not create tables. A PostgreSQL trigger protects original-version fields; verification/extraction revision fields are separate.
+Alembic revisions `0001_auth`, `0002_documents` and `0003_retrieval` are explicit. Startup does not create tables. PostgreSQL triggers protect original-version fields and forbid eligibility-review update/delete. Corrections append a new reviewed decision.
 
 ## Ingestion
 
@@ -44,6 +51,16 @@ PDF text preserves physical page numbers and exact `get_text('text', sort=False)
 
 Limits: 50 MiB stream, 60-second upload read deadline, 30-second default parser deadline, 500 pages and 2,000,000 extracted characters. Parser children are not an OS sandbox and have no hard memory quota. No malware scan is available; table layout and encoding need review. API liveness is independent of DB/worker/AI; readiness requires current DB/schema and authentication.
 
-## Future modules
+## Retrieval
 
-Embeddings/retrieval, local generation, claim citations, OCR, scoring, history/feedback and evaluation remain unimplemented. PostgreSQL source records will remain authoritative; any vector index must be derived and replaceable. See [maintainer state](MAINTAINER.md).
+The [encoder](../backend/app/embedding.py) explicitly prepares a pinned safetensors model outside Git, loads offline without remote code, and supplies all embeddings to Chroma. Hindi/English queries share the same normalized 384-dimensional space. Query/passage prefixes and special tokens count toward the 512-token maximum. New chunks target 448 tokens with 48-token overlap and heuristic newline/section boundaries; exact half-open offsets, continuation flags and original physical pages survive. No reparse of immutable originals is needed.
+
+[Eligibility](../backend/app/eligibility.py) requires a latest audited verified review, recorded reuse scope, completed extraction, active document and no explicit superseding relationship. Historical/unknown applicability remains visible. Partial/OCR-pending sources are excluded. A changed review blocks the old index snapshot immediately, even if still positive; rebuild to include it. Archive/rejection is rechecked from SQL after vector work. Regular users inspect eligible indexed text only; original/PNG routes remain admin-only because permitted narrative scope excludes graphics.
+
+[Index runtime](../backend/app/vector_index.py) creates one collection per generation with an exact model revision/dimension/normalization/metric/chunk spec. It checks actual cosine configuration and disables Chroma's embedding function. Stable passage UUIDs derive from generation/page/span; batches of eight use idempotent upserts. SQL leases last 180 seconds with heartbeats and stale-owner fencing, capped at three attempts. Only exact vector-ID coverage plus current source-review checks can atomically publish the active pointer. Failure preserves the previous ready generation. Reconciliation removes orphan IDs and invalidates missing-vector generations; historical SQL/collections are retained pending explicit garbage-collection design.
+
+[Single-owner service](../backend/index.py) holds a Windows file lock before model/Chroma loading. Worker and query operations share one nonblocking runtime lock; busy queries return 503 rather than overlap. It binds 127.0.0.1:8011 with a private HMAC-derived internal key, no public schema or CORS. The ordinary [search API](../backend/app/search_api.py) checks live auth/CSRF, applies persistent IP throttling (50 requests per 15 minutes by default) and uses a 20-second IPC timeout. Model loading never occurs during API startup. CPU uses two Torch threads; GPU inference is not configured.
+
+Search accepts 2–2000 characters, rejects actual prefixed input over 512 tokens, returns at most ten passages, and supports exact scheme/issuer/type and publication-date filters. Unknown dates are explicitly included/excluded when date filtering. SQL eligibility precedes Chroma filtering, and candidate retrieval covers the bounded corpus (100 versions/20,000 passages) so excluded hits cannot consume the requested count. This small-corpus strategy is not a scalable search benchmark. Every returned text is checked against the stored source-page span. Similarity >=0.78 is a labeled uncalibrated relevance heuristic; it cannot establish claim support or entitlement.
+
+Local generation, validated claim citations, OCR, scoring and history/feedback remain unimplemented. See [maintainer state](MAINTAINER.md).

@@ -31,7 +31,7 @@ Apply migrations for both fresh and existing application installations:
 .\.venv\Scripts\python.exe -m alembic -c backend/alembic.ini current
 ```
 
-Expected head: `0002_documents`. Upgrade is repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
+Expected head: `0003_retrieval`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
 
 Create the first administrator only when none exists:
 
@@ -40,6 +40,16 @@ Create the first administrator only when none exists:
 ```
 
 The command prompts for identity and hidden password confirmation. Existing installations retain their administrator. Secrets stay in ignored `.env`; never include them in logs, screenshots or public files.
+
+## Prepare the embedding model
+
+Run explicitly once (network download from the pinned official Hugging Face revision):
+
+```powershell
+.\.venv\Scripts\python.exe backend\prepare_model.py
+```
+
+Expected output includes `intfloat/multilingual-e5-small`, revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`, 384 dimensions and CPU configuration. The lock uses the official PyTorch CPU wheel index. No CUDA stack is required. Model files default to `%LOCALAPPDATA%\GovPolicyAgent\models`; subsequent API/model startup is offline and rejects an absent/mismatched preparation manifest. Downloading another revision requires a deliberate code/spec change and index rebuild.
 
 ## Start
 
@@ -61,11 +71,19 @@ Terminal 3, root:
 .\.venv\Scripts\python.exe backend\worker.py
 ```
 
-Use `http://127.0.0.1:5173/` consistently; `localhost` is a different origin. Admin uploads are at `/#admin`. API docs: `http://127.0.0.1:8000/docs`; readiness: `/health/ready`. Ready requires configured authentication and the current PostgreSQL schema. Worker output begins `Worker running; one job at a time. Ctrl+C to stop.` Stop terminals with Ctrl+C.
+Terminal 4, root:
+
+```powershell
+.\.venv\Scripts\python.exe backend\index.py serve
+```
+
+This loads one CPU model and owns Chroma under a Windows file lock, then starts a private loopback service on port 8011. Wait for Uvicorn startup (measured runtime load about 16 seconds). Do not start additional index owners or use reload/multiple workers. API startup does not load the model. The internal query endpoint requires a private derived key; use the authenticated API/UI instead.
+
+Use `http://127.0.0.1:5173/` consistently; `localhost` is a different origin. Admin uploads are at `/#admin`; protected retrieval is at `/#search`. Sign in, enter a Hindi/English question and select Search passages. Filters match exact stored scheme/issuer/type; date bounds concern publication dates, with an explicit unknown-date choice. Inspect extracted source text from a result. Only admins can review/upload/rebuild or fetch original PDF/PNG. API docs: `http://127.0.0.1:8000/docs`; readiness: `/health/ready`. Ready checks DB/schema/auth, not index-service availability. Stop terminals with Ctrl+C.
 
 ## Storage and corpus operations
 
-Durable originals default to `%LOCALAPPDATA%\GovPolicyAgent\data`, outside OneDrive. `GOV_DATA_DIR` can override this in private `.env`. Back up the database and data directory together. To relocate, stop API/worker, copy the complete storage directory, update the setting and verify original checksums after restart. Paths must remain private and outside frontend assets.
+Durable originals default to `%LOCALAPPDATA%\GovPolicyAgent\data`, outside OneDrive. `GOV_DATA_DIR` can override this in private `.env`; model/vector directories are siblings of that data directory. Back up the database and originals together; Chroma is derived and rebuildable. To relocate, stop all services, copy storage, update the setting and verify original checksums. Paths must remain private and outside frontend assets.
 
 Optional root commands:
 
@@ -74,13 +92,27 @@ Optional root commands:
 .\.venv\Scripts\python.exe backend\worker.py --reconcile
 .\.venv\Scripts\python.exe backend\corpus.py --download
 .\.venv\Scripts\python.exe backend\corpus.py --import
+.\.venv\Scripts\python.exe backend\index.py rebuild
+.\.venv\Scripts\python.exe backend\index.py status
 ```
 
-Reconcile removes only generated unreferenced originals older than 24 hours and temporary files older than one hour. Corpus download verifies [manifest](corpus_manifest.json) hashes; changed sources require review. Import requires an existing active first admin and reuses versions on repeat. Source rights restrictions remain in [SOURCES.md](SOURCES.md).
+Worker reconcile removes only generated unreferenced originals older than 24 hours and temporary files older than one hour. Corpus download verifies [manifest](corpus_manifest.json) hashes; changed sources require review. Import requires an existing active first admin, reuses versions on repeat and records the manifest's explicit audited review for the PIB factsheet only. Inspect extraction before rebuild. The existing three sources remain restricted. Source terms/scope are in [SOURCES.md](SOURCES.md).
+
+Rebuild prints a queued generation UUID; the running index service processes it. Repeated pending requests reuse the job. Status prints source exclusion reasons and durable progress; `ready` means a completed SQL generation, not a live-service probe. Failed jobs below three attempts can retry through the admin API; exhausted jobs require a new rebuild.
+
+Stop Terminal 4 before these maintenance commands (each requires exclusive vector ownership):
+
+```powershell
+.\.venv\Scripts\python.exe backend\index.py once
+.\.venv\Scripts\python.exe backend\index.py reconcile
+.\.venv\Scripts\python.exe backend\evaluate_retrieval.py
+```
+
+`once` claims one queued/expired job. Index reconcile removes orphan vector IDs; missing SQL-referenced vectors clear the active pointer and mark failure, requiring retry/rebuild. Old generation SQL provenance is retained; automatic old-collection garbage collection is deferred. Evaluation checks the eligible real source and writes ignored `runtime/retrieval-results.json`; it never substitutes fixtures. Restart `index.py serve` afterwards.
 
 ## Checks
 
-Root commands; tests reset only the dedicated test database and use temporary storage:
+Root commands; prepare the model first. Tests reset only the dedicated test database and use temporary vector/storage collections:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip check
@@ -100,3 +132,9 @@ If old Windows pytest temporary directories are inaccessible, supply `--basetemp
 | Upload 413/422 | Actual stream size or parser/file validation limits |
 | Inspection 401/403 | Session, admin role and approved 127.0.0.1 origin |
 | Missing/changed original | Restore matching storage/database backup |
+| Search 503/busy | Start the prepared single-owner service; retry after a batch finishes |
+| Model missing/mismatched | Run explicit preparation; preserve the pinned spec |
+| Index owner lock | Stop the other index service before offline maintenance |
+| No results | Check eligibility, exact filters, dates and heuristic cutoff; no answer is asserted |
+| Review changed after indexing | Rebuild; new review must be included in the active snapshot |
+| Query 422 | Shorten to 2–2000 characters and at most 512 actual prefixed tokens |

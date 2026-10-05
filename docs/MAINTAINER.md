@@ -1,12 +1,12 @@
 # Maintainer state
 
-Updated 2026-10-05. Parts 1–3 are complete; Part 4 has not started. This cleanup changes documentation only. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
+Updated 2026-10-05. Parts 1–4 are implemented and verified. Next authorized phase is Part 5; do not begin it automatically. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
 
 ## Continuation baseline
 
-- Current schema: `0002_documents`; preserve configured databases, private `.env`, originals and existing administrator. No application reset or reprovisioning is required.
+- Current schema: `0003_retrieval`; preserve configured databases, private `.env`, originals and existing administrator. No application reset or reprovisioning is required.
 - Local environment: Windows 11/PowerShell, bundled Python 3.12.14 `.venv`, Node 24.12.0, PostgreSQL 18.6. CPU i5-13500HX, about 15.7 GiB usable RAM, RTX 4050 with 6141 MiB VRAM. GPU/model performance has not been measured.
-- Latest implementation release: `d59aaf9392ce492dcd95bd18406d4f9ee09219dc`. Historical auth release: `fedc1c43a38324795f1d61a7348c2274407006ff`; foundation: `e8a41e16ba7e1c3b298724a05930d5fd6aae7c9b`.
+- Pre-Part-4 documentation cleanup: `cfa7006a849bdf056da5372c44d98f1d70f43c85`. Historical ingestion: `d59aaf9392ce492dcd95bd18406d4f9ee09219dc`; auth: `fedc1c43a38324795f1d61a7348c2274407006ff`; foundation: `e8a41e16ba7e1c3b298724a05930d5fd6aae7c9b`. The Part 4 release is the commit introducing this revision; use Git history for its hash.
 - Setup commands have one home in [SETUP.md](SETUP.md); schema/security detail in [ARCHITECTURE.md](ARCHITECTURE.md), measured evidence in [VERIFICATION.md](VERIFICATION.md), proposal traceability in [requirement mapping](../REQUIREMENTS_MATRIX.md).
 
 ## Decisions to preserve
@@ -15,15 +15,16 @@ Use a local modular monolith, PostgreSQL and private immutable originals. Keep d
 
 Auth uses server-authoritative roles/revocation, Argon2id, rotating opaque refresh sessions, memory-only access tokens, CSRF/exact-origin checks and durable throttling. Preserve hidden-input provisioning and first-admin-only bootstrap; no default credentials.
 
-Ingestion uses raw streams, global checksum dedup, private generated storage keys, bounded child parsing, durable fenced jobs and atomic results. Preserve exact original/page/text provenance, unknown dates and explicit evidence-backed relationships. Newer documents do not automatically supersede old ones. No hard-delete/audited verification-correction workflow exists yet.
+Ingestion uses raw streams, global checksum dedup, private generated storage keys, bounded child parsing, durable fenced jobs and atomic results. Preserve exact original/page/text provenance, unknown dates and explicit evidence-backed relationships. Newer documents do not automatically supersede old ones. Audited append-only eligibility reviews permit corrections without mutating original-version metadata; no hard-delete workflow exists.
 
-Official origin, legal status and reuse permission are distinct. The current three-source local-reference corpus is not eligible for retrieval. Expansion toward 10–20 documents across 3–5 schemes requires rights and extraction review. Proposal PDF is requirements material, never policy evidence; synthetic fixtures are test-only.
+Official origin, legal status and reuse permission are distinct. Of four real versions, one historical PIB text factsheet is eligible/indexed (nine passages); three original sources remain excluded. Expansion toward 10–20 documents across 3–5 schemes requires rights and extraction review. Proposal PDF is requirements material, never policy evidence; synthetic fixtures are test-only.
+
+Keep pinned multilingual E5-small on CPU/two threads, normalized 384-dimensional cosine vectors, explicit query/passage prefixes and token profile `e5-token-v1:448:48`. Retain old provisional chunks and generation-scoped provenance. One Windows file-locked process owns model/Chroma; the API uses private loopback IPC. SQL gates every retrieval and generation activation. Changed reviews require rebuilding; archive/rejection takes effect immediately. No mixed revisions, automatic downloads or default Chroma embeddings. Reconcile does not garbage-collect historical collections. Current bounds: 100 versions, 20,000 passages, batch eight, three attempts, one runtime operation at a time.
 
 ## Remaining roadmap
 
 | Part | Planned work |
 | --- | --- |
-| 4 | One replaceable multilingual embedding model, persistent Chroma and measured retrieval |
 | 5 | Benchmarked local Ollama generation, grounded context and abstention |
 | 6 | Claim-level exact version/page/passage citations and support validation |
 | 7 | Hindi/Hinglish checks and bounded OCR with page/quality provenance |
@@ -41,4 +42,4 @@ Measure retrieval P@k/recall, claim support, citation correctness, abstention, l
 
 Proposed score dimensions/weights are unvalidated: recency 20%, citation coverage 25%, semantic faithfulness 25%, consistency 15%, calibration 10%, feedback 5%. All are currently unavailable. Preserve missing values, formula version and coverage; do not invent components or silently reweight. Thresholds and calibration need evaluation.
 
-Known gaps: OCR, table/encoding quality, rights clearance, malware scanning, parser isolation/memory/concurrency budgets, production HTTPS/security, multi-worker resource behavior and model evaluation. Historical upstream TestClient deprecation remains. Update technical records with actual results when future work is authorized.
+Known gaps: OCR, table/encoding quality, wider corpus rights clearance, malware scanning, parser isolation/hard memory quotas, production HTTPS/security, GPU inference, throughput and held-out retrieval evaluation. The 12-case development set was source-checked by the implementing agent; independent human review is pending. Ambiguous questions still return candidates; the 0.78 cutoff is not calibrated. Historical upstream TestClient deprecation remains. Update technical records with actual results when future work is authorized.

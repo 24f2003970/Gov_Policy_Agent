@@ -15,6 +15,7 @@ from app.document_models import DocumentVersion
 from app.models import User
 from app.storage import checksum_file, directories, filename_format, validate_file
 from app.auth import now
+from app.index_models import EligibilityReview
 
 
 def download(entry, path):
@@ -80,7 +81,10 @@ def main():
                         if version.provenance_status == 'unverified':
                             version.provenance_status, version.verified_at, version.verified_by = 'verified', now(), admin.id
                             version.verification_note = entry['verification_note']; db.commit()
-                        print(f"{entry['filename']}: {'existing' if result['duplicate'] else 'queued'}; official-origin checked; local-reference rights only")
+                        if entry.get('review') and not db.scalar(select(EligibilityReview.id).where(EligibilityReview.version_id == version.id).limit(1)):
+                            db.add(EligibilityReview(version_id=version.id, reviewer_id=admin.id, **entry['review']))
+                            db.commit()
+                        print(f"{entry['filename']}: {'existing' if result['duplicate'] else 'queued'}; rights={entry['metadata']['reuse_status']}")
                 finally:
                     temporary.unlink(missing_ok=True)
             else:

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import Foundation from './App'
 import DocumentAdmin from './DocumentAdmin'
+import Search from './Search'
 import { authorized, login, logout, register, restoreSession, subscribe, type User } from './auth'
 
 const inputClass = 'mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-teal-700'
@@ -32,15 +33,15 @@ export default function AuthApp() {
   }
   return <>
     <nav aria-label="Account navigation" className="flex flex-wrap items-center gap-5 border-b border-slate-200 bg-white px-6 py-4 text-sm">
-      <a href="#home">Foundation</a>
+      <a href="#home">Foundation</a>{user && <a href="#search">Search</a>}
       {user ? <><a href="#account">Account</a>{user.role === 'admin' && <a href="#admin">Admin</a>}<button disabled={busy} onClick={() => void signOut()} className="ml-auto font-semibold text-teal-900">{busy ? 'Signing out…' : 'Logout'}</button></>
         : <><a href="#login">Login</a><a href="#register">Register</a></>}
     </nav>
     {error && <p role="alert" className="mx-auto mt-4 max-w-xl rounded-lg bg-amber-50 p-4 text-amber-900">{error}</p>}
-    {page === 'home' ? <Foundation /> : <main className={`mx-auto ${page === 'admin' ? 'max-w-3xl' : 'max-w-xl'} px-6 py-12`}>
+    {page === 'home' ? <Foundation /> : <main className={`mx-auto ${page === 'admin' || page === 'search' ? 'max-w-3xl' : 'max-w-xl'} px-6 py-12`}>
       {restoring ? <p role="status">Restoring your session…</p>
         : page === 'login' || page === 'register' ? <AuthForm kind={page} onLogin={() => { location.hash = 'account' }} />
-        : user ? page === 'admin' ? <AdminPage /> : <AccountPage user={user} onUpdate={setUser} />
+        : user ? page === 'search' ? <Search user={user} /> : page === 'admin' ? <AdminPage /> : <AccountPage user={user} onUpdate={setUser} />
         : <div><h1 className="text-2xl font-semibold">Sign in required</h1><p className="mt-4">This page requires an active session.</p><a className="mt-4 inline-block text-teal-800 underline" href="#login">Go to login</a></div>}
     </main>}
   </>

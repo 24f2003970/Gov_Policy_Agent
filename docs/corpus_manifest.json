@@ -1,6 +1,6 @@
 {
   "retrieved_on": "2026-10-05",
-  "purpose": "Private local educational extraction demo. Original PDFs and text are not redistributed in Git. Official origin verified; reproduction permissions not obtained. These are historical snapshots, not current legal advice.",
+  "purpose": "Private local educational corpus. Rights and intended scope are per entry; original files and extracted text are not redistributed in Git. Historical sources are not current entitlement advice.",
   "entries": [
     {
       "filename": "pmkisan.pdf",
@@ -62,6 +62,34 @@
       },
       "verification_note": "Official pmay-urban.gov.in PDF downloaded and signature, checksum, 112 pages, cover title and ministry checked on 2026-10-05. Cover states September 2024 without exact day; dates remain null. Local reference only; reproduction permission required by site copyright policy and not obtained. Low-text pages 2,4,6,8,111 are conservatively OCR-pending.",
       "rights_policy_url": "https://pmay-urban.gov.in/copyright"
+    },
+    {
+      "filename": "pib-pmkisan.pdf",
+      "sha256": "cb739585b7794b79dc61a164fcd744de4fc5bc1de75b1402db387b03eac40df8",
+      "pages": 7,
+      "bytes": 957521,
+      "provenance_status": "official_origin_checked",
+      "metadata": {
+        "title": "20th Instalment of PM-KISAN - PIB Research Unit factsheet",
+        "issuer": "Press Information Bureau, Government of India",
+        "scheme": "PM-KISAN",
+        "document_type": "factsheet",
+        "source_url": "https://static.pib.gov.in/WriteReadData/specificdocs/documents/2025/aug/doc202581597201.pdf",
+        "language": "en",
+        "publication_date": "2025-08-01",
+        "effective_date": null,
+        "reuse_status": "permission_recorded"
+      },
+      "verification_note": "PIB Research Unit cover, dated 1 August 2025, all seven physical pages/digital text/hash inspected on 2026-10-05. Historical factsheet, not a determination of current eligibility. PIB website terms permit accurate attributed first-party content use; third-party material is excluded.",
+      "rights_policy_url": "https://www.pib.gov.in/content/3604_2_CopyrightPolicy.aspx?lang=1&reg=3",
+      "review": {
+        "decision": "verified",
+        "reuse_status": "permission_recorded",
+        "applicability": "historical",
+        "reason": "Official PIB Research Unit narrative text and source attribution reviewed against PIB copyright terms on 2026-10-05; existing restricted sources are not cleared by these terms.",
+        "evidence_url": "https://www.pib.gov.in/content/3604_2_CopyrightPolicy.aspx?lang=1&reg=3",
+        "scope": "Local educational retrieval of PIB-authored digital narrative text with prominent title/issuer/URL attribution and exact excerpts. No third-party graphics, photographs or linked source reproduction; no claim of current policy applicability."
+      }
     }
   ]
 }

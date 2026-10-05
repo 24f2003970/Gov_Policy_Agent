@@ -4,17 +4,26 @@ The local GOV-CS-028 proposal (34 physical pages) supplied project requirements.
 
 ## Local document corpus
 
-[corpus_manifest.json](corpus_manifest.json) retains original URLs, issuers, titles, SHA256 hashes, byte/page counts, retrieval date, verification notes and rights uncertainty. It is preserved unchanged by documentation cleanup.
+[corpus_manifest.json](corpus_manifest.json) retains original URLs, issuers, titles, SHA256 hashes, byte/page counts, retrieval date, verification notes and per-source rights scope.
 
 | Source | Pages | Recorded status |
 | --- | --- | --- |
 | PM-KISAN operational guidelines | 12 | Digital extraction completed |
 | PMJDY mission document | 40 | Partial; one low-text page |
 | PMAY-U 2.0 guidelines | 112 | Partial; five low-text pages |
+| PIB Research Unit: 20th Instalment of PM-KISAN (2025-08-01) | 7 | Completed; audited historical narrative-text scope; nine indexed passages |
 
 Retrieved/inspected 2026-10-05. Official origins and covers/title/issuer were checked; exact publication/effective dates remain unknown where not established. Historical snapshots are not current entitlement advice. SHA256 verifies bytes, not authenticity or legal status.
 
-All three are local-reference-only; reproduction permissions are not obtained. [PM-KISAN copyright policy](https://www.pmkisan.gov.in/CopyrightPolicy.aspx) and [PMAY copyright policy](https://pmay-urban.gov.in/copyright) require reproduction permission. PMJDY's [official accessibility page](https://www.pmjdy.gov.in/accessibility) lists a copyright policy whose text was unavailable during review. Public availability is not a blanket reuse license. Originals and extracted corpus text are not redistributed in Git; zero versions are eligible for future retrieval.
+The original three remain local-reference-only; reproduction permissions are not obtained. [PM-KISAN copyright policy](https://www.pmkisan.gov.in/CopyrightPolicy.aspx) and [PMAY copyright policy](https://pmay-urban.gov.in/copyright) require reproduction permission. PMJDY's [official accessibility page](https://www.pmjdy.gov.in/accessibility) lists a copyright policy whose text was unavailable during review. Public availability is not a blanket reuse license. Originals and extracted corpus text are not redistributed in Git.
+
+The new [PIB factsheet](https://static.pib.gov.in/WriteReadData/specificdocs/documents/2025/aug/doc202581597201.pdf) was inspected across all seven physical pages. Its cover establishes the publication date; effective/current applicability is not inferred. SHA256: `cb739585b7794b79dc61a164fcd744de4fc5bc1de75b1402db387b03eac40df8`. [PIB copyright terms](https://www.pib.gov.in/content/3604_2_CopyrightPolicy.aspx?lang=1&reg=3), reviewed 2026-10-05, permit first-party featured material reproduction without prior permission subject to accuracy, non-misleading use and prominent source acknowledgment; third-party material is excluded. Intended-use review permits exact attributed PIB-authored narrative excerpts only, with title/issuer/source URL shown on every result. It does not clear photographs/graphics or reproduce content from linked third-party sources. Normal-user inspection is extracted text only. This is one eligible historical source, not blanket clearance for the earlier PM-KISAN guidelines or current entitlement advice.
+
+## Embedding baseline
+
+Official model-card comparison informed selection; only E5 was downloaded and measured. [Multilingual MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) is Apache-2.0, supports 50 languages, produces 384 dimensions and has a 128-token Sentence-Transformers limit. [Multilingual E5-small](https://huggingface.co/intfloat/multilingual-e5-small/tree/614241f622f53c4eeff9890bdc4f31cfecc418b3) is MIT, supports 100 languages including Hindi/English, produces 384 dimensions and uses a 512-token limit with mandatory `query: ` / `passage: ` prefixes for retrieval. E5's retrieval training and larger source context fit this task. This is a documented suitability comparison, not a head-to-head quality or resource benchmark.
+
+Pinned E5 revision: `614241f622f53c4eeff9890bdc4f31cfecc418b3`. Selected licenses/cards remain in the downloaded cache; models and weights are excluded from Git. Installed Sentence-Transformers 5.1.2, Transformers 4.57.6, CPU Torch 2.10.0+cpu and Chroma 1.5.9 were tested together. See [Sentence-Transformers loading/encoding](https://sbert.net/docs/package_reference/sentence_transformer/model.html), [Chroma clients](https://docs.trychroma.com/docs/run-chroma/client-server) and the [official CPU wheel index](https://download.pytorch.org/whl/cpu).
 
 ## Dependency references
 

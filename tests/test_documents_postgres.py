@@ -44,7 +44,7 @@ def pdf(pages=('Section 1 Eligibility\nSynthetic policy: conditions and exclusio
 def docs(postgres, tmp_path):
     settings, engine = postgres
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
+        connection.execute(text("TRUNCATE index_state, index_passages, index_generations, eligibility_reviews, auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
     settings = settings.model_copy(update={"data_dir": tmp_path, "environment": "test"})
     app = create_app(settings)
     app.state.engine.dispose(); app.state.engine = engine
@@ -226,7 +226,8 @@ def test_archive_provenance_versions_and_immutability(docs):
     for v in (first, second):
         result = client.patch(f"/admin/documents/versions/{v['id']}/provenance", headers=headers,
              json={'status': 'verified', 'note': 'Synthetic test provenance decision, not a real official source'})
-        assert result.status_code == 200 and result.json()['eligible_for_future_retrieval']
+        assert result.status_code == 200 and not result.json()['eligible_for_future_retrieval']
+        assert 'audit_review_required' in result.json()['eligibility']['reasons']
     result = client.post(f"/admin/documents/versions/{second['id']}/relationships", headers=headers,
         json={'to_version_id': first['id'], 'kind': 'amends', 'evidence_url': 'https://example.gov.in/amendment', 'scope_note': 'Synthetic test scope only, explicitly confirmed by tester'})
     assert result.status_code == 201

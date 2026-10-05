@@ -75,8 +75,9 @@ def version_data(db, version):
     result = {key: getattr(version, key) for key in ("id", "document_id", "version_number", "checksum", "original_name", "format", "size_bytes", "metadata_snapshot", "source_url", "language", "publication_date", "effective_date", "ingested_at", "provenance_status", "verified_at", "verification_note", "extraction_revision", "chunk_profile")}
     result["job"] = job_data(job)
     # Completed extraction does not verify official provenance. Partial/OCR are ineligible.
-    result["eligible_for_future_retrieval"] = bool(job.state == "completed" and version.provenance_status == "verified"
-        and version.metadata_snapshot.get("reuse_status") == "permission_recorded" and document.archived_at is None)
+    from .eligibility import eligibility
+    result['eligibility'] = eligibility(db, version)
+    result["eligible_for_future_retrieval"] = result['eligibility']['eligible']
     return result
 
 

@@ -44,7 +44,7 @@ def pdf(pages=('Section 1 Eligibility\nSynthetic policy: conditions and exclusio
 def docs(postgres, tmp_path):
     settings, engine = postgres
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE index_state, index_passages, index_generations, eligibility_reviews, auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
+        connection.execute(text("TRUNCATE answer_runs, answer_worker, index_state, index_passages, index_generations, eligibility_reviews, auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
     settings = settings.model_copy(update={"data_dir": tmp_path, "environment": "test"})
     app = create_app(settings)
     app.state.engine.dispose(); app.state.engine = engine

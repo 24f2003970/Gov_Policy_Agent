@@ -37,7 +37,7 @@ export default function App() {
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-teal-900 text-white" aria-hidden="true">GP</span>
           Policy Assistant
         </a>
-        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">GOV-CS-028 · Part 4</span>
+        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">GOV-CS-028 · Part 5</span>
       </header>
       <main className="mx-auto max-w-6xl px-6 pb-14 pt-8 md:pt-16">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr] lg:gap-16">
@@ -48,7 +48,7 @@ export default function App() {
             <div className="mt-7 flex flex-wrap gap-2" aria-label="Planned languages">
               {['English', 'हिन्दी', 'Hinglish'].map((language) => <span key={language} className="rounded-full bg-teal-50 px-4 py-2 text-sm text-teal-900">{language}</span>)}
             </div>
-            <p className="mt-8 max-w-xl border-l-2 border-teal-700 pl-4 text-sm leading-relaxed text-slate-600">Persistent accounts, admin document ingestion and multilingual passage search are available. Generated answers are deferred.</p>
+            <p className="mt-8 max-w-xl border-l-2 border-teal-700 pl-4 text-sm leading-relaxed text-slate-600">Accounts, document ingestion, multilingual passage search and local grounded historical answers are available. Full claim-support validation, OCR and trust scoring remain deferred.</p>
           </section>
           <section className="self-start rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8" aria-labelledby="connection-title">
             <p className="eyebrow">Live system check</p>

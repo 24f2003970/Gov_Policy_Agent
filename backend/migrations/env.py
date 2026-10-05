@@ -4,6 +4,7 @@ from app.database import make_engine
 from app.models import Base
 from app import document_models
 from app import index_models
+from app import answer_models
 
 target_metadata = Base.metadata
 

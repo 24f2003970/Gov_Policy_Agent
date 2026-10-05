@@ -1,0 +1,14 @@
+{
+  "tag": "qwen3:4b-instruct-2507-q4_K_M",
+  "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "quantization": "Q4_K_M",
+  "parameters": "4.0B",
+  "ollama_version": "0.17.1",
+  "tokenizer_repository": "Qwen/Qwen3-4B-Instruct-2507",
+  "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+  "context_tokens": 4096,
+  "output_tokens": 768,
+  "temperature": 0,
+  "seed": 28,
+  "think": false
+}

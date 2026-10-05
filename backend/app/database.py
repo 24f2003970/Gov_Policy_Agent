@@ -6,7 +6,7 @@ from fastapi import Request
 
 from .config import Settings
 
-SCHEMA_HEAD = "0003_retrieval"
+SCHEMA_HEAD = "0004_answers"
 
 
 def database_url(settings: Settings, test: bool = False):
@@ -50,6 +50,8 @@ def schema_ready(engine) -> bool:
             connection.execute(text("SELECT id, state, spec, versions, lease_owner FROM index_generations LIMIT 0"))
             connection.execute(text("SELECT id, generation_id, page_id, start_offset, end_offset FROM index_passages LIMIT 0"))
             connection.execute(text("SELECT id, active_id FROM index_state LIMIT 0"))
+            connection.execute(text("SELECT id, user_id, question, state, result, sources FROM answer_runs LIMIT 0"))
+            connection.execute(text("SELECT id, heartbeat FROM answer_worker LIMIT 0"))
             return True
     except SQLAlchemyError:
         return False

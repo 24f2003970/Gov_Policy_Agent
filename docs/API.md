@@ -39,3 +39,21 @@ Text windows are at most 20,000 characters, with explicit offset/total and half-
 Response `status` is `results`, `empty` or `unavailable`; results contain original question, generation/model spec, timings, labeled cosine distance/similarity and ranked exact text, document/version/chunk IDs, issuer/title/source URL, physical page, half-open character span, review scope and historical/unknown applicability. A 0.78 similarity cutoff is heuristic; no generated answer or trust score is returned. `empty` means no eligible candidate passed filters/cutoff, not proof that a policy does not exist. Busy/offline/mismatched service yields sanitized 503; oversized tokens yield 422. SQL status does not assert the separate service is running. Admin-only originals/previews are unchanged.
 
 Errors use `{error: {code, message, request_id}}` and `X-Request-ID`; submitted IDs and private exception details are not reflected. Validation/size/conflict/service errors use 422/413/409/503. CORS preflight denial is the middleware's separate 400 response.
+
+## Owned local answers
+
+Defined by [Ask routes](../backend/app/ask_api.py); all require live authentication, with Origin/CSRF on POSTs.
+
+| Method / route | Purpose |
+| --- | --- |
+| GET /ask/status | Worker heartbeat availability, pending limit 1, null trust |
+| POST /ask | Queue one owned request; 202, or sanitized 503 offline/busy |
+| GET /ask/history?page=1 | Owner-only summaries, 20 per page |
+| GET /ask/history/{run_id} | Owner-only immutable result/source/model/timing snapshot and current source warnings |
+| POST /ask/history/{run_id}/cancel | Cancel queued job or signal processing cancellation |
+
+Input: Search question/filters/date rules, `language: en|hi` (default en), fixed `count: 5`. Throttling defaults to 50 Ask requests/IP/15 minutes. Generation is asynchronous: poll the returned record ID. States are `queued`, `processing`, `done`, `error`, `cancelled`; terminal result statuses are `answered`, `partial`, `needs_clarification`, `insufficient_evidence`. A failed job has a sanitized `error_code`, not a fabricated answer. Other-owner/missing IDs return 404; no global private-history listing exists.
+
+Successful details include server-built answer/claims, exact quoted excerpt offsets, original passage/version/page/review metadata, pinned model/settings, prompt/schema/index revision and nanosecond Ollama counts/timings plus millisecond worker time. No raw prompts, reasoning or confidence percentages are returned. Trust is null. Historical snapshots carry limitations; later archive/review changes trigger current-source warnings. Terminal records expire at 30 days on worker startup/hourly cleanup.
+
+Relevant job errors: `retrieval_unavailable`, `ollama_unavailable`, `llm_digest_mismatch`, `ollama_version_mismatch`, `llm_token_count_mismatch`, `context_budget_exceeded`, `generation_truncated`, `generation_timeout`, `grounding_validation_failed`, `source_status_changed`, `source_span_changed`, `worker_interrupted`, `queue_deadline_exceeded`. Cancellation publishes no policy answer. Full semantic support verification is deferred.

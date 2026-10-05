@@ -43,10 +43,10 @@ def postgres():
         assert connection.scalar(text("SELECT current_database()")) == "gov_policy_test"
         assert connection.scalar(text("SELECT current_user")) == "gov_test"
         assert not connection.scalar(text("SELECT rolsuper FROM pg_roles WHERE rolname=current_user"))
-        allowed = {"users", "auth_sessions", "auth_throttles", "alembic_version", "schemes", "documents", "document_versions", "version_relationships", "extracted_pages", "chunks", "ingestion_jobs", "eligibility_reviews", "index_generations", "index_passages", "index_state"}
+        allowed = {"users", "auth_sessions", "auth_throttles", "alembic_version", "schemes", "documents", "document_versions", "version_relationships", "extracted_pages", "chunks", "ingestion_jobs", "eligibility_reviews", "index_generations", "index_passages", "index_state", "answer_runs", "answer_worker"}
         assert set(inspect(connection).get_table_names()) <= allowed, "Refusing to reset unexpected test tables"
         # Only this explicitly dedicated disposable database may be reset.
-        for table in ["index_state", "index_passages", "index_generations", "eligibility_reviews", "chunks", "version_relationships", "ingestion_jobs", "extracted_pages", "document_versions", "documents", "schemes", "auth_throttles", "auth_sessions", "users", "alembic_version"]:
+        for table in ["answer_worker", "answer_runs", "index_state", "index_passages", "index_generations", "eligibility_reviews", "chunks", "version_relationships", "ingestion_jobs", "extracted_pages", "document_versions", "documents", "schemes", "auth_throttles", "auth_sessions", "users", "alembic_version"]:
             connection.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))
         connection.execute(text("DROP FUNCTION IF EXISTS protect_document_version() CASCADE"))
         connection.execute(text("DROP FUNCTION IF EXISTS protect_eligibility_review() CASCADE"))
@@ -63,7 +63,7 @@ def postgres():
 def api(postgres):
     settings, engine = postgres
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE index_state, index_passages, index_generations, eligibility_reviews, auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
+        connection.execute(text("TRUNCATE answer_runs, answer_worker, index_state, index_passages, index_generations, eligibility_reviews, auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
     app = create_app(settings)
     if app.state.engine:
         app.state.engine.dispose()

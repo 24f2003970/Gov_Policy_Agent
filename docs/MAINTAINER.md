@@ -1,12 +1,12 @@
 # Maintainer state
 
-Updated 2026-10-05. Parts 1–4 are implemented and verified. Next authorized phase is Part 5; do not begin it automatically. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
+Updated 2026-10-05. Parts 1–5 are implemented and verified. Next phase is Part 6; do not begin it automatically. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
 
 ## Continuation baseline
 
-- Current schema: `0003_retrieval`; preserve configured databases, private `.env`, originals and existing administrator. No application reset or reprovisioning is required.
-- Local environment: Windows 11/PowerShell, bundled Python 3.12.14 `.venv`, Node 24.12.0, PostgreSQL 18.6. CPU i5-13500HX, about 15.7 GiB usable RAM, RTX 4050 with 6141 MiB VRAM. GPU/model performance has not been measured.
-- Pre-Part-4 documentation cleanup: `cfa7006a849bdf056da5372c44d98f1d70f43c85`. Historical ingestion: `d59aaf9392ce492dcd95bd18406d4f9ee09219dc`; auth: `fedc1c43a38324795f1d61a7348c2274407006ff`; foundation: `e8a41e16ba7e1c3b298724a05930d5fd6aae7c9b`. The Part 4 release is the commit introducing this revision; use Git history for its hash.
+- Current schema: `0004_answers`; preserve configured databases, private `.env`, originals and existing administrator. No application reset or reprovisioning is required.
+- Local environment: Windows 11/PowerShell, bundled Python 3.12.14 `.venv`, Node 24.12.0, PostgreSQL 18.6. CPU i5-13500HX, about 15.7 GiB usable RAM, RTX 4050 with 6141 MiB VRAM. Part 5 measured GPU offload with the pinned 4B Q4 model; see verification for timing/memory and Hindi limitations.
+- Pre-Part-4 documentation cleanup: `cfa7006a849bdf056da5372c44d98f1d70f43c85`. Historical ingestion: `d59aaf9392ce492dcd95bd18406d4f9ee09219dc`; auth: `fedc1c43a38324795f1d61a7348c2274407006ff`; foundation: `e8a41e16ba7e1c3b298724a05930d5fd6aae7c9b`. Part 4: `0f987b8470c06ddf09f5fd4a65204634e9fcaf0f`. The Part 5 release is the commit introducing the local-answer implementation; use Git history for its hash.
 - Setup commands have one home in [SETUP.md](SETUP.md); schema/security detail in [ARCHITECTURE.md](ARCHITECTURE.md), measured evidence in [VERIFICATION.md](VERIFICATION.md), proposal traceability in [requirement mapping](../REQUIREMENTS_MATRIX.md).
 
 ## Decisions to preserve
@@ -25,7 +25,6 @@ Keep pinned multilingual E5-small on CPU/two threads, normalized 384-dimensional
 
 | Part | Planned work |
 | --- | --- |
-| 5 | Benchmarked local Ollama generation, grounded context and abstention |
 | 6 | Claim-level exact version/page/passage citations and support validation |
 | 7 | Hindi/Hinglish checks and bounded OCR with page/quality provenance |
 | 8 | Transparent experimental evidence-quality scoring |
@@ -42,4 +41,8 @@ Measure retrieval P@k/recall, claim support, citation correctness, abstention, l
 
 Proposed score dimensions/weights are unvalidated: recency 20%, citation coverage 25%, semantic faithfulness 25%, consistency 15%, calibration 10%, feedback 5%. All are currently unavailable. Preserve missing values, formula version and coverage; do not invent components or silently reweight. Thresholds and calibration need evaluation.
 
-Known gaps: OCR, table/encoding quality, wider corpus rights clearance, malware scanning, parser isolation/hard memory quotas, production HTTPS/security, GPU inference, throughput and held-out retrieval evaluation. The 12-case development set was source-checked by the implementing agent; independent human review is pending. Ambiguous questions still return candidates; the 0.78 cutoff is not calibrated. Historical upstream TestClient deprecation remains. Update technical records with actual results when future work is authorized.
+Known gaps: OCR, table/encoding quality, wider corpus rights clearance, malware scanning, parser isolation/hard memory quotas, production HTTPS/security, CPU generation fallback, throughput and held-out retrieval evaluation. The 12-case development set was source-checked by the implementing agent; independent human review is pending. Ambiguous questions still return candidates; the 0.78 cutoff is not calibrated. Historical upstream TestClient deprecation remains. Update technical records with actual results when future work is authorized.
+
+## Answer baseline to preserve
+
+Qwen3 4B Instruct 2507 Q4_K_M through Ollama 0.17.1; exact pins in [model record](llm_model.json). Keep 4096 context/768 output/temperature 0/seed 28/non-thinking, single pending job, complete prompt-token counts, explicit failures and contained cancellation. Preserve exact excerpt handles, server-built final claims, source locks, private owned history and null trust. One historical PIB source remains the entire answer corpus; no rights/extraction status was relaxed. No further models or fine-tuning were used. English/Hindi development samples and implementing-agent manual review do not establish held-out accuracy; Hindi output limits/language errors remain. Part 6 should address claim entailment, date/value association and support scope rather than treating valid citation IDs as proof.

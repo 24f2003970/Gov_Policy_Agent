@@ -18,7 +18,7 @@ def client():
 def test_live_without_models_or_database(client):
     response = client.get("/health/live")
     assert response.status_code == 200
-    assert response.json() == {"status": "alive", "project_id": "GOV-CS-028", "phase": 4}
+    assert response.json() == {"status": "alive", "project_id": "GOV-CS-028", "phase": 5}
     UUID(response.headers["x-request-id"])
 
 
@@ -27,7 +27,7 @@ def test_ready_reports_only_current_dependencies(client):
     assert response.status_code == 503
     assert response.json()["status"] == "not_ready"
     assert response.json()["required_dependencies"]["postgresql"] == "unavailable_or_migrations_missing"
-    assert response.json()["optional_services"] == {"chroma": "separate_index_service", "ollama": "not_required_in_part_4"}
+    assert response.json()["optional_services"] == {"chroma": "separate_index_service", "ollama": "separate_local_rag_worker"}
 
 
 def test_request_ids_are_unique_and_client_input_is_not_trusted(client):

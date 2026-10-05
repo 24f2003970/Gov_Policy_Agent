@@ -1,6 +1,6 @@
 # Architecture
 
-One React frontend calls a modular FastAPI application. PostgreSQL stores authentication, source metadata, exact passages and durable jobs. Separate ingestion and single-owner indexing processes handle parsing and embeddings. Originals are private local files; no public static mount exists.
+One React frontend calls a modular FastAPI application. PostgreSQL stores authentication, source metadata, exact passages and durable jobs. Separate ingestion, single-owner indexing and answer-worker processes handle parsing, embeddings and generation. Originals are private local files; no public static mount exists.
 
 ```mermaid
 flowchart LR
@@ -15,6 +15,10 @@ flowchart LR
   DB --> INDEX
   INDEX --> MODEL[Offline pinned E5-small CPU]
   INDEX --> VECTOR[(Persistent Chroma)]
+  DB --> RAG[Single-owner answer worker]
+  RAG --> INDEX
+  RAG --> LLM[Contained loopback Ollama / Qwen3 4B]
+  RAG --> DB
 ```
 
 ## Authentication
@@ -38,8 +42,10 @@ UUID keys, foreign keys, constraints and timezone-aware timestamps are defined i
 | eligibility_reviews | Append-only evidence/reason/scope/reviewer decisions, separate from immutable originals |
 | index_generations, index_state | Pinned model/chunk spec, reviewed source snapshot, durable lease/progress and atomic active pointer |
 | index_passages | Generation-scoped exact page/text spans; old provisional chunks remain intact |
+| answer_runs | Owned questions, terminal results, immutable grounding/model snapshots and sanitized errors |
+| answer_worker | Singleton heartbeat for request availability |
 
-Alembic revisions `0001_auth`, `0002_documents` and `0003_retrieval` are explicit. Startup does not create tables. PostgreSQL triggers protect original-version fields and forbid eligibility-review update/delete. Corrections append a new reviewed decision.
+Alembic revisions `0001_auth`, `0002_documents`, `0003_retrieval` and additive `0004_answers` are explicit. Startup does not create tables. PostgreSQL triggers protect original-version fields and forbid eligibility-review update/delete. Corrections append a new reviewed decision.
 
 ## Ingestion
 
@@ -63,4 +69,18 @@ The [encoder](../backend/app/embedding.py) explicitly prepares a pinned safetens
 
 Search accepts 2–2000 characters, rejects actual prefixed input over 512 tokens, returns at most ten passages, and supports exact scheme/issuer/type and publication-date filters. Unknown dates are explicitly included/excluded when date filtering. SQL eligibility precedes Chroma filtering, and candidate retrieval covers the bounded corpus (100 versions/20,000 passages) so excluded hits cannot consume the requested count. This small-corpus strategy is not a scalable search benchmark. Every returned text is checked against the stored source-page span. Similarity >=0.78 is a labeled uncalibrated relevance heuristic; it cannot establish claim support or entitlement.
 
-Local generation, validated claim citations, OCR, scoring and history/feedback remain unimplemented. See [maintainer state](MAINTAINER.md).
+Full semantic citation support, OCR, scoring and saved-answer/feedback workflows remain deferred. See [maintainer state](MAINTAINER.md).
+
+## Local answers
+
+[Ask API](../backend/app/ask_api.py) accepts owned, CSRF-protected requests. PostgreSQL advisory locking plus a partial unique index allow one queued/processing request globally, without an unbounded inference queue. A 15-second worker heartbeat gates submissions. History is owner-filtered; another user's UUID returns 404. Records retain question/language/filters, validated claims, exact source/version/page/span/review snapshots, index generation, model digest/settings, prompt/schema revisions, timings and sanitized errors. Terminal records older than 30 days are removed at worker startup and hourly while active; backups have separate retention. Raw generation prompts, rejected output and thinking are neither logged nor stored. Disable API access logs to avoid identity-bearing URLs.
+
+[Worker](../backend/app/answer_worker.py) uses replaceable [retrieval/generation interfaces](../backend/app/rag_engine.py). Retrieval calls the existing keyed service, never a second E5 model. Conservative keyword scope checks distinguish historical questions, ambiguous requests and unsupported current-policy advice; these are not comprehensive intent classification. The model also evaluates answerability. Empty/insufficient evidence makes no generation call; service failures remain errors.
+
+The complete raw Qwen control template, system/schema, escaped untrusted question/excerpts and output reserve use the pinned **LLM** tokenizer. Whole lower-ranked passages are removed until prompt + 768 output + 64 safety tokens fit 4096. No excerpt is silently clipped; omissions are disclosed. Ollama truncation/context shifting are disabled. Actual prompt counts must equal preflight counts; unexpected thinking, truncation or oversized responses fail. Structured output permits at most one concise claim; only final validated results appear in the UI. Repair is bounded to one additional generation and never uses model memory as fallback.
+
+[Grounding](../backend/app/grounding.py) supplies exact excerpt handles. The model selects IDs/handles; the server reconstructs original quote text and page offsets, preventing altered PDF whitespace. Extra fields, invented IDs/excerpts, non-exact spans, basic unsupported numbers/currencies/months and one explicit negation case are rejected. These checks do **not** prove semantic entailment, numeric association, exhaustive conditions, translation quality or complete date interpretation. Broad page excerpts can contain unrelated values. High-signal instruction paragraphs are omitted and Qwen control tokens escaped, but this is not a comprehensive prompt-injection defense. Full claim support belongs to Part 6; trust stays null.
+
+Sources are rechecked after inference and row-locked through publication against live SQL eligibility, latest review, ready generation and original page spans. Changed sources produce an error, never a new answer from stale evidence. Later history views show changed eligibility/review warnings without rewriting the historical answer.
+
+[Contained Ollama](../backend/app/ollama_local.py) uses an exclusive project lock and Windows kill-on-close job containing server/runner descendants at 127.0.0.1:11435, a separate private model store, cloud disabled, one loaded model/parallel request/queue slot. The worker has a 120-second processing deadline and 120-second queued TTL; generation HTTP read/load limits are 60 seconds. Cancellation/timeouts cancel the HTTP task and replace the complete owned process tree. A fresh worker marks interrupted processing jobs as errors rather than regenerating silently. These are execution/token bounds, not hard RAM/VRAM quotas. The personal Ollama service/cache is untouched.

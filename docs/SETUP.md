@@ -31,7 +31,7 @@ Apply migrations for both fresh and existing application installations:
 .\.venv\Scripts\python.exe -m alembic -c backend/alembic.ini current
 ```
 
-Expected head: `0003_retrieval`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
+Expected head: `0004_answers`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
 
 Create the first administrator only when none exists:
 
@@ -51,12 +51,22 @@ Run explicitly once (network download from the pinned official Hugging Face revi
 
 Expected output includes `intfloat/multilingual-e5-small`, revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`, 384 dimensions and CPU configuration. The lock uses the official PyTorch CPU wheel index. No CUDA stack is required. Model files default to `%LOCALAPPDATA%\GovPolicyAgent\models`; subsequent API/model startup is offline and rejects an absent/mismatched preparation manifest. Downloading another revision requires a deliberate code/spec change and index rebuild.
 
+## Prepare local generation
+
+Install [official Ollama for Windows](https://docs.ollama.com/windows) if absent. Tested installation is the per-user `%LOCALAPPDATA%\Programs\Ollama\ollama.exe`, version 0.17.1. The worker requires that location and rejects another runtime version. Existing personal models/service on 11434 are preserved. From the root, explicitly prepare once:
+
+```powershell
+.\.venv\Scripts\python.exe backend\prepare_llm.py
+```
+
+This starts a temporary project-owned loopback server on 11435, downloads only `qwen3:4b-instruct-2507-q4_K_M` (about 2.5 GB) and the pinned Qwen tokenizer, then stops its process tree. Model/tag/digest/runtime/settings must match [llm_model.json](llm_model.json); unexpected changes fail rather than updating the record. Runtime startup is offline and does not pull weights. Files live in `%LOCALAPPDATA%\GovPolicyAgent\ollama`, separate from the personal Ollama cache. Stop the answer worker before preparation or evaluation; both use its exclusive owner lock. No cloud generation, CUDA Python installation or Stack Builder package is needed.
+
 ## Start
 
 Terminal 1, root:
 
 ```powershell
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-proxy-headers
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-proxy-headers --no-access-log
 ```
 
 Terminal 2, root:
@@ -79,7 +89,15 @@ Terminal 4, root:
 
 This loads one CPU model and owns Chroma under a Windows file lock, then starts a private loopback service on port 8011. Wait for Uvicorn startup (measured runtime load about 16 seconds). Do not start additional index owners or use reload/multiple workers. API startup does not load the model. The internal query endpoint requires a private derived key; use the authenticated API/UI instead.
 
-Use `http://127.0.0.1:5173/` consistently; `localhost` is a different origin. Admin uploads are at `/#admin`; protected retrieval is at `/#search`. Sign in, enter a Hindi/English question and select Search passages. Filters match exact stored scheme/issuer/type; date bounds concern publication dates, with an explicit unknown-date choice. Inspect extracted source text from a result. Only admins can review/upload/rebuild or fetch original PDF/PNG. API docs: `http://127.0.0.1:8000/docs`; readiness: `/health/ready`. Ready checks DB/schema/auth, not index-service availability. Stop terminals with Ctrl+C.
+Terminal 5, root:
+
+```powershell
+.\.venv\Scripts\python.exe backend\rag.py
+```
+
+Expected: `Local RAG worker ready; one pending job; project Ollama 127.0.0.1:11435`. It owns one private server/runner tree and processes durable PostgreSQL requests. Do not launch a second RAG worker or a manual server on 11435. Cancellation/timeouts replace this contained tree; Ctrl+C closes it. Default context/output are 4096/768 tokens, temperature 0, concurrency one. Trust is unavailable.
+
+Use `http://127.0.0.1:5173/` consistently; `localhost` is a different origin. Admin uploads are at `/#admin`; protected retrieval is at `/#search`; local answers/history are at `/#ask`. Try “According to the 2025 PM-KISAN factsheet, what annual assistance and instalments are described?” or “2025 के पीएम किसान दस्तावेज़ के अनुसार: पीएम किसान में हर साल कितनी आर्थिक सहायता मिलती है और कितनी किस्तों में?” Select English/Hindi explicitly. Current entitlement questions abstain; ambiguous questions clarify. Sign in, enter a Hindi/English question and select Search passages. Filters match exact stored scheme/issuer/type; date bounds concern publication dates, with an explicit unknown-date choice. Inspect extracted source text from a result. Only admins can review/upload/rebuild or fetch original PDF/PNG. API docs: `http://127.0.0.1:8000/docs`; readiness: `/health/ready`. Ready checks DB/schema/auth, not index-service availability. Stop terminals with Ctrl+C.
 
 ## Storage and corpus operations
 
@@ -110,6 +128,14 @@ Stop Terminal 4 before these maintenance commands (each requires exclusive vecto
 
 `once` claims one queued/expired job. Index reconcile removes orphan vector IDs; missing SQL-referenced vectors clear the active pointer and mark failure, requiring retry/rebuild. Old generation SQL provenance is retained; automatic old-collection garbage collection is deferred. Evaluation checks the eligible real source and writes ignored `runtime/retrieval-results.json`; it never substitutes fixtures. Restart `index.py serve` afterwards.
 
+For read-only real answer evaluation, keep the index service running and stop only Terminal 5:
+
+```powershell
+.\.venv\Scripts\python.exe backend\evaluate_answers.py
+```
+
+This uses the existing real-source development questions, isolated injection text and actual local cancellation/timeout/offline recovery. It writes ignored `runtime/answer-results.json` with quoted corpus text. Inspect every claim manually; schema validity is not factual accuracy. Restart `backend\rag.py` afterwards. Source/model weights, private histories and raw prompts stay outside Git. Terminal answer records expire after 30 days during worker startup/hourly cleanup; database backups retain their own copies.
+
 ## Checks
 
 Root commands; prepare the model first. Tests reset only the dedicated test database and use temporary vector/storage collections:
@@ -138,3 +164,5 @@ If old Windows pytest temporary directories are inaccessible, supply `--basetemp
 | No results | Check eligibility, exact filters, dates and heuristic cutoff; no answer is asserted |
 | Review changed after indexing | Rebuild; new review must be included in the active snapshot |
 | Query 422 | Shorten to 2–2000 characters and at most 512 actual prefixed tokens |
+
+Answer errors: worker 503 → start Terminal 5; busy → wait/cancel the existing request; `llm_not_prepared` → stop worker and run preparation; digest/runtime mismatch → inspect the pinned record, do not accept a changed model silently. `generation_truncated`/`grounding_validation_failed` publish no answer: shorten the question and inspect source coverage. Source change errors require a fresh reviewed/indexed snapshot and a new question. Longer context/output/model settings require fresh measurements.

@@ -1,6 +1,6 @@
 # Recorded verification
 
-Executed 2026-10-05 on Windows 11/PowerShell 7.6.5, Python 3.12.14, Node 24.12.0/npm 11.6.2 and PostgreSQL 18.6. Earlier phase rows retain historical results; the Part 4 row records the current implementation run.
+Executed 2026-10-05 on Windows 11/PowerShell 7.6.5, Python 3.12.14, Node 24.12.0/npm 11.6.2 and PostgreSQL 18.6. Earlier phase rows retain historical results; the Part 5 row records the current implementation run.
 
 | Release | Backend | Other checks |
 | --- | --- | --- |
@@ -8,6 +8,7 @@ Executed 2026-10-05 on Windows 11/PowerShell 7.6.5, Python 3.12.14, Node 24.12.0
 | Authentication (Part 2) | 32 passed in 7.44s, including 16 real PostgreSQL cases | pip check, TypeScript/build, actual browser account/role/session flows |
 | Ingestion (Part 3) | 56 passed in 22.84s, real PostgreSQL and parser/claim processes | pip check, TypeScript/build (33 modules), admin upload/inspection/preview/retry/archive |
 | Retrieval (Part 4) | 65 passed in 64.06s, including nine real-model/vector/PostgreSQL retrieval cases | pip check, TypeScript/build (34 modules), offline real-source evaluation and browser Search |
+| Local answers (Part 5) | 84 passed in 90.41s; final prompt/schema follow-up 16 passed in 0.88s | pip check, TypeScript/build (35 modules), real GPU inference and protected browser Ask/history |
 
 One upstream Starlette/anyio BlockingPortal deprecation warning remained. Final ingestion tests used a new workspace temporary directory after old Windows pytest temp/cache permission failures. Reproducible commands and the temporary-directory workaround are in [SETUP.md](SETUP.md).
 
@@ -29,7 +30,7 @@ Measured corpus snapshot: three schemes/documents/versions, 164 pages, 398 chunk
 
 ## Limits of evidence
 
-No generated-answer quality, OCR, table reconstruction, throughput, GPU inference, multi-worker resource, public deployment or production-security evaluation. Malware scanning, OS parser sandbox and hard memory quota are unavailable. Health snapshot and transient recovery checks do not prove continuous monitoring or all timeout paths. Origin checks do not prove permission to reproduce sources.
+Parts 1–3 did not evaluate generated-answer quality or GPU inference; Part 5 evidence is below. OCR, table reconstruction, throughput, multi-worker resource, public deployment and production-security evaluation remain pending. Malware scanning, OS parser sandbox and hard memory quota are unavailable. Health snapshot and transient recovery checks do not prove continuous monitoring or all timeout paths. Origin checks do not prove permission to reproduce sources.
 
 Implementation releases were reviewed for ignored/private artifacts and pushed without force; commit identifiers are in [maintainer state](MAINTAINER.md). The preceding documentation cleanup checked links/commands/whitespace and documentation-only scope without changing historical measurements.
 
@@ -59,3 +60,36 @@ The objectives query ranked a broad page-7 conclusion first in both languages; H
 Final read-only CPU run after fresh SQL rechecks: grounded English median total 106.10 ms, Hindi 93.03 ms; all eight positive totals ranged 74.52–199.47 ms. The first query was 199.47 ms (embedding 63.63 ms). Runtime/model/Chroma initialization together took 13.068 seconds; process working set 777.1 MiB, peak 777.2 MiB, two Torch threads. Totals include model/vector/SQL checks, exclude HTTP/browser rendering, and describe sequential small-corpus queries on this laptop. Earlier cold browser Hindi query took 541.29 ms server total; latency varies with startup/system load. CPU-only Torch was retained; GPU memory/latency is unmeasured and no CUDA feasibility claim is made.
 
 Commands are centralized in [SETUP.md](SETUP.md). Measured JSON output remains ignored under runtime rather than redistributing corpus text. Dependency compatibility, whitespace, links, public-file/private-artifact checks and remote commit verification accompany release; no learning guides or generation/OCR/trust features were added.
+
+## Part 5 local-answer evidence
+
+Application upgrade to `0004_answers`, repeated upgrade and exact in-memory comparison preserved users, sessions, versions, pages, provisional chunks, audited reviews and retrieval generations/passages/state. No reset or reprovisioning. The baseline remains four versions/171 pages/410 provisional chunks, one eligible historical source/nine vectors and three excluded sources. Only additive owned-answer/worker tables were introduced.
+
+Ollama 0.17.1 was already installed; its personal 11434 service and existing larger model were preserved and not used. Only official Qwen3 4B Instruct 2507 Q4_K_M was prepared in the separate project store. Actual digest/settings and pinned Qwen tokenizer are in [model record](llm_model.json). Loopback 127.0.0.1:11435 verified. No second E5 model, paid/cloud generation, second candidate download or CUDA Python stack.
+
+### Real source samples and manual review
+
+Read-only [answer runner](../backend/evaluate_answers.py) uses the twelve-case Part 4 development set, with an explicit 2025-document prefix on the eight grounded English/Hindi cases. Final constrained one-claim run returned eight schema/span-valid results: annual support page 2, objectives page 3 (Hindi also cited page 2), face authentication page 4 and chatbot page 5. These are **not eight independently verified factual answers**. The implementing agent inspected all eight generated claims against their exact quoted spans. Independent human review is pending.
+
+Annual examples described Rs 6,000/year and three instalments in both languages. English face authentication retained 2023 and “without OTP or fingerprint”; Hindi retained that negation. EKstep/Bhashini names were preserved in the final bilingual chatbot samples. Exact page/excerpt offsets and basic values were checked, with no invented URL or trust percentage displayed.
+
+Known manual-review issues: objectives outputs omit some small/marginal-farmer qualifiers; Hindi objectives has poor grammar and broadens “moneylenders” to “bankers or other moneylenders.” This demonstrates that ID/span/numeric validation does not establish semantic faithfulness or complete beneficiary scope. Earlier development runs had Hindi truncation at the 768-token cap, name transliteration errors and one planned-event/completed-event tense error. Prompt refinement reduced adjacent claims and final samples did not truncate, but those failure modes are not proven eliminated. This is development tuning on one source, not held-out accuracy, a hallucination percentage or a proposal-target result. Full semantic support/date-value association remains Part 6; broader Hindi/Hinglish quality remains Part 7.
+
+Both ambiguous cases clarified without generation. Both out-of-corpus Neptune cases abstained. Additional English/Hindi present-day amount/eligibility cases and a no-match filter abstained without generation. Historical-source notices and context omission notices remained visible. Keyword intent checks and similarity cutoff are uncalibrated and cannot guarantee all unsupported questions are caught.
+
+### Measured execution
+
+Final sequential eight-sample run: cold first pipeline 9.339 s, including Ollama load 3.782 s. Subsequent seven pipeline totals 5.393–11.205 s, median 5.929 s; warm model load 107–141 ms. Output generation rate 37.50–40.33 tokens/s (actual eval_count/eval_duration), prompt counts 2662–3188 and output counts 130–360. All successful calls matched exact pinned-Qwen preflight prompt counts, with raw template/schema/system/evidence included. Whole lower-ranked passages were omitted when necessary; no condition text was clipped. Totals include retrieval/validation/IPC, exclude browser rendering and worker polling. Separate worker startup/tokenizer initialization and system load vary; these timings are not throughput guarantees.
+
+Actual `/api/ps` reported 3,515,036,800 bytes for both model size and size_vram at context 4096, establishing full GPU residency on this RTX 4050 run. `nvidia-smi` sampled 3153 MiB total GPU use and 96% utilization after the recovery inference; it uses a different accounting basis from Ollama. During the preceding final-prompt development run, project server working set was 69,959,680 bytes and runner 762,441,728 bytes (combined about 794 MiB), with individual reported peaks 72,232,960/794,910,720 bytes. These are process samples, not a continuously measured system RAM peak or hard quotas. The personal instance was excluded. GPU inference worked, so CPU generation fallback was not exercised; E5 remains CPU/two threads.
+
+### Failures, privacy and cleanup
+
+Real isolated user/document injection selected no factual claims; synthetic instructions never entered the application corpus, SQL source tables or vectors. Unit tests also check escaped Qwen control tokens and omission of high-signal instruction paragraphs. This limited test does not establish general injection resistance.
+
+Actual in-flight inference was cancelled after 0.5 seconds; the owned Windows process tree was replaced in 3.157 s, and the fresh instance reported zero loaded models before a successful new request. A separate actual 0.5-second deadline cancelled generation, replaced the tree and again showed zero loaded models; another successful request followed. Stopping the actual server produced `ollama_unavailable` and restart recovered. The full 120-second worker timeout was exercised with a shortened one-second deadline and a slow test double, not a 120-second manual wait. Single-pending busy behavior, cross-user 404/empty history, source archive during generation, changed history warnings, interrupted-worker recovery and 30-day retention used isolated PostgreSQL fixtures. Adapter doubles cover digest/runtime/count mismatch, truncation/thinking/oversized output and timeout/offline errors. Bounded JSON repair and invented ID/quote/number/date/currency/negation rejection are tested independently of real-model quality.
+
+All prior authentication, ingestion, actual E5/vector and PostgreSQL regressions passed. Full regression found and fixed startup heartbeat autoflush before the final 84-test pass. Production frontend build initially hit Windows sandbox parent-path read restrictions; rerunning with authorized read access succeeded. One existing upstream deprecation warning remains. Private model/corpus/history/report files stay ignored; raw prompts and reasoning are not stored. Relative documentation links, command entrypoints and public-artifact checks are part of release review.
+
+Browser Ask used the existing private admin session: English and Hindi annual-support answers showed the official source, physical page 2 and exact [0, 1056) quote. One alternate Hindi wording returned grounding_validation_failed with no answer; a transient fetch error recovered. Current Hindi entitlement abstained and ambiguous English intent clarified. Owned history and its Hindi answer detail survived actual API/RAG process restart and page reload; no credentials were entered or published.
+Browser cancellation reached cancelled with no answer. Existing Hindi Search still returned exact historical passages and admin access/document ingestion remained available.

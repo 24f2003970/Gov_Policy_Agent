@@ -117,7 +117,7 @@ export default function DocumentAdmin() {
   const document = items.find(item => item.id === selected?.document_id)
   return <section className="mt-8 space-y-6">
     <h2 className="text-2xl font-semibold">Document ingestion</h2>
-    <p className="text-sm text-slate-600">PDF/UTF-8 TXT, up to 50 MiB. Uploads start unverified. Reviewed eligible text can be indexed for Search. OCR, HTML/DOCX and generated answers are deferred. Virus scanning is unavailable.</p>
+    <p className="text-sm text-slate-600">PDF/UTF-8 TXT, up to 50 MiB. Uploads start unverified. Reviewed eligible text can be indexed for Search and historical-source Ask. OCR and HTML/DOCX remain deferred. Virus scanning is unavailable.</p>
     <p className="rounded bg-slate-100 p-3 text-sm">Separate worker: from project root run <code>.\.venv\Scripts\python.exe backend\worker.py</code>. Jobs remain queued until it runs.</p>
     <form onSubmit={event => void upload(event)} className="space-y-4 rounded-xl border bg-white p-5">
       <h3 className="text-lg font-semibold">Upload source</h3>

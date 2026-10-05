@@ -1,6 +1,6 @@
 # Multilingual Government Policy Assistant
 
-GOV-CS-028 is a B.Tech student project for exploring document-grounded government policy question answering in English, Hindi and Hinglish. The current application provides authentication, document ingestion and multilingual passage retrieval. Generated answers are deferred.
+GOV-CS-028 is a B.Tech student project for exploring document-grounded government policy question answering in English, Hindi and Hinglish. The current application provides authentication, document ingestion, multilingual passage retrieval and local English/Hindi answers from reviewed historical sources.
 
 ## Implemented features
 
@@ -12,19 +12,21 @@ GOV-CS-028 is a B.Tech student project for exploring document-grounded governmen
 - Audited source eligibility reviews, token-aware exact-span chunks, persistent Chroma generations and recoverable indexing jobs.
 - Protected Hindi/English Search with filters, source-page text inspection, historical-status notices and measured retrieval timings.
 
+- Protected Ask with bounded local Ollama generation, validated claim/excerpt references, clarification/abstention, cancellation and private query history.
+
 ## Stack
 
-React, TypeScript, Vite and Tailwind CSS; FastAPI, SQLAlchemy, psycopg and Alembic; PostgreSQL; PyMuPDF; Sentence-Transformers with multilingual E5-small, CPU PyTorch and Chroma; Argon2id and JWT authentication. Dependencies are pinned in the backend lock and frontend package-lock.
+React, TypeScript, Vite and Tailwind CSS; FastAPI, SQLAlchemy, psycopg and Alembic; PostgreSQL; PyMuPDF; Sentence-Transformers with multilingual E5-small, CPU PyTorch and Chroma; local Ollama Qwen3 4B Q4_K_M; Argon2id and JWT authentication. Dependencies are pinned in the backend lock and frontend package-lock.
 
 ## Setup and usage
 
 See [Windows setup](docs/SETUP.md) for dependencies, private database configuration, migrations, startup and checks. Python 3.12, Node 22.12+ and PostgreSQL 18 are the documented baseline.
 
-Run the API, frontend, ingestion worker and single-owner index service in separate terminals. Open `http://127.0.0.1:5173/`. Sign in, then use `/#search` to retrieve exact passages in Hindi or English. Admin can upload PDF/TXT, inspect extraction, record evidence-backed eligibility reviews and queue index rebuilds. API documentation is at `http://127.0.0.1:8000/docs`.
+Run the API, frontend, ingestion worker, single-owner index service and answer worker in separate terminals. Open `http://127.0.0.1:5173/`. Sign in, then use `/#search` for exact passages or `/#ask` for questions explicitly about a dated historical document. Admin can upload PDF/TXT, inspect extraction, record evidence-backed eligibility reviews and queue index rebuilds. API documentation is at `http://127.0.0.1:8000/docs`.
 
 ## Current limitations
 
-No generated AI answers, OCR, claim-support validation or trust scores. Retrieval similarity is relevance, not correctness or current entitlement advice. A 0.78 cosine-similarity cutoff is a development heuristic, not calibrated abstention. Low-text/scanned pages remain OCR-pending; partial sources are excluded. Uploads have size/time/page/text limits but no malware scanner, OS parser sandbox or hard memory quota. Deployment is local development HTTP, not production-ready.
+Initial grounding checks IDs, exact excerpts and basic numbers/dates; full semantic claim-support validation remains Part 6. Trust scores and OCR remain unavailable. Hindi output can contain language errors or hit the bounded output limit; failures publish no policy answer. Retrieval similarity is relevance, not correctness or current entitlement advice. A 0.78 cosine-similarity cutoff is a development heuristic, not calibrated abstention. Low-text/scanned pages remain OCR-pending; partial sources are excluded. Uploads have size/time/page/text limits but no malware scanner, OS parser sandbox or hard memory quota. Deployment is local development HTTP, not production-ready.
 
 The local corpus contains four PDFs across three schemes: one reviewed historical PIB factsheet is indexed into nine token-aware passages; three original local-reference PDFs remain excluded. Permitted scope covers attributed PIB narrative text, excluding third-party graphics and linked-source content. Original PDFs, extracted corpus text, models, vectors, secrets and runtime data are excluded from Git. The small source-checked development set is not a held-out benchmark; see [recorded measurements](docs/VERIFICATION.md).
 

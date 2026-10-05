@@ -1,0 +1,110 @@
+"""Replaceable local retrieval/generation interfaces, exact Qwen raw prompt budgeting."""
+import asyncio
+import json
+import time
+from typing import Protocol
+import httpx
+from .config import ROOT
+from .ollama_local import URL, TAG
+from .search_api import internal_key
+from .grounding import GroundedOutput, ModelOutput, RagError, raw_prompt, expand_model_output, precheck, final_result
+
+
+class Retriever(Protocol):
+    async def retrieve(self,question,filters): ...
+
+
+class Generator(Protocol):
+    def budget(self,question,language,passages,repair=None): ...
+    async def generate(self,prompt,tokens): ...
+
+
+class LocalRetriever:
+    def __init__(self,settings): self.key=internal_key(settings)
+    async def retrieve(self,question,filters):
+        async with httpx.AsyncClient(trust_env=False,timeout=20) as client:
+            try:
+                response=await client.post('http://127.0.0.1:8011/query',
+                    headers={'X-Index-Key':self.key},json={'question':question,'count':5,**filters})
+                if response.status_code==422: raise RagError('query_token_limit')
+                if response.status_code!=200: raise RagError('retrieval_unavailable')
+                result=response.json()
+            except httpx.HTTPError: raise RagError('retrieval_unavailable') from None
+        if result.get('status')=='unavailable': raise RagError('retrieval_unavailable')
+        if result.get('status') not in ('empty','results'): raise RagError('invalid_retrieval_response')
+        return result
+
+
+class LocalGenerator:
+    def __init__(self,settings):
+        self.manifest=json.loads((ROOT/'docs/llm_model.json').read_text('utf-8'))
+        local=settings.data_dir.parent/'ollama'
+        if not (local/'prepared.json').is_file() or json.loads((local/'prepared.json').read_text('utf-8'))!=self.manifest:
+            raise RagError('llm_not_prepared')
+        from transformers import AutoTokenizer
+        self.tokenizer=AutoTokenizer.from_pretrained(str(local/'tokenizer'),local_files_only=True,trust_remote_code=False)
+
+    def budget(self,question,language,passages,repair=None):
+        selected=list(passages)
+        while True:
+            prompt=raw_prompt(question,language,selected,repair)
+            tokens=len(self.tokenizer.encode(prompt,add_special_tokens=False))
+            if tokens+self.manifest['output_tokens']+64<=self.manifest['context_tokens']:
+                return prompt,tokens,selected,len(selected)<len(passages)
+            if not selected: raise RagError('context_budget_exceeded')
+            selected.pop()  # Whole passages only; never silently clips policy conditions.
+
+    async def generate(self,prompt,tokens):
+        async with httpx.AsyncClient(trust_env=False,timeout=httpx.Timeout(60,connect=3)) as client:
+            try:
+                version=(await client.get(URL+'/api/version')).json()['version']
+                if version!=self.manifest['ollama_version']: raise RagError('ollama_version_mismatch')
+                tags=(await client.get(URL+'/api/tags')).json()['models']
+                current=next((m for m in tags if m['name']==TAG),None)
+                if not current or current['digest']!=self.manifest['digest']: raise RagError('llm_digest_mismatch')
+                options={k:self.manifest[k] for k in ('temperature','seed')}
+                options.update(num_ctx=self.manifest['context_tokens'],num_predict=self.manifest['output_tokens'])
+                payload={'model':TAG,'prompt':prompt,'raw':True,'stream':False,
+                    'format':ModelOutput.model_json_schema(),'think':False,'keep_alive':'5m','options':options,'truncate':False,'shift':False}
+                async with client.stream('POST',URL+'/api/generate',json=payload) as response:
+                    if response.status_code!=200: raise RagError('ollama_unavailable')
+                    raw=bytearray()
+                    async for chunk in response.aiter_bytes():
+                        raw.extend(chunk)
+                        if len(raw)>65536: raise RagError('llm_response_limit')
+                    result=json.loads(raw)
+            except httpx.TimeoutException: raise RagError('generation_timeout') from None
+            except (httpx.HTTPError,ValueError,KeyError): raise RagError('ollama_unavailable') from None
+        if result.get('thinking') or '<think>' in result.get('response',''): raise RagError('unexpected_thinking_output')
+        if result.get('done_reason')!='stop' or not result.get('done'): raise RagError('generation_truncated')
+        if result.get('prompt_eval_count')!=tokens: raise RagError('llm_token_count_mismatch')
+        if tokens+result.get('eval_count',0)>self.manifest['context_tokens']-64: raise RagError('llm_context_overrun')
+        metrics={k:result.get(k) for k in ('total_duration','load_duration','prompt_eval_count','prompt_eval_duration','eval_count','eval_duration')}
+        return result['response'],metrics
+
+
+async def pipeline(question,language,filters,retriever,generator):
+    started=time.perf_counter(); response=await retriever.retrieve(question,filters)
+    passages=response['items']
+    state=precheck(question,filters,passages,language)
+    timings={'retrieval_ms':round((time.perf_counter()-started)*1000,2),'generation_attempts':0}
+    if state:
+        output=GroundedOutput(status=state,language=language,claims=[],limitations=[])
+        return final_result(output,passages,language),passages,response.get('generation'),timings
+    failures={'invalid_structured_output','response_language_mismatch','invented_evidence_id','invented_quote_id','non_exact_evidence_quote','unsupported_numeric_claim','unsupported_claim_markup','contradictory_condition'}
+    repair=None; attempts=[]
+    for _ in range(2):
+        prompt,tokens,selected,omitted=generator.budget(question,language,passages,repair)
+        if not selected:
+            output=GroundedOutput(status='insufficient_evidence',language=language,claims=[],limitations=['incomplete_context'])
+            return final_result(output,[],language,True),[],response.get('generation'),timings
+        raw,metrics=await generator.generate(prompt,tokens); attempts.append(metrics)
+        timings.update(generation_attempts=len(attempts),inference=attempts)
+        try: output=expand_model_output(raw,language,selected)
+        except RagError as exc:
+            if exc.code not in failures: raise
+            repair=exc.code
+            continue
+        timings['pipeline_ms']=round((time.perf_counter()-started)*1000,2)
+        return final_result(output,selected,language,omitted),selected,response.get('generation'),timings
+    raise RagError('grounding_validation_failed')

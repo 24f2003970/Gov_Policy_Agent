@@ -34,6 +34,19 @@ Recorded 2026-10-05, after reading all 34 physical PDF pages. Page numbers below
 - D25: Hidden-input local provisioning/admin CLI; generated per-install credentials, no default admin, only first admin bootstrap. Hash routes avoid an unnecessary frontend routing dependency.
 - D26: Real PostgreSQL migrations/auth tests only. Required DB tests fail when prerequisites are missing; no SQLite/mocked completion. Frontend/backend verification and publication remain gated on actual results.
 
+## Part 3 decisions (2026-10-05)
+
+- D27: Seven document/provenance/derived-text/job tables only; explicit 0002_documents migration preserves auth. Source version snapshot protected by PostgreSQL immutability trigger, no application hard-delete endpoint.
+- D28: Raw binary streaming uploads, authenticated before reading; metadata in encoded header, not URL logs. Enforce 50 MiB on actual stream, 60-second read deadline, safe generated storage names, actual parser validation.
+- D29: Durable originals default to LocalAppData/GovPolicyAgent/data outside OneDrive; runtime download cache ignored. Atomic no-overwrite publication + DB job transaction, explicit grace-period orphan reconcile and paired storage/DB backups.
+- D30: PyMuPDF 1.28.2 digital PDFs and exact UTF-8 TXT. Killable parser children, wall/page/text/output bounds; no claim of OS sandbox, hard memory quota or virus scan. Respect AGPL/commercial licensing; no new multipart dependency.
+- D31: Preserve exact physical PDF pages/text and TXT spans. Provisional 1200-character/120-overlap profile; heuristic detected labels, continued-clause flag; no embedding tokenizer/model yet. Low-text pages conservatively OCR-pending; mixed PDFs partial, never silently ready.
+- D32: Separate PostgreSQL worker, transactional SKIP LOCKED claims, heartbeat/lease ownership fencing, at most three attempts, coherent result transaction. Failed below-limit admin retry only; no in-memory queue or endless automatic retry.
+- D33: SHA256 dedup scope is entire corpus. Same bytes/same metadata reuse version/job; conflicts return 409. New byte editions attach to selected logical document; amendments/supersession require distinct verified versions and explicit evidence/scope, never newer-date inference.
+- D34: Authenticated bounded PNG original-page preview plus original byte download; React plain-text rendering, no uploaded HTML/scripts embedded. Real persisted status polling capped/cleaned up; API health does not require worker/AI.
+- D35: Three real official-origin PDFs, 164 pages, local-reference-only. Source authenticity observations separate from reproduction permissions; no source PDF/extracted corpus text in Git, no eligible retrieval corpus until rights cleared. Synthetic tests isolated from real corpus.
+- D36: Every numbered part includes its own beginner Hinglish learning guide and README link in the verified phase commit; Parts 1/2 documented retroactively without rebuilding.
+
 ## Six proposed trust dimensions
 
 | Dimension | Proposal weight (unvalidated) | Planned interpretation / availability |

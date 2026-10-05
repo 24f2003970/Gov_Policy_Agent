@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.auth import COOKIE, now, password_hash
 from app.config import Settings
-from app.database import make_engine, schema_ready
+from app.database import make_engine, schema_ready, SCHEMA_HEAD
 from app.main import create_app
 from app.models import AuthSession, User
 
@@ -43,16 +43,17 @@ def postgres():
         assert connection.scalar(text("SELECT current_database()")) == "gov_policy_test"
         assert connection.scalar(text("SELECT current_user")) == "gov_test"
         assert not connection.scalar(text("SELECT rolsuper FROM pg_roles WHERE rolname=current_user"))
-        allowed = {"users", "auth_sessions", "auth_throttles", "alembic_version"}
+        allowed = {"users", "auth_sessions", "auth_throttles", "alembic_version", "schemes", "documents", "document_versions", "version_relationships", "extracted_pages", "chunks", "ingestion_jobs"}
         assert set(inspect(connection).get_table_names()) <= allowed, "Refusing to reset unexpected test tables"
         # Only this explicitly dedicated disposable database may be reset.
-        for table in ["auth_throttles", "auth_sessions", "users", "alembic_version"]:
+        for table in ["chunks", "version_relationships", "ingestion_jobs", "extracted_pages", "document_versions", "documents", "schemes", "auth_throttles", "auth_sessions", "users", "alembic_version"]:
             connection.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))
+        connection.execute(text("DROP FUNCTION IF EXISTS protect_document_version() CASCADE"))
     assert not schema_ready(engine)
     migrate(engine)  # Real migration from empty database.
     migrate(engine)  # Repeated upgrade must be idempotent.
     assert schema_ready(engine)
-    assert set(inspect(engine).get_table_names()) == {"users", "auth_sessions", "auth_throttles", "alembic_version"}
+    assert set(inspect(engine).get_table_names()) == allowed
     yield settings, engine
     engine.dispose()
 
@@ -61,7 +62,7 @@ def postgres():
 def api(postgres):
     settings, engine = postgres
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE auth_throttles, auth_sessions, users CASCADE"))
+        connection.execute(text("TRUNCATE auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
     app = create_app(settings)
     if app.state.engine:
         app.state.engine.dispose()
@@ -238,7 +239,7 @@ def test_session_survives_app_recreation_and_schema_readiness(api):
     assert client.get("/health/ready").status_code == 503
     assert client.get("/health/live").status_code == 200
     with engine.begin() as connection:
-        connection.execute(text("UPDATE alembic_version SET version_num='0001_auth'"))
+        connection.execute(text("UPDATE alembic_version SET version_num=:head"), {"head": SCHEMA_HEAD})
 
 
 def test_configured_but_unreachable_database_readiness(postgres):

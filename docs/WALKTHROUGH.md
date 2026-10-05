@@ -53,3 +53,6 @@ Browser verification alag hai: actual Vite aur Uvicorn processes chalakar Connec
 **Q2: RAG abhi implement kyun nahi kiya?** Numbered development plan ke hisaab se pehle tested foundation banana hai. Database, verified evidence aur retrieval ke baad local generation add karenge.
 
 **Q3: CORS aur request ID kya solve karte hain?** CORS approved browser origins ko response read permission deta hai. Request ID ek request ko trace karne mein help karta hai; dono authentication ya factual accuracy prove nahi karte.
+# Current learning guides
+
+Beginner explanations of actual implementations: [Part 1](learning/PART_01_EXPLAINED.md), [Part 2](learning/PART_02_EXPLAINED.md), [Part 3](learning/PART_03_EXPLAINED.md). Current reproducible startup: [Part 3 setup](SETUP_PART3.md). Earlier foundation walkthrough below is historical.

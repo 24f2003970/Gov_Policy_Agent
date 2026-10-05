@@ -31,11 +31,11 @@ export function subscribe(listener: (user: User | null) => void) {
 
 async function request(path: string, options: RequestInit = {}, protectedRequest = false): Promise<Response> {
   const headers = new Headers(options.headers)
-  headers.set('Content-Type', 'application/json')
+  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   headers.set('X-CSRF-Protection', '1')
   if (protectedRequest && accessToken) headers.set('Authorization', `Bearer ${accessToken}`)
   return fetch(`${base}${path}`, { ...options, headers, credentials: 'include', cache: 'no-store',
-    signal: AbortSignal.timeout(10000) })
+    signal: options.signal || AbortSignal.timeout(10000) })
 }
 
 async function checked<T>(response: Response): Promise<T> {
@@ -88,6 +88,10 @@ export async function logout() {
 }
 
 export async function authorized<T>(path: string, options: RequestInit = {}): Promise<T> {
+  return checked<T>(await authorizedResponse(path, options))
+}
+
+export async function authorizedResponse(path: string, options: RequestInit = {}): Promise<Response> {
   let response = await request(path, options, true)
   if (response.status === 401) {
     const restored = await restoreSession()
@@ -95,5 +99,6 @@ export async function authorized<T>(path: string, options: RequestInit = {}): Pr
     response = await request(path, options, true) // Exactly one refresh/retry; no recursion.
     if (response.status === 401) update(null)
   }
-  return checked<T>(response)
+  if (!response.ok) await checked(response)
+  return response
 }

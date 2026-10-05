@@ -16,7 +16,19 @@ Application errors use `{ "error": { "code": "...", "message": "...", "request_i
 
 React pages will call one FastAPI API. Internal modules will handle auth/users, document ingestion, retrieval, generation, citations, scoring and analytics. PostgreSQL owns transactional metadata and job state; Chroma owns replaceable derived embeddings; local storage holds immutable originals and extraction artifacts. Ollama inference remains local and replaceable. Ingestion work must be durable and resource-bounded, with processing initiated from persisted jobs rather than relying solely on in-memory background tasks.
 
-Part 1 implemented no database models/migrations. Part 2 now implements only users, auth_sessions and auth_throttles; vector stores and all future document/RAG entities remain planned.
+Part 1 implemented no database models/migrations. Part 2 implemented users, auth_sessions and auth_throttles. Part 3 adds schemes, documents, document_versions, version_relationships, extracted_pages, chunks and ingestion_jobs; query/RAG/vector entities remain planned.
+
+## Part 3 delivered document flow
+
+Admin React form → authenticated raw byte stream API → bounded parser validation → generated private original + immutable version/job transaction → separate PostgreSQL worker → fenced atomic page/chunk result transaction → protected admin inspection and PNG original-page preview.
+
+Originals default to LocalAppData/GovPolicyAgent/data outside OneDrive. Storage keys are generated relative UUID names. Database and original storage must be backed up together. Publication uses no-overwrite linking; explicit reconciliation removes only old generated orphan files after a grace period.
+
+Worker claims use FOR UPDATE SKIP LOCKED, an owner UUID, expiring lease and heartbeat. A stopped worker leaves durable jobs; expired jobs can be reclaimed up to three attempts. Ownership fencing prevents stale workers publishing results. Parsing runs in killable children with wall/page/text limits; it has no OS sandbox or hard memory quota. API liveness remains independent of the worker and AI; readiness requires configured PostgreSQL/current schema/authentication.
+
+Physical PDF pages and exact Unicode text offsets remain traceable. Provisional chunks use 1200 characters and 120 overlap, with heuristic labels only. Low-text scanned pages remain needs_ocr; mixed documents are partial. OCR, embeddings, semantic retrieval, legal-status inference and trust scoring are deferred.
+
+The three official-origin corpus PDFs total 164 pages/398 chunks. Origin verification is separate from reuse permission; all remain local-reference-only and none is eligible for future retrieval. See [corpus manifest](corpus_manifest.json), [setup](SETUP_PART3.md) and [learning guide](learning/PART_03_EXPLAINED.md).
 
 ## Current Part 2 authentication architecture
 

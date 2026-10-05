@@ -1,5 +1,7 @@
 # Part 2 — PostgreSQL and authentication (Windows PowerShell)
 
+Part 2 installation/authentication instructions are preserved. Current schema head is `0002_documents`; follow [SETUP_PART3.md](SETUP_PART3.md) for the added migration and worker. Do not rerun provisioning or bootstrap an existing administrator.
+
 Work in `C:\Users\thiss\OneDrive\Documents\ChatGPT\Gov_Policy_Agent`. Keep the existing bundled-Python .venv. No Docker or AI model is required.
 
 ## Native installation and private setup

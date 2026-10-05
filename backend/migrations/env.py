@@ -2,6 +2,7 @@ from alembic import context
 from app.config import Settings
 from app.database import make_engine
 from app.models import Base
+from app import document_models
 
 target_metadata = Base.metadata
 

@@ -1,5 +1,6 @@
 """Fail early on invalid configuration; never load future services here."""
 from pathlib import Path
+import os
 from typing import Literal
 from urllib.parse import urlsplit
 
@@ -33,6 +34,12 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     login_limit: int = Field(default=5, ge=2, le=20)
     throttle_seconds: int = Field(default=900, ge=10, le=3600)
+    data_dir: Path = Path(os.environ.get("LOCALAPPDATA", str(ROOT / "runtime"))) / "GovPolicyAgent" / "data"
+    upload_limit_bytes: int = Field(default=50 * 1024 * 1024, ge=1, le=50 * 1024 * 1024)
+    parser_seconds: int = Field(default=30, ge=1, le=60)
+    max_pages: int = Field(default=500, ge=1, le=500)
+    max_text_chars: int = Field(default=2_000_000, ge=100, le=2_000_000)
+    job_lease_seconds: int = Field(default=45, ge=10, le=120)
 
     @field_validator("cors_origins")
     @classmethod

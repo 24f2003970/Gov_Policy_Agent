@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import Foundation from './App'
+import DocumentAdmin from './DocumentAdmin'
 import { authorized, login, logout, register, restoreSession, subscribe, type User } from './auth'
 
 const inputClass = 'mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-teal-700'
@@ -36,7 +37,7 @@ export default function AuthApp() {
         : <><a href="#login">Login</a><a href="#register">Register</a></>}
     </nav>
     {error && <p role="alert" className="mx-auto mt-4 max-w-xl rounded-lg bg-amber-50 p-4 text-amber-900">{error}</p>}
-    {page === 'home' ? <Foundation /> : <main className="mx-auto max-w-xl px-6 py-12">
+    {page === 'home' ? <Foundation /> : <main className={`mx-auto ${page === 'admin' ? 'max-w-3xl' : 'max-w-xl'} px-6 py-12`}>
       {restoring ? <p role="status">Restoring your session…</p>
         : page === 'login' || page === 'register' ? <AuthForm kind={page} onLogin={() => { location.hash = 'account' }} />
         : user ? page === 'admin' ? <AdminPage /> : <AccountPage user={user} onUpdate={setUser} />
@@ -109,5 +110,5 @@ function AdminPage() {
       .catch((failure: unknown) => { if (!disposed) setStatus(messageOf(failure)) })
     return () => { disposed = true }
   }, [])
-  return <section><h1 className="text-3xl font-semibold">Admin access</h1><p role="status" className="mt-5">{status}</p><p className="mt-5 text-sm text-slate-600">This phase verifies permissions. Document administration will be added later.</p></section>
+  return <section><h1 className="text-3xl font-semibold">Admin access</h1><p role="status" className="mt-5">{status}</p>{status === 'Admin access confirmed by the backend.' && <DocumentAdmin />}</section>
 }

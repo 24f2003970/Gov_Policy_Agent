@@ -1,6 +1,6 @@
 # Progress
 
-Updated 2026-10-05 (Asia/Kolkata). Current scope: Part 2 only; Part 1 completed previously.
+Updated 2026-10-05 (Asia/Kolkata). Current scope: Part 3 only; Parts 1 and 2 preserved.
 
 ## Implemented
 
@@ -33,4 +33,12 @@ Real browser registration, wrong-password error, login, profile save, reload res
 
 Part 2 release checks and the 34-file staged review passed. The resulting main release commit is identified by git log and the publication result. Future parts require separate prompts. Remaining limits: local development HTTP only, upstream TestClient deprecation warning, bounded refresh history may require re-login, and cross-tab fallback without Web Locks may revoke racing sessions. Public deployment/security evaluation remains Parts 11–12.
 
-No document ingestion, embeddings, AI models, RAG, citations, trust scoring or dashboards were implemented. Future parts require separate user prompts.
+The preceding paragraph records the historical Part 2 boundary.
+
+## Part 3 implementation
+
+Admin-only PDF/UTF-8 TXT streaming upload, immutable version metadata, SHA256 deduplication/integrity, private LocalAppData originals, physical pages/exact text spans, provisional chunks and verified relationships are implemented. Seven new PostgreSQL tables use explicit auth-preserving migration 0002_documents. A separate durable worker uses transactional claims, leases, heartbeats, fencing and three-attempt limits. Result publication is atomic; orphan reconciliation is explicit. Protected PNG preview/original download, bounded status polling, inspection, retry and archive/unarchive are available.
+
+Real local corpus: 3 official-origin PDFs across 3 schemes, 164 pages and 398 provisional chunks. One job completed and two are partial; six low-text pages await OCR. All three are local-reference-only, so zero versions are eligible for future retrieval. Source originals and extracted corpus text remain outside Git. Unknown legal dates remain null.
+
+Parts 1/2/3 beginner learning guides document actual behavior and verification; README links them. See docs/VERIFICATION.md for final executed release checks. OCR, HTML/DOCX, malware scanning, embeddings, Ollama, RAG, citation validation, trust scores, public deployment and resource benchmarks remain deferred. Parser processes have time/page/text bounds but no OS sandbox or hard memory quota. Future numbered parts require separate user prompts and updated learning guides.

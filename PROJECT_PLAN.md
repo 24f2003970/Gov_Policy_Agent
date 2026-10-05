@@ -1,6 +1,8 @@
 # Incremental project plan
 
-Parts 1 and 2 are authorized through their respective prompts. Current scope is Part 2 only. Start each later part only after its prompt; update progress, decisions, requirement mapping and verification after each part. No fixed deadline is assumed.
+Parts 1, 2 and 3 are authorized through their respective prompts. Current scope is Part 3 only. Start each later part only after its prompt; update progress, decisions, requirement mapping and verification after each part. No fixed deadline is assumed.
+
+Required learning workflow for every future numbered part: create docs/learning/PART_XX_EXPLAINED.md in beginner Hinglish, explaining actual concepts/flow/files/functions/endpoints/tables/choices/commands/usage/tests/errors/viva and a spoken summary. Link actual sources relatively, distinguish implemented/planned/deferred features, update if implementation changes, and include it with README Learning Guide link in the same verified phase commit/push. Parts 1/2 guides document existing behavior without rebuilding those parts.
 
 | Part | Scope | Completion evidence |
 | --- | --- | --- |
@@ -19,7 +21,7 @@ Parts 1 and 2 are authorized through their respective prompts. Current scope is 
 
 ## Corpus and evaluation strategy
 
-Later start with roughly 10–20 verified official documents covering 3–5 schemes. Keep original URL, issuing authority, checksum, publication date if supported, ingestion time and manual verification time separately. Choose exact sources in Part 3; no documents are claimed verified now. Verify republication rights rather than assuming every government file is unrestricted. Expand only after retrieval, source coverage and laptop resource usage work.
+Part 3 starts with 3 inspected official-origin PDFs across 3 schemes, 164 physical pages, kept as local references only; reproduction permissions are not obtained. Further expansion toward 10–20 documents requires rights/extraction review. Keep source URL, issuer, checksum, unknown dates, ingestion and manual verification time separately. Expand only after retrieval, source coverage and laptop resource usage work.
 
 Use explicit amendment/supersession relationships supported by source evidence, with scope and effective dates where available. Missing evidence remains unknown; a newer file does not automatically override an older one.
 

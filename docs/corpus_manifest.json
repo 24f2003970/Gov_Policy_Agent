@@ -1,0 +1,67 @@
+{
+  "retrieved_on": "2026-10-05",
+  "purpose": "Private local educational extraction demo. Original PDFs and text are not redistributed in Git. Official origin verified; reproduction permissions not obtained. These are historical snapshots, not current legal advice.",
+  "entries": [
+    {
+      "filename": "pmkisan.pdf",
+      "sha256": "ae82cac83f61a5fa5049387a7c13e00c6d55cef0e9163deb5497dc86c86d697f",
+      "pages": 12,
+      "bytes": 824649,
+      "provenance_status": "official_origin_checked",
+      "metadata": {
+        "title": "PM-KISAN Operational Guidelines (revised 29.03.2020)",
+        "issuer": "Ministry of Agriculture and Farmers Welfare",
+        "scheme": "PM-KISAN",
+        "document_type": "guidelines",
+        "source_url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf",
+        "language": "en",
+        "publication_date": null,
+        "effective_date": null,
+        "reuse_status": "local_reference_only"
+      },
+      "verification_note": "Official pmkisan.gov.in PDF downloaded and signature, checksum, 12 pages, cover title and ministry checked on 2026-10-05. Cover says revised 29.03.2020, not a separately established publication date. Local reference only; copyright policy requires reproduction permission, not obtained. Encoding artifacts require review.",
+      "rights_policy_url": "https://www.pmkisan.gov.in/CopyrightPolicy.aspx"
+    },
+    {
+      "filename": "pmjdy.pdf",
+      "sha256": "43c19d71d4566b02b96dc10f1ff23ca3c0185c18a5d0e1cacda31acfc4da0a84",
+      "pages": 40,
+      "bytes": 4460654,
+      "provenance_status": "official_origin_checked",
+      "metadata": {
+        "title": "PMJDY Mission Document - A National Mission on Financial Inclusion",
+        "issuer": "Department of Financial Services, Ministry of Finance",
+        "scheme": "PMJDY",
+        "document_type": "mission_document",
+        "source_url": "https://pmjdy.gov.in/files/E-Documents/PMJDY_BROCHURE_ENG.pdf",
+        "language": "en",
+        "publication_date": null,
+        "effective_date": null,
+        "reuse_status": "local_reference_only"
+      },
+      "verification_note": "Official pmjdy.gov.in PDF downloaded and signature, checksum, 40 pages, cover title and issuer checked on 2026-10-05. Historical mission document; exact publication/effective dates unconfirmed. Local reference only; no redistribution permission claimed. Page 32 has low digital text.",
+      "rights_policy_url": "https://www.pmjdy.gov.in/accessibility",
+      "rights_check_note": "Official accessibility page lists Copyright Policy; policy text could not be fetched. No reproduction permission claimed."
+    },
+    {
+      "filename": "pmay-u2.pdf",
+      "sha256": "74c4f6724f6645f08463e9b09009edd3ddd720739bf2a13af0f4bf22fea4b0f3",
+      "pages": 112,
+      "bytes": 5771975,
+      "provenance_status": "official_origin_checked",
+      "metadata": {
+        "title": "PMAY-U 2.0 Scheme Guidelines - Housing for All Mission",
+        "issuer": "Ministry of Housing and Urban Affairs",
+        "scheme": "PMAY-U 2.0",
+        "document_type": "guidelines",
+        "source_url": "https://pmay-urban.gov.in/uploads/guidelines/Operational-Guidelines-of-PMAY-U-2.pdf",
+        "language": "en",
+        "publication_date": null,
+        "effective_date": null,
+        "reuse_status": "local_reference_only"
+      },
+      "verification_note": "Official pmay-urban.gov.in PDF downloaded and signature, checksum, 112 pages, cover title and ministry checked on 2026-10-05. Cover states September 2024 without exact day; dates remain null. Local reference only; reproduction permission required by site copyright policy and not obtained. Low-text pages 2,4,6,8,111 are conservatively OCR-pending.",
+      "rights_policy_url": "https://pmay-urban.gov.in/copyright"
+    }
+  ]
+}

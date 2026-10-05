@@ -6,7 +6,7 @@ from fastapi import Request
 
 from .config import Settings
 
-SCHEMA_HEAD = "0001_auth"
+SCHEMA_HEAD = "0002_documents"
 
 
 def database_url(settings: Settings, test: bool = False):
@@ -42,6 +42,10 @@ def schema_ready(engine) -> bool:
             connection.execute(text("SELECT id, email, username, password_hash, role, active, preferred_language, created_at, updated_at FROM users LIMIT 0"))
             connection.execute(text("SELECT id, user_id, refresh_hash, used_hashes, expires_at, revoked_at, rotated_at, created_at FROM auth_sessions LIMIT 0"))
             connection.execute(text("SELECT key, attempts, window_start FROM auth_throttles LIMIT 0"))
+            connection.execute(text("SELECT id, document_id, checksum, storage_key, provenance_status FROM document_versions LIMIT 0"))
+            connection.execute(text("SELECT id, version_id, state, lease_owner, lease_until, attempts FROM ingestion_jobs LIMIT 0"))
+            connection.execute(text("SELECT id, version_id, ordinal, pdf_page_number, text FROM extracted_pages LIMIT 0"))
+            connection.execute(text("SELECT id, version_id, page_id, start_offset, end_offset FROM chunks LIMIT 0"))
             return True
     except SQLAlchemyError:
         return False

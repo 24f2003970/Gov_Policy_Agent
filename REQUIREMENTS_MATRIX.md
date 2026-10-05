@@ -42,7 +42,7 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | Security/JWT/TLS/rate limiting; pp.4,19,30 | 2,11–12 | Local loopback HTTP, JWT/cookie auth and durable throttling verified in Part 2; public TLS/security review remain later |
 | Resource profiling/performance/OWASP review; p.30 | 11 | Hardware inventory only now; no throughput claims |
 | Reproducible test set/BLEU/ROUGE/BERTScore; pp.30–31 | 11 | Test set/quality metrics planned; prioritize evidence support and abstention |
-| Full report/demo/video/viva and public code; pp.30–31 | 1,12 | Beginner foundation docs now; final report/demo later |
+| Full report/demo/video/viva and public code; pp.30–31 | 12 | Final college deliverables remain planned; current repository keeps technical setup, source disclosures and verification |
 | Eight-month multi-person roadmap; pp.28–30 | 1–12 | Adapted to user-directed numbered parts, solo pace, no deadline |
 | GPU/translation/OCR/vector-scale/copyright/team risks; pp.31–32 | 3–12 | Local CPU fallback, quality flags, measured expansion, documented handover |
 | Additional Indian languages, mobile, voice; pp.15,32 | Beyond 12 | Deferred; no implementation in baseline |
@@ -50,4 +50,4 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 
 ## Cross-cutting acceptance rules
 
-User input and retrieved instructions are untrusted data. Preserve original passages; generated translations must not masquerade as verbatim evidence. Ask for clarification for ambiguous scheme/jurisdiction/date questions. Abstain when no support exists. Maintain immutable source versions and verified supersession scope. Never fabricate publication dates, document counts, evaluation results or trust values. These controls remain design requirements for Parts 3–11; Part 1 does not claim RAG safety has been implemented.
+User input and retrieved instructions are untrusted data. Future answering must preserve original passages, label translations, clarify ambiguous scheme/jurisdiction/date questions and abstain without support. Immutable source versions and explicit verified relationships are implemented; retrieval/answer safeguards remain planned. Publication dates, counts, evaluation results and trust values must remain evidence-based. See [maintainer state](docs/MAINTAINER.md) for continuation decisions.

@@ -1,69 +1,35 @@
-## Multilingual Government Policy Assistant
+# Multilingual Government Policy Assistant
 
-**GOV-CS-028** · B.Tech project · Part 3 reliable document ingestion
+GOV-CS-028 is a B.Tech student project for exploring document-grounded government policy question answering in English, Hindi and Hinglish. The current application provides authentication and document ingestion. Question answering and retrieval are not implemented yet.
 
-A local application being developed to answer English, Hindi and practical Hinglish policy questions from verified official evidence. The final system will support grounded RAG, claim-level citations and an experimental evidence-quality index. These capabilities are **planned**, not implemented or measured yet.
+## Implemented features
 
-Parts 1/2 are preserved: foundation, PostgreSQL accounts, rotating sessions and server-enforced roles. Part 3 adds admin PDF/UTF-8 TXT uploads, immutable source versions, protected originals/page previews, provenance, exact extraction spans, provisional chunks and a separate durable worker. Current local demo contains 3 official-origin PDFs across 3 schemes (164 pages); originals stay private/ignored, all local-reference-only. No embeddings, policy answers, RAG or AI models yet. Executed checks are in [PROGRESS.md](PROGRESS.md).
+- Registration, login, rotating sessions, language preference and server-enforced user/admin roles.
+- Admin PDF/UTF-8 TXT upload, immutable document versions, checksum-based deduplication and source metadata.
+- Separate durable ingestion worker with bounded retries, lease recovery and atomic result publication.
+- Physical PDF pages, extracted text spans, provisional chunks, protected original download/page preview and archive controls.
+- PostgreSQL migrations, health endpoints and tests using an isolated PostgreSQL database.
 
-## Start on Windows PowerShell
+## Stack
 
-From the repository root, with existing private PostgreSQL configuration; apply current migration per [docs/SETUP_PART3.md](docs/SETUP_PART3.md):
+React, TypeScript, Vite and Tailwind CSS; FastAPI, SQLAlchemy, psycopg and Alembic; PostgreSQL; PyMuPDF; Argon2id and JWT authentication. Dependencies are pinned in the backend lock and frontend package-lock.
 
-```powershell
-# Terminal 1
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-proxy-headers
-```
+## Setup and usage
 
-```powershell
-# Terminal 2
-Set-Location frontend
-npm.cmd run dev
-```
+See [Windows setup](docs/SETUP.md) for dependencies, private database configuration, migrations, startup and checks. Python 3.12, Node 22.12+ and PostgreSQL 18 are the documented baseline.
 
-```powershell
-# Terminal 3, repository root; durable ingestion runs separately
-.\.venv\Scripts\python.exe backend\worker.py
-```
+Run the API, frontend and ingestion worker in separate terminals. Open `http://127.0.0.1:5173/`. Register a normal account or sign in with an existing administrator. Admin can select a PDF/TXT file, enter source metadata, upload it and inspect job status, pages and original preview. Queued jobs require the worker to run. API documentation is at `http://127.0.0.1:8000/docs`.
 
-Open http://127.0.0.1:5173. Foundation should show **Connected · Foundation ready** with current DB/schema. Existing admin login then /#admin opens uploads/list/inspection. Status polling reads persisted jobs; worker must run to process queued work. API docs: http://127.0.0.1:8000/docs. Stop each terminal with Ctrl+C.
+## Current limitations
 
-```powershell
-# Run from the repository root
-.\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider
-Set-Location frontend
-npm.cmd run build
-```
+No embeddings, semantic retrieval, AI answers, OCR, validated citations or trust scores. Low-text/scanned pages remain OCR-pending; mixed PDFs are partial. Digital text order, table layout and encoding need source-page review. Uploads have size/time/page/text limits but no malware scanner, OS parser sandbox or hard memory quota. Deployment is local development HTTP, not production-ready.
 
-## Layout
-
-```text
-backend/app/     FastAPI, configuration, database and authentication
-backend/migrations/ explicit Alembic schema revisions
-frontend/src/    foundation, health/auth clients and document admin UI
-docs/           setup, architecture, verification and beginner explanations
-scripts/        PowerShell startup and verification helpers
-tests/          foundation/security and real PostgreSQL auth/ingestion tests
-```
+The inspected local corpus contains three official-origin PDFs across three schemes, 164 pages and 398 provisional chunks. Reproduction permissions are not obtained; all are local-reference-only and none is eligible for future retrieval. Original PDFs, extracted corpus text, secrets and runtime data are excluded from Git. No measured answer-quality or scalability claims are made.
 
 ## Project records
 
-- [Current PostgreSQL/auth setup](docs/SETUP_PART2.md) and [Part 1 environment record](docs/SETUP.md)
-- [Current ingestion/worker/corpus setup](docs/SETUP_PART3.md) and [reproducible corpus manifest](docs/corpus_manifest.json)
-- [Architecture and planned relational design](docs/ARCHITECTURE.md)
-- [Beginner code walkthrough and viva](docs/WALKTHROUGH.md)
-- [Roadmap](PROJECT_PLAN.md), [progress](PROGRESS.md), [decisions](DECISIONS.md)
+- [Architecture](docs/ARCHITECTURE.md) and [API conventions](docs/API.md)
+- [Maintainer state and roadmap](docs/MAINTAINER.md)
+- [Recorded verification](docs/VERIFICATION.md)
+- [Sources and licensing disclosures](docs/SOURCES.md) and [corpus manifest](docs/corpus_manifest.json)
 - [Proposal requirement mapping](REQUIREMENTS_MATRIX.md)
-- [Executed verification](docs/VERIFICATION.md)
-
-## Learning Guide
-
-Simple conversational Hinglish, actual source links, exact commands, limitations and viva practice:
-
-- [Part 1: working foundation](docs/learning/PART_01_EXPLAINED.md)
-- [Part 2: accounts, PostgreSQL and permissions](docs/learning/PART_02_EXPLAINED.md)
-- [Part 3: reliable document upload and ingestion](docs/learning/PART_03_EXPLAINED.md)
-
-Every future numbered part must add/update its own docs/learning/PART_XX_EXPLAINED.md in the same verified phase commit. Historical guides describe delivered behavior and explicitly distinguish current changes.
-
-The local 34-page proposal was read as a requirements reference. It is ignored by Git and must never become chatbot evidence. Uploaded documents, secrets, local data and model weights are also ignored. No accuracy, novelty, publication or production-scale claims have been established.

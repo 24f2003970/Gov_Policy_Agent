@@ -20,7 +20,16 @@ Date: 2026-10-05, Windows 11 / PowerShell 7.6.5. Python 3.12.14 in project .venv
 | Responsive review | Mobile/default viewport and 1366px desktop checked; DOM page width did not exceed viewport, desktop full-page layout visually inspected; temporary viewport reset |
 | Remote prepublication recheck | Origin matched requested URL; ls-remote still returned no refs |
 
-All required Part 1 technical checks passed. Publication evidence is recorded below after commit/push; no unrun check is counted as passing.
+All required Part 1 technical checks passed; no unrun check is counted as passing.
+
+## Publication evidence
+
+- Reviewed/staged exactly 33 intended files; staged diff whitespace check passed.
+- Created initial main and configured origin as https://github.com/shashwatmishra18/Gov_Policy_Agent.git; remote rechecked empty before initial push.
+- Foundation commit: `e8a41e16ba7e1c3b298724a05930d5fd6aae7c9b`, `feat: build verified Part 1 FastAPI and React foundation`.
+- `git push -u origin main` succeeded; `git ls-remote origin refs/heads/main` independently returned that exact hash.
+- Clean tracked working tree after push; all 33 committed paths reviewed. No PDF, actual .env, dependency directory, private user record or model weight in the Git tree.
+- This release record is a subsequent documentation-only commit. Use `git log -1` for the final documentation revision; foundation code/tests remain unchanged.
 
 ## What remains outside Part 1
 

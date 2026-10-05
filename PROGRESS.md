@@ -14,7 +14,7 @@ Updated 2026-10-05 (Asia/Kolkata). Scope: Part 1 only.
 
 ## Verification/release gate
 
-See docs/VERIFICATION.md for actual checks. All required technical checks passed: 14 backend tests, clean backend lock install and pip check, npm ci, TypeScript and production build, real connected/disconnected/recovered browser states, and responsive review. Final diff review and Git publication are being finalized; release status must be updated after evidence is available.
+**Part 1 complete.** See docs/VERIFICATION.md for actual checks. All required technical checks passed: 14 backend tests, clean backend lock install and pip check, npm ci, TypeScript and production build, real connected/disconnected/recovered browser states, and responsive review. The staged diff and public file tree were reviewed. Foundation commit `e8a41e16ba7e1c3b298724a05930d5fd6aae7c9b` was pushed to main and independently confirmed by remote refs. This record is a documentation follow-up to that verified commit; no future phase was implemented.
 
 ## Known limits and user actions
 

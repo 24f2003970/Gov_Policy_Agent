@@ -14,6 +14,7 @@ from app.eligibility import eligibility
 from app.rag_engine import LocalGenerator,LocalRetriever,pipeline
 from app.ollama_local import OllamaHost,URL
 from app.grounding import expand_model_output,quote_options,RagError
+from app.support import SupportVerifier
 
 
 async def evaluate(settings,host):
@@ -23,7 +24,7 @@ async def evaluate(settings,host):
     with Session(engine) as db:
         version=db.scalar(select(DocumentVersion).where(DocumentVersion.checksum==dev['source_sha256']))
         if not version or not eligibility(db,version)['eligible']: raise RuntimeError('Reviewed real source unavailable')
-    engine.dispose()
+    verifier=SupportVerifier(engine,generator)
     results=[]
     for case in dev['cases']:
         question=case['question']
@@ -31,17 +32,18 @@ async def evaluate(settings,host):
             question=('According to the 2025 PM-KISAN factsheet: ' if case['language']=='en' else '2025 के पीएम किसान दस्तावेज़ के अनुसार: ')+question
         begin=time.perf_counter()
         try:
-            result,sources,generation,timings=await pipeline(question,case['language'],{},retriever,generator)
+            result,sources,generation,timings=await pipeline(question,case['language'],{},retriever,generator,verifier)
+            result.pop('_claim_checks',None)
             row={'id':case['id'],'kind':case['kind'],'language':case['language'],'result':result,'timings':timings,
                 'quote_pages':[p['pdf_page_number'] for p in sources if any(e['id']==p['chunk_id'] for c in result['claims'] for e in c['evidence'])]}
         except RagError as exc:row={'id':case['id'],'error':exc.code}
         row['wall_ms']=round((time.perf_counter()-begin)*1000,2);results.append(row)
         print(case['id'],row.get('error') or row['result']['status'],row['wall_ms'],flush=True)
     for language,question in [('en','What is the current PM-KISAN amount today and am I eligible in 2026?'),('hi','आज पीएम किसान में मुझे कितनी रकम मिलेगी और क्या मैं पात्र हूँ?')]:
-        result,*_=await pipeline(question,language,{},retriever,generator)
+        result,*_=await pipeline(question,language,{},retriever,generator,verifier)
         results.append({'id':'current-'+language,'result':result})
         assert result['status']=='insufficient_evidence'
-    empty,*_=await pipeline('According to the 2025 PM-KISAN factsheet, annual support?','en',{'scheme':'No matching scheme'},retriever,generator)
+    empty,*_=await pipeline('According to the 2025 PM-KISAN factsheet, annual support?','en',{'scheme':'No matching scheme'},retriever,generator,verifier)
     assert empty['status']=='insufficient_evidence'
     # Synthetic untrusted text never enters SQL, production corpus or vector collection.
     synthetic={'chunk_id':'isolated-synthetic-injection','title':'Synthetic isolated security fixture','publication_date':'2025-08-01',
@@ -67,7 +69,7 @@ async def evaluate(settings,host):
         loaded=(await client.get(URL+'/api/ps')).json()['models']
     cleanup={'inference_was_in_flight':in_flight,'fresh_instance_loaded_models':len(loaded),'restart_ms':round((time.perf_counter()-cleanup_start)*1000,2)}
     assert in_flight and not loaded
-    recovered,*_=await pipeline('According to the 2025 PM-KISAN factsheet, what annual amount is described?','en',{},retriever,generator)
+    recovered,*_=await pipeline('According to the 2025 PM-KISAN factsheet, what annual amount is described?','en',{},retriever,generator,verifier)
     cleanup['recovery_status']=recovered['status']
     # Actual timeout uses the same task cancellation + owned process-tree replacement.
     try:
@@ -85,7 +87,7 @@ async def evaluate(settings,host):
     except RagError as exc:
         assert exc.code=='ollama_unavailable'
     host.start()
-    recovered,*_=await pipeline('According to the 2025 PM-KISAN factsheet, what annual amount is described?','en',{},retriever,generator)
+    recovered,*_=await pipeline('According to the 2025 PM-KISAN factsheet, what annual amount is described?','en',{},retriever,generator,verifier)
     async with httpx.AsyncClient(trust_env=False) as client:residency=(await client.get(URL+'/api/ps')).json()
     gpu=subprocess.run(['nvidia-smi','--query-gpu=memory.used,utilization.gpu','--format=csv,noheader'],capture_output=True,text=True).stdout.strip()
     report={'manual_review':'Generated claims require inspection against quoted source spans; implementing-agent review, independent human pending.',

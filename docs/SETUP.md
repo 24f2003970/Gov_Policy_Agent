@@ -166,3 +166,17 @@ If old Windows pytest temporary directories are inaccessible, supply `--basetemp
 | Query 422 | Shorten to 2–2000 characters and at most 512 actual prefixed tokens |
 
 Answer errors: worker 503 → start Terminal 5; busy → wait/cancel the existing request; `llm_not_prepared` → stop worker and run preparation; digest/runtime mismatch → inspect the pinned record, do not accept a changed model silently. `generation_truncated`/`grounding_validation_failed` publish no answer: shorten the question and inspect source coverage. Source change errors require a fresh reviewed/indexed snapshot and a new question. Longer context/output/model settings require fresh measurements.
+
+## Claim citations and support checks
+
+The same `upgrade head` command applies additive `0005_citations`; no account provisioning, data reset or second model is required. Existing answers stay `not_evaluated`. New Ask results expose numbered source evidence buttons and a citation panel. Open cited source text to inspect the actual referenced physical page/span; publication/effective dates and historical applicability remain distinct from support.
+
+For read-only claim-support evaluation, keep Terminal 4 running and stop Terminal 5 first. From project root:
+
+```powershell
+.\.venv\Scripts\python.exe backend\evaluate_support.py
+```
+
+This uses [support_devset.json](support_devset.json), writes ignored `runtime/support-results.json`, and never imports synthetic mutations. It measures false accepts/rejects, exact provenance, candidate retention and latency with the existing pinned Qwen. Restart `backend\rag.py` afterwards. Labels are implementing-agent development review, not independent human or held-out validation.
+
+`verification_unavailable`/`verification_timeout` publish no answer; check the worker and pinned project Ollama, then submit a new request. `verification_invalid_output` is an explicit error with no fallback. `unsupported`/`conflicting` candidates are omitted with a reason; zero retained claims abstain. Large complete context yields `insufficient_context` without truncation. Revoked history shows metadata and a withheld notice; restore eligibility through an evidence-backed review and rebuild for new retrieval. Do not change original snapshots or weaken guards. Historical citations retain the old review: a changed review remains withheld even when a new positive review is added.

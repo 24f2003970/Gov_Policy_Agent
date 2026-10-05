@@ -52,8 +52,10 @@ class GeneratorDouble:
     async def generate(self,*args):self.calls+=1;return next(self.responses),{'eval_count':20}
 
 def test_bounded_repair_and_safe_final_claims():
+    class CheckedDouble:
+        async def evaluate(self,output,*args):return output,[],{'method':'isolated-support-double'}
     g=GeneratorDouble(['not-json',model_output()])
-    result,sources,_,timings=asyncio.run(pipeline('2025 PM-KISAN factsheet annual support','en',{},RetrieverDouble(),g))
+    result,sources,_,timings=asyncio.run(pipeline('2025 PM-KISAN factsheet annual support','en',{},RetrieverDouble(),g,CheckedDouble()))
     assert g.calls==2 and timings['generation_attempts']==2
     assert result['answer'].endswith(result['claims'][0]['text']) and result['trust_score'] is None
     g=GeneratorDouble(['not-json','not-json'])

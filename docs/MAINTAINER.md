@@ -1,10 +1,10 @@
 # Maintainer state
 
-Updated 2026-10-05. Parts 1–5 are implemented and verified. Next phase is Part 6; do not begin it automatically. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
+Updated 2026-10-06. Parts 1–6 are implemented. Next phase is Part 7; do not begin it automatically. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
 
 ## Continuation baseline
 
-- Current schema: `0004_answers`; preserve configured databases, private `.env`, originals and existing administrator. No application reset or reprovisioning is required.
+- Current schema: `0005_citations`; preserve configured databases, private `.env`, originals and existing administrator. No application reset or reprovisioning is required.
 - Local environment: Windows 11/PowerShell, bundled Python 3.12.14 `.venv`, Node 24.12.0, PostgreSQL 18.6. CPU i5-13500HX, about 15.7 GiB usable RAM, RTX 4050 with 6141 MiB VRAM. Part 5 measured GPU offload with the pinned 4B Q4 model; see verification for timing/memory and Hindi limitations.
 - Pre-Part-4 documentation cleanup: `cfa7006a849bdf056da5372c44d98f1d70f43c85`. Historical ingestion: `d59aaf9392ce492dcd95bd18406d4f9ee09219dc`; auth: `fedc1c43a38324795f1d61a7348c2274407006ff`; foundation: `e8a41e16ba7e1c3b298724a05930d5fd6aae7c9b`. Part 4: `0f987b8470c06ddf09f5fd4a65204634e9fcaf0f`. The Part 5 release is the commit introducing the local-answer implementation; use Git history for its hash.
 - Setup commands have one home in [SETUP.md](SETUP.md); schema/security detail in [ARCHITECTURE.md](ARCHITECTURE.md), measured evidence in [VERIFICATION.md](VERIFICATION.md), proposal traceability in [requirement mapping](../REQUIREMENTS_MATRIX.md).
@@ -25,7 +25,6 @@ Keep pinned multilingual E5-small on CPU/two threads, normalized 384-dimensional
 
 | Part | Planned work |
 | --- | --- |
-| 6 | Claim-level exact version/page/passage citations and support validation |
 | 7 | Hindi/Hinglish checks and bounded OCR with page/quality provenance |
 | 8 | Transparent experimental evidence-quality scoring |
 | 9 | Chat/source/history/saved-answer frontend workflows |
@@ -45,4 +44,8 @@ Known gaps: OCR, table/encoding quality, wider corpus rights clearance, malware 
 
 ## Answer baseline to preserve
 
-Qwen3 4B Instruct 2507 Q4_K_M through Ollama 0.17.1; exact pins in [model record](llm_model.json). Keep 4096 context/768 output/temperature 0/seed 28/non-thinking, single pending job, complete prompt-token counts, explicit failures and contained cancellation. Preserve exact excerpt handles, server-built final claims, source locks, private owned history and null trust. One historical PIB source remains the entire answer corpus; no rights/extraction status was relaxed. No further models or fine-tuning were used. English/Hindi development samples and implementing-agent manual review do not establish held-out accuracy; Hindi output limits/language errors remain. Part 6 should address claim entailment, date/value association and support scope rather than treating valid citation IDs as proof.
+Qwen3 4B Instruct 2507 Q4_K_M through Ollama 0.17.1; exact pins in [model record](llm_model.json). Keep 4096 context/768 output/temperature 0/seed 28/non-thinking, single pending job, complete prompt-token counts, explicit failures and contained cancellation. Preserve exact excerpt handles, server-built final claims, source locks, private owned history and null trust. One historical PIB source remains the entire answer corpus; no rights/extraction status was relaxed. No further models or fine-tuning were used. English/Hindi development samples and implementing-agent manual review do not establish held-out accuracy; Hindi output limits/language errors remain. Part 6 adds exact SQL provenance, stable additive claim/citation records, final-language scope/value guards and a bounded same-Qwen support judge. Exact provenance and heuristic support remain separate from current applicability. No reassessment/backfill of Part 5 answers occurred; API history redacts answer/excerpts when current source/review/provenance access changes. Private snapshots remain unchanged. Only retained claims form a new answer; rejected candidates have controlled reasons rather than exposed policy prose.
+
+Preserve `layered-qwen-v2`/`support-judge-v1`, 30-second judge deadline, 256-output-token reserve and no excerpt clipping. One production claim, at most one judge call per candidate; one original schema repair remains bounded. Conflicting annual amounts are checked only among selected same-scheme contexts; this is not an exhaustive corpus/legal conflict detector. Generation may omit Hindi qualifiers and conservatively abstain; do not relax guards to improve apparent coverage. The 35-case support devset was tuned/reviewed by the implementing agent; independent labels and held-out evaluation remain pending.
+
+A pre-release Hindi recipient/DBT false accept under v1 was found in browser review; v2 guards reject the added development case. Preserve its recorded private v1 assessment, expose the method mismatch and do not silently backfill/reassess. See VERIFICATION for the full limitation and measured final results.

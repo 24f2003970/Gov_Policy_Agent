@@ -2,9 +2,13 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { authorized } from './auth'
 
 type Evidence = {id: string; quote: string; quote_start_offset: number; quote_end_offset: number}
-type Result = {status: string; language: string; answer: string; claims: {text: string; evidence: Evidence[]}[]; limitations: string[]; trust_score: null; grounding: string}
-type Source = {chunk_id: string; version_id: string; title: string; issuer: string; source_url: string; pdf_page_number: number | null; start_offset: number; end_offset: number; text: string; verification: {applicability: string; scope: string}}
-type Run = {id: string; question: string; language: string; state: string; status: string | null; error_code: string | null; created_at: string; result?: Result | null; sources?: Source[]; current_source_warnings?: {warning: string}[]; model?: {tag: string; digest: string}; timings?: {worker_total_ms: number}}
+type Support = {outcome:string; method:string|null; reason:string; judge_called?:boolean; independent_verification:boolean}
+type Citation = {citation_id:string; claim_id:string; claim_position:number; marker:number; claim_text:string|null; quote:string|null; start_offset:number; end_offset:number;
+  metadata:{title:string; issuer:string; source_url:string; version_id:string; version_number?:number; pdf_page_number:number|null; page_ordinal:number; publication_date:string|null; effective_date:string|null; section_label:string|null; section_is_heuristic:boolean; clause:null; review:{applicability:string}};
+  provenance:{status:string; method:string; reason:string}; support:Support; current_access:{allowed:boolean; reasons:string[]; applicability?:string}}
+type Result = {status: string; language: string; answer: string; claims: {claim_id?:string; text: string; evidence: Evidence[]; support?:Support; citation_markers?:number[]}[]; limitations: string[]; trust_score: null; grounding: string}
+type Source = {chunk_id: string; version_id: string; title: string; issuer: string; source_url: string; pdf_page_number: number | null; start_offset: number; end_offset: number; text: string|null; verification: {applicability: string; scope: string}}
+type Run = {id: string; question: string; language: string; state: string; status: string | null; error_code: string | null; created_at: string; result?: Result | null; sources?: Source[]; citations?:Citation[]; claim_checks?:{position:number;retained:boolean;assessment:Support}[]; source_access_withheld?:boolean; current_support_method?:string; current_source_warnings?: {warning: string}[]; model?: {tag: string; digest: string}; timings?: {worker_total_ms: number;verification?:{total_ms:number}}}
 const input='mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2'
 const button='rounded bg-teal-900 px-4 py-2 text-white disabled:opacity-50'
 const failure=(e:unknown)=>e instanceof Error?e.message:'Request failed'
@@ -13,6 +17,7 @@ export default function Ask() {
   const [run,setRun]=useState<Run|null>(null),[history,setHistory]=useState<Run[]>([])
   const [error,setError]=useState(''),[busy,setBusy]=useState(false),[worker,setWorker]=useState<boolean|null>(null)
   const [historyPage,setHistoryPage]=useState(1)
+  const [citation,setCitation]=useState<Citation|null>(null),[inspection,setInspection]=useState<{text:string;offset:number;pdf_page_number:number|null;total_characters:number}|null>(null)
   const live=useRef(true),active=useRef<string|null>(null)
   async function refresh(page=historyPage) {
     const [h,s]=await Promise.all([authorized<{items:Run[]}>(`/ask/history?page=${page}`),authorized<{worker_available:boolean}>('/ask/status')])
@@ -35,13 +40,18 @@ export default function Ask() {
   },[run?.id,run?.state])
   const pending=busy || !!run && ['queued','processing'].includes(run.state)
   async function submit(event:FormEvent<HTMLFormElement>){
-    event.preventDefault();setBusy(true);setError('');const f=new FormData(event.currentTarget)
+    event.preventDefault();setBusy(true);setError('');setCitation(null);setInspection(null);const f=new FormData(event.currentTarget)
     const body={question:f.get('question'),language:f.get('language'),scheme:f.get('scheme')||null,issuer:f.get('issuer')||null,
       document_type:f.get('document_type')||null,published_after:f.get('published_after')||null,published_before:f.get('published_before')||null,unknown_dates:f.get('unknown_dates')}
     try{setRun(await authorized<Run>('/ask',{method:'POST',body:JSON.stringify(body)}));await refresh()}
     catch(e){setError(failure(e))}finally{setBusy(false)}
   }
-  async function select(id:string){setError('');try{setRun(await authorized<Run>(`/ask/history/${id}`))}catch(e){setError(failure(e))}}
+  async function select(id:string){setError('');setCitation(null);setInspection(null);try{setRun(await authorized<Run>(`/ask/history/${id}`))}catch(e){setError(failure(e))}}
+  async function inspect(){if(!run||!citation)return;setError('');setInspection(null);try{setInspection(await authorized(`/ask/history/${run.id}/citations/${citation.citation_id}/text`))}catch(e){
+    setError(failure(e));setCitation(null)
+    try{setRun(await authorized<Run>(`/ask/history/${run.id}`))}catch{setRun(null)}
+  }}
+  function openCitation(c:Citation){setCitation(c);setInspection(null)}
   async function cancel(){if(!run)return;setError('');try{setRun(await authorized<Run>(`/ask/history/${run.id}/cancel`,{method:'POST'}))}catch(e){setError(failure(e))}}
   async function changePage(page:number){setHistoryPage(page);try{await refresh(page)}catch(e){setError(failure(e))}}
   return <section className="space-y-6"><h1 className="text-3xl font-semibold">Ask from reviewed sources</h1>
@@ -64,11 +74,25 @@ export default function Ask() {
       {run.result&&<><h3 className="font-semibold">{run.result.status}</h3><p className="whitespace-pre-wrap">{run.result.answer}</p>
         <ul className="list-disc pl-5">{run.result.limitations.map((t,i)=><li key={i}>{t}</li>)}</ul><p className="text-sm">{run.result.grounding}</p>
         {(run.current_source_warnings||[]).map((w,i)=><p className="rounded bg-amber-50 p-3" key={i}>{w.warning}</p>)}
-        {run.result.claims.map((c,i)=><article className="border-t pt-3" key={i}><h4 className="font-semibold">Claim {i+1}</h4><p>{c.text}</p>
-          {c.evidence.map((e,j)=>{const s=run.sources?.find(p=>p.chunk_id===e.id);return <div className="mt-2" key={j}>
-            {s&&<><p>{s.title} · {s.issuer} · physical page {s.pdf_page_number} · {s.verification.applicability}</p><a className="break-all underline" href={s.source_url} target="_blank" rel="noreferrer">Official source</a>
-              <p className="break-all text-xs">Version {s.version_id} · passage {s.chunk_id} · quote characters [{e.quote_start_offset}, {e.quote_end_offset})</p></>}
-            <blockquote className="whitespace-pre-wrap border-l-2 border-teal-700 pl-3">{e.quote}</blockquote></div>})}</article>)}
+        {run.result.claims.map((c,i)=><article className="border-t pt-3" key={c.claim_id||i}><h4 className="font-semibold">Claim {i+1}</h4><p>{c.text}</p>
+          <p>Support: {c.support?.outcome||'not_evaluated'} · automated check, no truth guarantee</p>
+          {(run.citations||[]).filter(v=>v.claim_id===c.claim_id).map(v=><button className="mr-3 underline" key={v.citation_id} aria-label={`Citation ${v.marker}`} onClick={()=>openCitation(v)}>[{v.marker}] Source evidence</button>)}</article>)}
+        {(run.claim_checks||[]).filter(c=>!c.retained).map(c=><p className="rounded bg-amber-50 p-3" key={c.position}>Candidate {c.position} omitted: {c.assessment.outcome}. {c.assessment.reason}</p>)}
+        {run.source_access_withheld&&(run.citations||[]).map(c=><button className="mr-3 underline" key={c.citation_id} onClick={()=>openCitation(c)}>Citation [{c.marker}] metadata; text withheld</button>)}
+        {citation&&<aside aria-label="Citation panel" className="space-y-3 rounded border p-3"><h3 className="font-semibold">Citation [{citation.marker}]</h3><p>{citation.claim_text||'Claim text withheld under current source-access policy.'}</p>
+          <p>Provenance: {citation.provenance.status} · {citation.provenance.method}</p><p>{citation.provenance.reason}</p>
+          <p>Support: {citation.support.outcome} · {citation.support.method||'No Part 6 assessment'}</p><p>{citation.support.reason}</p>
+          {citation.support.method&&run.current_support_method&&citation.support.method!==run.current_support_method&&<p className="rounded bg-amber-50 p-3">Recorded assessment uses an earlier method. It has not been reassessed by {run.current_support_method}.</p>}
+          <p className="text-sm">The support judge uses the same model as the generator; this is not independent fact verification. Trust score is unavailable.</p>
+          <p>{citation.metadata.title} · {citation.metadata.issuer}</p><p>Version {citation.metadata.version_number||'recorded'} · physical page {citation.metadata.pdf_page_number??'TXT'} · source characters [{citation.start_offset}, {citation.end_offset})</p>
+          <p>Published: {citation.metadata.publication_date||'unknown'} · effective date: {citation.metadata.effective_date||'unknown'} · recorded applicability: {citation.metadata.review.applicability}. Historical sources do not establish current entitlement.</p>
+          {citation.metadata.section_label&&<p>Detected section (heuristic): {citation.metadata.section_label}</p>}
+          <a className="break-all underline" href={citation.metadata.source_url} target="_blank" rel="noreferrer">Official source</a>
+          <p>Current access: {citation.current_access.allowed?'eligible under the recorded review':`withheld (${citation.current_access.reasons.join(', ')})`}</p>
+          <blockquote className="whitespace-pre-wrap border-l-2 pl-3">{citation.quote||'Exact excerpt withheld; private snapshot is preserved.'}</blockquote>
+          <button className="underline" disabled={!citation.current_access.allowed} onClick={()=>void inspect()}>Open cited source text</button>
+          {inspection&&<div><p>Original extracted text · physical page {inspection.pdf_page_number??'TXT'} · window begins at {inspection.offset} / {inspection.total_characters} characters</p><pre className="whitespace-pre-wrap">{inspection.text}</pre></div>}
+        </aside>}
         <p className="break-all text-xs">{run.model?.tag} · digest {run.model?.digest} · total {run.timings?.worker_total_ms} ms</p></>}
     </section>}
     <section className="rounded border bg-white p-4"><h2 className="text-xl font-semibold">Your query history</h2><p className="text-sm">Private to your account. Thirty-day retention; snapshots are not proof of ongoing source eligibility.</p>

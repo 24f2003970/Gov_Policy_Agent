@@ -55,6 +55,19 @@ class LocalGenerator:
             selected.pop()  # Whole passages only; never silently clips policy conditions.
 
     async def generate(self,prompt,tokens):
+        return await self._generate(prompt,tokens,ModelOutput.model_json_schema(),self.manifest['output_tokens'])
+
+    def judge_budget(self,system,data,schema):
+        serialized=json.dumps(data,ensure_ascii=False).replace('<','\\u003c').replace('>','\\u003e')
+        prompt='<|im_start|>system\n'+system+'\nSCHEMA:\n'+json.dumps(schema)+'<|im_end|>\n<|im_start|>user\n'+serialized+'<|im_end|>\n<|im_start|>assistant\n'
+        tokens=len(self.tokenizer.encode(prompt,add_special_tokens=False))
+        if tokens+256+64>self.manifest['context_tokens']:raise RagError('verification_context_limit')
+        return prompt,tokens
+
+    async def judge(self,prompt,tokens,schema):
+        return await self._generate(prompt,tokens,schema,256)
+
+    async def _generate(self,prompt,tokens,schema,output_tokens):
         async with httpx.AsyncClient(trust_env=False,timeout=httpx.Timeout(60,connect=3)) as client:
             try:
                 version=(await client.get(URL+'/api/version')).json()['version']
@@ -63,9 +76,9 @@ class LocalGenerator:
                 current=next((m for m in tags if m['name']==TAG),None)
                 if not current or current['digest']!=self.manifest['digest']: raise RagError('llm_digest_mismatch')
                 options={k:self.manifest[k] for k in ('temperature','seed')}
-                options.update(num_ctx=self.manifest['context_tokens'],num_predict=self.manifest['output_tokens'])
+                options.update(num_ctx=self.manifest['context_tokens'],num_predict=output_tokens)
                 payload={'model':TAG,'prompt':prompt,'raw':True,'stream':False,
-                    'format':ModelOutput.model_json_schema(),'think':False,'keep_alive':'5m','options':options,'truncate':False,'shift':False}
+                    'format':schema,'think':False,'keep_alive':'5m','options':options,'truncate':False,'shift':False}
                 async with client.stream('POST',URL+'/api/generate',json=payload) as response:
                     if response.status_code!=200: raise RagError('ollama_unavailable')
                     raw=bytearray()
@@ -83,7 +96,7 @@ class LocalGenerator:
         return result['response'],metrics
 
 
-async def pipeline(question,language,filters,retriever,generator):
+async def pipeline(question,language,filters,retriever,generator,verifier=None):
     started=time.perf_counter(); response=await retriever.retrieve(question,filters)
     passages=response['items']
     state=precheck(question,filters,passages,language)
@@ -105,6 +118,20 @@ async def pipeline(question,language,filters,retriever,generator):
             if exc.code not in failures: raise
             repair=exc.code
             continue
+        checks=[]
+        if output.claims:
+            if verifier is None:raise RagError('verification_unavailable')
+            output,checks,verification=await verifier.evaluate(output,selected,response.get('generation'))
+            timings['verification']=verification
+        result=final_result(output,selected,language,omitted)
+        result['_claim_checks']=checks
+        result['grounding']='Exact SQL provenance + deterministic guards + same-model heuristic support judge; not independent fact verification.'
+        from .support import METHOD
+        result['support_method']=METHOD if checks else 'not_evaluated'
+        result['limitations']=[v for v in result['limitations'] if 'full claim entailment' not in v and 'पूरे दावे का अर्थ' not in v]
+        if checks:
+            result['limitations'].append(('Automated support check is heuristic; the generator and judge use the same model. It is not a truth guarantee.',
+                'स्वचालित समर्थन जाँच एक सीमित अनुमान है; उत्तर और जाँच में एक ही मॉडल है। यह सत्य की गारंटी नहीं है।')[language=='hi'])
         timings['pipeline_ms']=round((time.perf_counter()-started)*1000,2)
-        return final_result(output,selected,language,omitted),selected,response.get('generation'),timings
+        return result,selected,response.get('generation'),timings
     raise RagError('grounding_validation_failed')

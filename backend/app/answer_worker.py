@@ -14,34 +14,18 @@ from .eligibility import eligibility
 from .models import User
 from .grounding import RagError,PROMPT_REVISION,SCHEMA_REVISION
 from .rag_engine import LocalRetriever,LocalGenerator,pipeline
+from .citations import validate_sources,persist_claims
+from .support import SupportVerifier
 
 DEADLINE_SECONDS=120
 
 
-def validate_sources(db,passages,generation):
-    if passages:
-        job=db.get(IndexGeneration,UUID(generation),with_for_update=True)
-        if not job or job.state!='ready': raise RagError('source_status_changed')
-    for p in passages:
-        version=db.get(DocumentVersion,UUID(p['version_id']),with_for_update=True)
-        if not version: raise RagError('source_status_changed')
-        db.get(Document,version.document_id,with_for_update=True)
-        e=eligibility(db,version)
-        if not e['eligible'] or e['review_id']!=p['verification']['review_id']:
-            raise RagError('source_status_changed')
-        passage=db.get(IndexPassage,UUID(p['chunk_id']))
-        page=db.get(ExtractedPage,passage.page_id) if passage else None
-        if not passage or str(passage.generation_id)!=generation or str(passage.version_id)!=p['version_id'] or not page:
-            raise RagError('source_span_changed')
-        if passage.text!=p['text'] or page.text[p['start_offset']:p['end_offset']]!=p['text']:
-            raise RagError('source_span_changed')
-
-
 class Worker:
-    def __init__(self,settings,engine,host,generator=None,retriever=None):
+    def __init__(self,settings,engine,host,generator=None,retriever=None,verifier=None):
         self.engine,self.host=engine,host
         self.generator=generator or LocalGenerator(settings)
         self.retriever=retriever or LocalRetriever(settings)
+        self.verifier=verifier or SupportVerifier(engine,self.generator)
         self.last_beat=0
         self.last_cleanup=0
 
@@ -75,7 +59,8 @@ class Worker:
             run.state='processing';db.commit()
             job_id=run.id;question,language,filters=run.question,run.language,run.filters
         start=time.perf_counter();error=None;result=None;sources=[];timings={};generation=None
-        task=asyncio.create_task(pipeline(question,language,filters,self.retriever,self.generator))
+        checks=[]
+        task=asyncio.create_task(pipeline(question,language,filters,self.retriever,self.generator,self.verifier))
         try:
             while not task.done():
                 await asyncio.wait({task},timeout=0.2)
@@ -85,6 +70,7 @@ class Worker:
                     if record.cancel_requested: raise RagError('cancelled')
                 if time.perf_counter()-start>DEADLINE_SECONDS: raise RagError('generation_timeout')
             result,sources,generation,timings=await task
+            checks=result.pop('_claim_checks',[])
             with Session(self.engine) as db: validate_sources(db,sources,generation)
         except RagError as exc: error=exc.code
         except Exception: error='answer_processing_failed'
@@ -93,7 +79,7 @@ class Worker:
                 task.cancel()
                 try: await task
                 except (asyncio.CancelledError,Exception): pass
-            if error in ('cancelled','generation_timeout','ollama_unavailable'):
+            if error in ('cancelled','generation_timeout','ollama_unavailable','verification_timeout','verification_unavailable'):
                 # Closing the Windows job kills this project's server AND all inference children.
                 self.host.restart()
         timings['worker_total_ms']=round((time.perf_counter()-start)*1000,2)
@@ -108,6 +94,7 @@ class Worker:
                     record.result=result
                     record.sources=json.loads(json.dumps(sources,default=str))
             record.model={**self.generator.manifest,'prompt_revision':PROMPT_REVISION,'schema_revision':SCHEMA_REVISION,'index_generation':generation}
+            if not error:persist_claims(db,record,checks)
             record.timings=timings
             record.state='cancelled' if error=='cancelled' else 'error' if error else 'done'
             record.error_code=error;record.finished_at=now();db.commit()

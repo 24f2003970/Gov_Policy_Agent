@@ -1,0 +1,257 @@
+{
+  "purpose": "Small claim-support development set; not held out, not a truth benchmark.",
+  "review_status": "Claims/labels checked against the cited original physical pages by implementing agent on 2026-10-06; independent human review pending. Synthetic mutations are isolated and never imported.",
+  "source_sha256": "cb739585b7794b79dc61a164fcd744de4fc5bc1de75b1402db387b03eac40df8",
+  "cases": [
+    {
+      "id": "annual-en",
+      "claim": "The factsheet describes Rs 6,000 per year in three equal instalments for land-holding farmers.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "positive"
+    },
+    {
+      "id": "annual-hi",
+      "claim": "दस्तावेज़ के अनुसार भूमिधारक किसानों को सालाना ६,००० रुपये तीन समान किस्तों में दिए जाते हैं।",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "positive"
+    },
+    {
+      "id": "annual-indian-format",
+      "claim": "Land-holding farmers receive INR 6,000 annually through Direct Benefit Transfer.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "positive"
+    },
+    {
+      "id": "face-en",
+      "claim": "The 2023 face authentication feature enabled remote farmers to complete e-KYC without OTP or fingerprint.",
+      "page": 4,
+      "anchor": "without OTP or fingerprint",
+      "expected": "positive"
+    },
+    {
+      "id": "face-hi",
+      "claim": "२०२३ में फेस ऑथेंटिकेशन सुविधा से दूर के किसान ओटीपी या फिंगरप्रिंट के बिना ई-केवाईसी कर सकते थे।",
+      "page": 4,
+      "anchor": "without OTP or fingerprint",
+      "expected": "positive"
+    },
+    {
+      "id": "chatbot-en",
+      "claim": "EKstep foundation and Bhashini supported development and improvement of the PM-KISAN AI chatbot.",
+      "page": 5,
+      "anchor": "EKstep foundation and Bhashini",
+      "expected": "positive"
+    },
+    {
+      "id": "chatbot-hi",
+      "claim": "पीएम किसान एआई चैटबॉट के विकास और सुधार में ईकेस्टेप फाउंडेशन और भाषिणी ने सहयोग दिया।",
+      "page": 5,
+      "anchor": "EKstep foundation and Bhashini",
+      "expected": "positive"
+    },
+    {
+      "id": "objectives-en",
+      "claim": "PM-KISAN aims to protect small and marginal farmers from moneylenders when meeting crop-input expenses.",
+      "page": 3,
+      "anchor": "moneylenders",
+      "expected": "positive"
+    },
+    {
+      "id": "amount",
+      "claim": "Land-holding farmers receive Rs 9,000 per year.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "monthly",
+      "claim": "Land-holding farmers receive Rs 6,000 monthly.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "instalment",
+      "claim": "Land-holding farmers receive Rs 6,000 per instalment.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "monthly-hi",
+      "claim": "भूमिधारक किसानों को प्रति माह ६,००० रुपये दिए जाते हैं।",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "currency",
+      "claim": "Land-holding farmers receive USD 6,000 annually.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "count",
+      "claim": "Land-holding farmers receive Rs 6,000 per year in six equal instalments.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "all-farmers",
+      "claim": "All farmers receive Rs 6,000 per year.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "landless-hi",
+      "claim": "भूमिहीन किसानों को सालाना ६,००० रुपये मिलते हैं।",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "today",
+      "claim": "Currently every farmer receives Rs 6,000 per year.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "wrong-jurisdiction",
+      "claim": "PM-KISAN pays land-holding farmers in Nepal Rs 6,000 annually.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "state-only",
+      "claim": "Only land-holding farmers in Uttar Pradesh receive Rs 6,000 annually.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "negation",
+      "claim": "OTP is mandatory for face authentication e-KYC.",
+      "page": 4,
+      "anchor": "without OTP or fingerprint",
+      "expected": "negative"
+    },
+    {
+      "id": "negation-hi",
+      "claim": "फेस ऑथेंटिकेशन में ई-केवाईसी के लिए ओटीपी अनिवार्य है।",
+      "page": 4,
+      "anchor": "without OTP or fingerprint",
+      "expected": "negative"
+    },
+    {
+      "id": "wrong-year",
+      "claim": "The mobile app face authentication feature was launched in 2026.",
+      "page": 4,
+      "anchor": "without OTP or fingerprint",
+      "expected": "negative"
+    },
+    {
+      "id": "wrong-entity",
+      "claim": "Microsoft and Google developed and improved the PM-KISAN chatbot.",
+      "page": 5,
+      "anchor": "EKstep foundation and Bhashini",
+      "expected": "negative"
+    },
+    {
+      "id": "unrelated-real-quote",
+      "claim": "Land-holding farmers receive Rs 6,000 per year.",
+      "page": 5,
+      "anchor": "EKstep foundation and Bhashini",
+      "expected": "negative"
+    },
+    {
+      "id": "objective-scope",
+      "claim": "PM-KISAN protects farmers from moneylenders.",
+      "page": 3,
+      "anchor": "moneylenders",
+      "expected": "negative"
+    },
+    {
+      "id": "objective-achieved",
+      "claim": "PM-KISAN has protected small and marginal farmers from moneylenders.",
+      "page": 3,
+      "anchor": "moneylenders",
+      "expected": "negative"
+    },
+    {
+      "id": "banker-hi",
+      "claim": "पीएम किसान छोटे और सीमांत किसानों को बैंकरों से बचाता है।",
+      "page": 3,
+      "anchor": "moneylenders",
+      "expected": "negative"
+    },
+    {
+      "id": "fabricated-quote",
+      "claim": "Land-holding farmers receive Rs 6,000 per year.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative",
+      "mutation": "fabricate"
+    },
+    {
+      "id": "short-context",
+      "claim": "All farmers are entitled to annual support without conditions.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative",
+      "mutation": "short"
+    },
+    {
+      "id": "explicit-conflict",
+      "claim": "Land-holding farmers receive Rs 6,000 per year.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative",
+      "mutation": "conflict"
+    },
+    {
+      "id": "superseded",
+      "claim": "Land-holding farmers receive Rs 6,000 per year.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative",
+      "mutation": "superseded"
+    },
+    {
+      "id": "cumulative-indian-format",
+      "claim": "Since its launch in 2019, the scheme transferred ₹3,69,000 crore through 19 instalments.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "positive"
+    },
+    {
+      "id": "total-as-benefit",
+      "claim": "Land-holding farmers receive ₹22,000 crore per year.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "omitted-landholding",
+      "claim": "Farmers receive Rs 6,000 annually.",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative"
+    },
+    {
+      "id": "browser-officer-account-hi",
+      "claim": "भूमिधारक किसानों के लिए PM-KISAN योजना के तहत, एक साल के लिए ₹6,000 की सहायता दी जाती है, जो तीन बराबर किस्तों में अंतर्गत होती है और डिजिटल लाभ के माध्यम से अधिकारी के खाते में ट्रांसफर की जाती है।",
+      "page": 2,
+      "anchor": "6,000/- per year",
+      "expected": "negative",
+      "note": "Observed browser generation false accept under pre-release layered-qwen-v1; implementing-agent source review identified changed bank-account recipient and DBT meaning. Preserved privately, not silently reassessed."
+    }
+  ]
+}

@@ -93,3 +93,45 @@ All prior authentication, ingestion, actual E5/vector and PostgreSQL regressions
 
 Browser Ask used the existing private admin session: English and Hindi annual-support answers showed the official source, physical page 2 and exact [0, 1056) quote. One alternate Hindi wording returned grounding_validation_failed with no answer; a transient fetch error recovered. Current Hindi entitlement abstained and ambiguous English intent clarified. Owned history and its Hindi answer detail survived actual API/RAG process restart and page reload; no credentials were entered or published.
 Browser cancellation reached cancelled with no answer. Existing Hindi Search still returned exact historical passages and admin access/document ingestion remained available.
+
+## Part 6 claim/citation evidence (2026-10-06)
+
+Additive `0005_citations` and repeated upgrade compared every existing table row in memory before/after, including private answer histories and worker/auth state. All were unchanged; zero historical claims/citations were backfilled. Four versions/171 pages/410 provisional chunks, nine indexed passages, one eligible historical PIB source and three excluded sources remain unchanged. No account provisioning, extra model, OCR or trust score.
+
+### Support development measurements
+
+[35-case support set](support_devset.json) and [read-only runner](../backend/evaluate_support.py) use the original eligible factsheet checksum/physical pages. Claims/labels were source-reviewed by the implementing agent and tuned during development; independent human validation and held-out evaluation are pending. Nine positives cover English/Hindi annual benefit, negation, named organisations, SMF objectives and equivalent Indian cumulative-number formatting. Twenty-six negatives cover amount/currency/frequency, instalment count versus national total, recipients/omitted conditions, negation, current/historical scope, jurisdiction/year, unrelated/edited quotes, insufficient quote, Hindi meaning, isolated conflict/supersession and the observed browser failure below. Synthetic mutations never entered application source tables/vectors.
+
+Final `layered-qwen-v2` run with the same pinned Qwen/digest:
+
+| Measure | Result / denominator |
+| --- | --- |
+| False accepts | 0/26 agent-labeled negative candidates |
+| False rejects | 0/9 agent-labeled positive candidates |
+| Exact SQL provenance | 34/35 attempts; the one intentionally fabricated quote failed before judging |
+| Retained candidate coverage | 9/35 overall (25.7%); 9/9 positives; this challenge mix is not normal-user answer coverage |
+| Judge calls | 12/35 cases; guards/provenance handled the remainder |
+| Judge-case wall latency | median 1.512 s, range 1.359–4.612 s (first cold); includes source lookup/check and inference |
+
+These results do not establish a hallucination target, general multilingual accuracy or independent truth verification. Guard/judge tuning used this same set. Conflicts are limited to selected same-scheme annual contexts and explicit source relationships, not exhaustive legal conflict detection. Judgment can still miss incorrect meaning.
+
+A separate real-source two-candidate fixture retained the valid annual benefit and removed monthly ₹6,000: `partial`, 1/2 candidate retention, one judge call. Production generation still permits one claim. Four real generation-plus-support questions returned two retained English claims (annual benefit with land-holding restriction, SMF objective), one Hindi annual candidate removed for omitted land-holding scope, and one Hindi face-authentication abstention generated with zero claims. Thus 2/3 generated candidates retained and 2/4 queries produced claims; all 2/2 retained claims had exact original citations. No rejected policy prose was shown.
+
+Warm pipeline totals were 6.198 s English annual, 5.788 s English objectives, 4.681 s Hindi annual rejection and 1.986 s Hindi zero-claim abstention. Added support-stage time was 1.741/2.006 s for retained English claims and 43.61 ms for the Hindi deterministic rejection; no support call for zero claims. These include real-source SQL gates/IPC and exclude browser rendering/polling. No matched counterfactual or throughput benchmark is claimed. Judge raw prompt counts matched the pinned tokenizer exactly; 256 output/64 safety tokens fit the existing 4096 context without clipping. GPU/runtime architecture and manifest are unchanged; no new memory-profile claim.
+
+### Observed false accept and conservative correction
+
+Before release, the browser's scoped Hindi annual answer changed the recipient to “अधिकारी के खाते” and DBT wording to “डिजिटल लाभ”. Pre-release `layered-qwen-v1` accepted it: one manually identified false accept in that observed case. The earlier 34-case set had reported 0/25 false accepts and missed this failure. It is not hidden: the complete candidate is now a negative development case, recipient/DBT guards were added and the method advanced to `layered-qwen-v2`. The final added case is rejected for scope mismatch. This is further development tuning, not fresh held-out success.
+
+Existing private v1 answer/assessment remains unchanged and shows its recorded method; citation views identify when the current method differs and state that no reassessment occurred. Part 5 answers remain `not_evaluated`. This known failure demonstrates why same-model agreement is not independent corroboration. Hindi grammar and interpretation remain limited; correct bilingual hand-labeled support inputs passing does not imply reliable Hindi generation.
+
+### Regression and browser checks
+
+Final full suite: **107 passed, one existing upstream TestClient deprecation**, 56.35 s. Required pip check, TypeScript and production Vite build passed. Build initially encountered the Windows sandbox's parent-directory read restriction; authorized read access resolved it. Dedicated real PostgreSQL/actual E5 tests cover prior auth/ingestion/retrieval/answer behavior, exact-span persistence, stable IDs/index-rebuild inspection, partial filtering, legacy no-backfill, cross-user 404, normal-user text/admin-only originals, source archive and appended review change during support, missing/changed provenance redaction, timeout/unavailable/invalid verifier errors and no published answer. Verifier failure tests use controlled doubles; they do not measure a real 30-second model timeout. Real model checks exercised bounded generation/judging; Part 5's actual contained cancellation/offline recovery evidence remains applicable and is recorded above.
+
+Browser checks used the existing private session, without entering/publishing credentials: legacy answer showed `not_evaluated` and opened actual page 2; new English annual claim showed numbered marker, valid SQL provenance, bounded heuristic support, version/date/applicability and original [0,1056) page text. The pre-release Hindi false accept is documented above; final revised browser behavior is recorded below. Current-policy abstention/clarification and reload/history flows were checked. Source revocation was tested only in isolated SQL fixtures, not by changing the live source review. React renders source/model text as text, not trusted HTML. Public-file/secret, relative-link/command and remote-hash checks accompany release; raw reports, corpus, models/vectors and private snapshots stay ignored.
+
+Final browser repeat of the same scoped Hindi question returned `insufficient_evidence`, candidate omitted for `scope_mismatch`, with no rejected factual text shown. Its total worker time was 10.610 s including cold generation. Opening the preserved v1 history showed the earlier-method/no-reassessment notice. New English browser annual claim had exact page-2 inspection (earlier measured worker total 10.117 s); legacy Part 5 inspection remained not_evaluated.
+
+Final v2 English browser request took 6.020 s total, retained the land-holding/₹6,000/year/three-instalment claim, and opened exact page 2 with `layered-qwen-v2`. Current Hindi entitlement abstained and ambiguous English intent clarified.
+Final v2 answer and complete citation/source inspection text matched exactly after authenticated browser reload and history reselection.

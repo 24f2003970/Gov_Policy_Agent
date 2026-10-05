@@ -261,6 +261,8 @@ def provenance(version_id: UUID, body: VerificationInput, user: User = Depends(a
 
 @router.post("/versions/{version_id}/relationships", dependencies=[Depends(csrf)], status_code=201)
 def relationship(version_id: UUID, body: RelationshipInput, user: User = Depends(admin_user), db: Session = Depends(get_db)):
+    # Serialize supersession with final citation/source publication locks.
+    list(db.scalars(select(DocumentVersion).where(DocumentVersion.id.in_([version_id,body.to_version_id])).order_by(DocumentVersion.id).with_for_update()))
     source, target = require_version(db, version_id), require_version(db, body.to_version_id)
     if source.id == target.id or source.provenance_status != "verified" or target.provenance_status != "verified":
         raise HTTPException(409, "Relationships require distinct verified source versions")

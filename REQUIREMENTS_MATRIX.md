@@ -4,8 +4,8 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 
 | Requirement / proposal location | Planned part | Current status and adaptation |
 | --- | --- | --- |
-| O1 grounded policy Q&A; pp.5,10,14 | 4–5 | Parts 4–5 eligible-source retrieval and bounded local grounded answers delivered; full semantic support pending Part 6 |
-| O2 clause/claim-level citations; pp.14,21 | 6 | Planned; version, exact page and verbatim passage; section/clause only if actually present |
+| O1 grounded policy Q&A; pp.5,10,14 | 4–5 | Parts 4–6 eligible-source retrieval, bounded local answers, exact citations and limited same-model support checks delivered; complete semantic/legal verification not established |
+| O2 clause/claim-level citations; pp.14,21 | 6 | Part 6 stable ordered claim/citation records, original version/page/span, controlled support reasons and authorized citation panel delivered; section heuristic, absent clauses null |
 | O3 six-dimensional trust; pp.14,22,26 | 8 | Design documented; all components currently unavailable; experimental index |
 | O4 Hindi/English; pp.14,18,29 | 4,7,9 | Part 4 real multilingual retrieval and paired source-checked Hindi/English dev queries; Part 5 real English/Hindi generation samples with documented Hindi limitations; broader language/Hinglish evaluation deferred |
 | O5 hallucination <5%; p.14 | 11 | Aspirational; not measured or guaranteed |
@@ -27,11 +27,11 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | Vector CRUD/HNSW/filtering; pp.20–21 | 4 | Persistent cosine Chroma, explicit embeddings, durable coherent generations, reconcile/rebuild, SQL eligibility/filter gates implemented |
 | Top20 → rerank top5; HyDE; p.21 | 4,11 | Bounded-corpus candidate retrieval/top1–10 delivered; uncalibrated heuristic cutoff, reranker/HyDE deferred |
 | Ollama Mistral/Llama, temp0.1/context4096/streaming; p.21 | 5,9 | Part 5 pinned Qwen3 4B Q4/Ollama, full LLM-token budgets, structured final-only answers, deadlines/cancellation and real GPU measurements; no unchecked streaming |
-| Claim extraction/cosine source mapping; p.21 | 6 | Citation support validation required; similarity cannot prove a claim |
+| Claim extraction/cosine source mapping; p.21 | 6 | Part 6 exact SQL provenance + lexical scope/value guards + bounded same-Qwen heuristic; similarity cannot prove support; old answers not_evaluated |
 | Personal dashboard/history/saved answers/trust timeline; p.22 | 2,9 | Part 5 owned query/result history delivered; saved answers/dashboard/trust timeline deferred, unavailable scores absent |
 | Admin analytics/topics/P@5/feedback/error rates; p.22 | 10–11 | Actual persisted events and labeled evaluation only; feedback ≠ accuracy |
 | Feedback ratings/comments/review flags; p.22 | 10 | Planned with ownership, privacy and moderation |
-| PostgreSQL users/documents/chunks/queries/citations/trust/feedback; pp.23–27 | 2–10 | Auth/ingestion plus Part 4 audited reviews, generations, active pointer and exact passages verified on PostgreSQL 18.6; Part 5 owned queries/answers and exact grounding snapshots delivered; full citations/trust/feedback deferred |
+| PostgreSQL users/documents/chunks/queries/citations/trust/feedback; pp.23–27 | 2–10 | Auth/ingestion plus Part 4 audited reviews, generations, active pointer and exact passages verified on PostgreSQL 18.6; Part 5 owned queries/answers and exact grounding snapshots delivered; Part 6 additive claim/citation tables delivered; trust/feedback deferred |
 | Source versioning/amendments/supersession; pp.10,12 | 3–6 | Part 3 immutable versions and explicitly verified relationship APIs; legal dates separate from ingestion/verification, no automatic supersession |
 | Swagger/OpenAPI; p.15 | 1 | Implemented at /docs and /openapi.json |
 | React/Tailwind/FastAPI layered architecture; pp.3,16–18 | 1 | Implemented starter, modular monolith; TypeScript/Vite added |
@@ -50,4 +50,4 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 
 ## Cross-cutting acceptance rules
 
-User input and retrieved instructions are untrusted data. Future answering must preserve original passages, label translations, clarify ambiguous scheme/jurisdiction/date questions and abstain without support. Immutable source versions, explicit verified relationships and SQL-gated retrieval are implemented; Part 5 bounded structured output, initial numeric/exact-span checks, conservative clarification/abstention and source rechecks delivered; full semantic support remains planned. Retrieval candidates and similarity cannot establish claim support. Publication dates, counts, evaluation results and trust values must remain evidence-based. See [maintainer state](docs/MAINTAINER.md) for continuation decisions.
+User input and retrieved instructions are untrusted data. Future answering must preserve original passages, label translations, clarify ambiguous scheme/jurisdiction/date questions and abstain without support. Immutable source versions, explicit verified relationships and SQL-gated retrieval are implemented; Part 5 bounded structured output, initial numeric/exact-span checks, conservative clarification/abstention and source rechecks delivered; Part 6 limited final-language support checks and current-access history redaction delivered; exhaustive semantic/legal verification remains unavailable. Retrieval candidates and similarity cannot establish claim support. Publication dates, counts, evaluation results and trust values must remain evidence-based. See [maintainer state](docs/MAINTAINER.md) for continuation decisions.

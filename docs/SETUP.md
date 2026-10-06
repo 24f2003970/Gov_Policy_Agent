@@ -31,7 +31,7 @@ Apply migrations for both fresh and existing application installations:
 .\.venv\Scripts\python.exe -m alembic -c backend/alembic.ini current
 ```
 
-Expected head: `0008_saved_answers`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
+Expected head: `0009_answer_feedback`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
 
 Create the first administrator only when none exists:
 
@@ -226,3 +226,7 @@ The existing root `upgrade head` command adds the nullable assessment column wit
 ## Existing installation upgrade
 
 Part 9 adds only the bookmark migration; keep the existing private configuration, accounts, corpus and model stores. Apply the migration using the existing command above, then restart the existing API owner. Frontend startup remains `npm.cmd --prefix frontend run dev`; no new service, model, package or provisioning step is required. Inspect listening ports/process owners before restarting a missing service; use one owner per API/frontend/worker/index/RAG service. A stopped frontend produces `ERR_CONNECTION_REFUSED`; run the existing dev command and confirm Vite reports `http://127.0.0.1:5173/`.
+
+## Feedback and analytics
+
+Existing startup commands are unchanged. After the additive migration, restart only the API if it is already running. Feedback is available on accessible answered/partial details in Ask, History and Saved; it requires no model service. Admin Analytics is at `/#analytics`, with 1/7/30-day UTC windows. Feedback comments are private plain text, maximum 500 Unicode characters (the browser may conservatively count supplementary characters as two). No analytics package or synthetic live feedback seed is required.

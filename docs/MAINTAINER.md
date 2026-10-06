@@ -1,10 +1,10 @@
 # Maintainer state
 
-Updated 2026-10-06. Parts 1–9 are implemented. Part 10 requires a new user instruction; do not begin it automatically. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
+Updated 2026-10-06. Parts 1–10 are implemented. Part 11 requires a new user instruction; do not begin it automatically. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
 
 ## Continuation baseline
 
-- Current schema: `0008_saved_answers`; preserve configured databases, private `.env`, originals and existing administrator. No application reset or reprovisioning is required.
+- Current schema: `0009_answer_feedback`; preserve configured databases, private `.env`, originals and existing administrator. No application reset or reprovisioning is required.
 - Local environment: Windows 11/PowerShell, bundled Python 3.12.14 `.venv`, Node 24.12.0, PostgreSQL 18.6. CPU i5-13500HX, about 15.7 GiB usable RAM, RTX 4050 with 6141 MiB VRAM. Part 5 measured GPU offload with the pinned 4B Q4 model; see verification for timing/memory and Hindi limitations.
 - Pre-Part-4 documentation cleanup: `cfa7006a849bdf056da5372c44d98f1d70f43c85`. Historical ingestion: `d59aaf9392ce492dcd95bd18406d4f9ee09219dc`; auth: `fedc1c43a38324795f1d61a7348c2274407006ff`; foundation: `e8a41e16ba7e1c3b298724a05930d5fd6aae7c9b`. Part 4: `0f987b8470c06ddf09f5fd4a65204634e9fcaf0f`. The Part 5 release is the commit introducing the local-answer implementation; use Git history for its hash.
 - Setup commands have one home in [SETUP.md](SETUP.md); schema/security detail in [ARCHITECTURE.md](ARCHITECTURE.md), measured evidence in [VERIFICATION.md](VERIFICATION.md), proposal traceability in [requirement mapping](../REQUIREMENTS_MATRIX.md).
@@ -25,7 +25,6 @@ Keep pinned multilingual E5-small on CPU/two threads, normalized 384-dimensional
 
 | Part | Planned work |
 | --- | --- |
-| 10 | Feedback, genuine analytics and experiment records |
 | 11 | Held-out evaluation, security review and resource profiling |
 | 12 | Local Compose packaging, backup/restore and final project deliverables |
 
@@ -72,4 +71,12 @@ Part 9 preserves the Part 8 baseline `1bac73ed1ef3c5756ba12dbdda1fa208ea86ded3`.
 
 Parent-answer row locks serialize save/remove writes. Duplicate saves preserve bookmark time; repeated removes succeed; for overlapping opposite operations, the last database-serialized write determines membership (HTTP arrival/completion order is not promised). Composite owner/run FK and primary key enforce ownership/uniqueness in SQL. Terminal answer retention deletes bookmarks by cascade; saving does not renew expiry. Saved list/detail uses existing current-source gates, never cached copies. Expired answers are omitted from Saved even before hourly worker cleanup.
 
-The shared answer detail keeps original policy text, numbered citations, protected source text and nullable versioned evidence-quality panels. Navigation/bookmark messages follow the profile language, with Hinglish preference mapped to Hindi; older result text keeps its recorded language. List/detail links retain the originating page. Diagnostics and source/index metadata are expandable or secondary. No sharing/export, feedback, analytics, new inference model or recalibration was added. Legacy admin tools retain their existing technical labels; this is not complete translation of the admin console. Browser smoke checks are recorded in VERIFICATION; broad screen-reader/device coverage remains unmeasured.
+The shared answer detail keeps original policy text, numbered citations, protected source text and nullable versioned evidence-quality panels. Navigation/bookmark messages follow the profile language, with Hinglish preference mapped to Hindi; older result text keeps its recorded language. List/detail links retain the originating page. Diagnostics and source/index metadata are expandable or secondary. Part 9 added no sharing/export, feedback, analytics, new inference model or recalibration. Legacy admin tools retain their existing technical labels; this is not complete translation of the admin console. Browser smoke checks are recorded in VERIFICATION; broad screen-reader/device coverage remains unmeasured.
+
+## Part 10 decisions
+
+`answer_feedback` is one current vote per owner/run, composite primary key and owner/run cascade FK. Only accessible, nonempty terminal answered/partial results within the original 30 days accept feedback; abstentions/clarifications are not rated answers. Parent locks serialize changes; the last database-serialized write wins, not HTTP arrival order. Identical submissions preserve timestamps. Comments are bounded plain text, never prompts or HTML; no admin comment browser exists. Every feedback operation requires current source access; revocation hides it and blocks removal until restored or normal retention deletes the answer. Bookmarks retain their separate safe-unsave behavior.
+
+Analytics uses fixed aggregate queries in a read-only repeatable-read snapshot. Answer-created UTC cohorts are [start,end), 1/7/30 days. Current votes include edits after a historical end; there is no vote activity timeline. Participation divides votes by retained completed answered/partial runs, including subsequently revoked sources; helpful rate divides helpful votes by all current votes. Both are descriptive self-selected satisfaction, never accuracy. Missing/invalid terminal worker timings are excluded with counts; pending runs do not contribute. Processing uses job creation/current state, version ingestion and review-decision creation. Answer retention removes votes and changes historical totals. No materialized tracking, exports or private-text listings were added. Feedback remains unavailable as an evidence-quality component; historical snapshots were not reassessed.
+
+Part 10 starts from Part 9 `be47e80deebba29b1264cf697d6cbb8f4367bdd9`. Verification and remaining limits are recorded in VERIFICATION. No inference/model/config/source-access changes were needed. Future independent evaluation/security work remains Part 11.

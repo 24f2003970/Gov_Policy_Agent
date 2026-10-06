@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { authorized, type User } from './auth'
 import EvidenceQuality, {type Assessment} from './EvidenceQuality'
+import Feedback, {type Selection} from './Feedback'
 import { translate } from './ui'
 type Citation={citation_id:string;marker:number;claim_id:string;start_offset:number;end_offset:number;quote:string|null;claim_text:string|null;metadata:{title:string;issuer:string;version_number:number;pdf_page_number:number|null;source_url:string;publication_date:string|null;effective_date:string|null;version_id:string;extraction_method?:string;ocr_notice?:string;review:{applicability:string}};current_access:{allowed:boolean};provenance:{status:string;reason:string};support:{outcome:string;reason:string;method:string|null}}
-export type Answer={id:string;question:string;state:string;status:string|null;error_code:string|null;saved:boolean;can_save:boolean;source_access_withheld:boolean;current_support_method?:string;result?:{answer:string;claims:{text:string;claim_id?:string}[];limitations:string[]}|null;citations?:Citation[];evidence_quality?:Assessment;claim_checks?:{position:number;retained:boolean;assessment:{outcome:string;reason:string}}[];current_source_warnings?:{warning:string}[];model?:{tag:string;digest:string};timings?:{worker_total_ms:number}}
+export type Answer={id:string;question:string;state:string;status:string|null;error_code:string|null;saved:boolean;can_save:boolean;can_feedback?:boolean;feedback?:Selection|null;source_access_withheld:boolean;current_support_method?:string;result?:{answer:string;claims:{text:string;claim_id?:string}[];limitations:string[]}|null;citations?:Citation[];evidence_quality?:Assessment;claim_checks?:{position:number;retained:boolean;assessment:{outcome:string;reason:string}}[];current_source_warnings?:{warning:string}[];model?:{tag:string;digest:string};timings?:{worker_total_ms:number}}
 export default function AnswerDetail({user,run,onUpdate}:{user:User;run:Answer;onUpdate:(v:Answer)=>void}) {
   const t=translate(user),[busy,setBusy]=useState(false),[error,setError]=useState(''),[citation,setCitation]=useState<Citation|null>(null),[text,setText]=useState(''),[stale,setStale]=useState(false)
   const live=useRef(true),inspectionRequest=useRef(0)
@@ -32,6 +33,7 @@ export default function AnswerDetail({user,run,onUpdate}:{user:User;run:Answer;o
     {citation&&<aside className="card" aria-label={t('Source text','स्रोत का पाठ')}><h3>{t('Citation','संदर्भ')} [{citation.marker}]</h3><button onClick={()=>{inspectionRequest.current++;setCitation(null);setText('')}}>{t('Close','बंद करें')}</button>{text?<pre className="whitespace-pre-wrap">{text}</pre>:<p role="status">{t('Loading text…','पाठ खुल रहा है…')}</p>}</aside>}
     {run.claim_checks?.some(c=>!c.retained)&&<details><summary>{t('Omitted candidates','छोड़े गए संभावित दावे')}</summary>{run.claim_checks.filter(c=>!c.retained).map(c=><p key={c.position}>{c.position}: {c.assessment.outcome} · {c.assessment.reason}</p>)}</details>}
     {run.model&&<details><summary>{t('Recorded processing details','प्रसंस्करण का रिकॉर्ड')}</summary><p>{run.model.tag} · {run.model.digest} · {run.timings?.worker_total_ms} ms</p></details>}
+    {run.can_feedback&&<Feedback key={run.id} user={user} id={run.id} current={run.feedback||null} onUpdate={v=>onUpdate({...run,feedback:v})} onRefresh={reload}/>}
     {run.evidence_quality&&<EvidenceQuality assessment={run.evidence_quality} language={user.preferred_language==='en'?'en':'hi'}/>}
   </div>
 }

@@ -3,6 +3,7 @@ import Foundation from './App'
 import DocumentAdmin from './DocumentAdmin'
 import Search from './Search'
 import Ask from './Ask'
+import Analytics from './Analytics'
 import AnswerLibrary from './AnswerLibrary'
 import RecordPage from './RecordPage'
 import { translate } from './ui'
@@ -44,7 +45,7 @@ export default function AuthApp() {
     <a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus()}}>{t('Skip to content','मुख्य भाग पर जाएँ')}</a>
     <header className="border-b bg-white"><div className="mx-auto max-w-5xl px-5 py-4"><a className="font-semibold text-lg no-underline" href="#home">Government Policy Assistant</a><p className="muted text-sm">GOV-CS-028 · {t('Student project · reviewed historical sources','छात्र परियोजना · जाँचे गए ऐतिहासिक स्रोत')}</p>
     <nav aria-label={t('Main navigation','मुख्य नेविगेशन')} className="mt-4 flex flex-wrap items-center gap-3">
-      {user? <>{links.map(([key,en,hi])=><a className="nav-link" aria-current={route===key?'page':undefined} key={key} href={`#${key}`}>{t(en,hi)}</a>)}{user.role==='admin'&&<a className="nav-link" aria-current={route==='admin'?'page':undefined} href="#admin">{t('Admin','प्रशासन')}</a>}<button disabled={busy} onClick={()=>void signOut()}>{t('Logout','लॉग आउट')}</button></>:<><a href="#login">Login</a><a href="#register">Register</a></>}
+      {user? <>{links.map(([key,en,hi])=><a className="nav-link" aria-current={route===key?'page':undefined} key={key} href={`#${key}`}>{t(en,hi)}</a>)}{user.role==='admin'&&<><a className="nav-link" aria-current={route==='admin'?'page':undefined} href="#admin">{t('Admin','प्रशासन')}</a><a className="nav-link" aria-current={route==='analytics'?'page':undefined} href="#analytics">{t('Analytics','आँकड़े')}</a></>}<button disabled={busy} onClick={()=>void signOut()}>{t('Logout','लॉग आउट')}</button></>:<><a href="#login">Login</a><a href="#register">Register</a></>}
     </nav></div></header>
     <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-5 py-8">
     {error&&<p role="alert" className="notice mb-4">{error}</p>}
@@ -53,7 +54,7 @@ export default function AuthApp() {
     :!user?<section><h1>Sign in required</h1><p>This page requires an active session.</p><a href="#login">Login</a></section>
     :route==='ask'?<Ask user={user}/>:route==='search'?<Search user={user}/>
     :route==='history'||route==='saved'?id?<RecordPage key={id} user={user} id={id} library={route} backPage={initialPage}/>:<AnswerLibrary key={route} user={user} saved={route==='saved'} initialPage={initialPage}/>
-    :route==='admin'?<AdminPage/>:route==='account'?<AccountPage user={user} onUpdate={setUser}/>:<p>{t('Page not found. Choose a page from the navigation.','पृष्ठ नहीं मिला। नेविगेशन से पृष्ठ चुनें।')}</p>}
+    :route==='admin'?<AdminPage/>:route==='account'?<AccountPage user={user} onUpdate={setUser}/>:route==='analytics'?<Analytics user={user}/>:<p>{t('Page not found. Choose a page from the navigation.','पृष्ठ नहीं मिला। नेविगेशन से पृष्ठ चुनें।')}</p>}
     </main><footer className="mx-auto max-w-5xl border-t px-5 py-5 muted text-sm"><p>{t('Academic prototype. Historical evidence does not establish present eligibility.','शैक्षणिक परियोजना। ऐतिहासिक साक्ष्य वर्तमान पात्रता साबित नहीं करते।')}</p><a href="#system">{t('System status','सिस्टम स्थिति')}</a></footer>
   </>
 }

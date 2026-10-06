@@ -18,6 +18,8 @@ from .documents import router as documents_router
 from .search_api import router as search_router
 from .ask_api import router as ask_router
 from .ocr_api import router as ocr_router
+from .feedback_api import router as feedback_router
+from .analytics_api import router as analytics_router
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if application.state.engine is not None:
             application.state.engine.dispose()
 
-    app = FastAPI(title=settings.app_name, version="0.9.0", lifespan=lifespan)
+    app = FastAPI(title=settings.app_name, version="0.10.0", lifespan=lifespan)
     app.state.settings = settings
     install_database(app, settings)
     app.include_router(router)
@@ -49,6 +51,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(search_router)
     app.include_router(ask_router)
     app.include_router(ocr_router)
+    app.include_router(feedback_router)
+    app.include_router(analytics_router)
 
     def error_response(request: Request, status: int, code: str, message: str) -> JSONResponse:
         request_id = request.state.request_id
@@ -91,14 +95,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/health/live", response_model=LiveResponse)
     async def live():
-        return LiveResponse(status="alive", project_id="GOV-CS-028", phase=9)
+        return LiveResponse(status="alive", project_id="GOV-CS-028", phase=10)
 
     @app.get("/health/ready", response_model=ReadyResponse)
     def ready():
         database_ok = schema_ready(app.state.engine)
         auth_ok = settings.jwt_secret is not None
         data = ReadyResponse(
-            status="ready" if database_ok and auth_ok else "not_ready", project_id="GOV-CS-028", phase=9,
+            status="ready" if database_ok and auth_ok else "not_ready", project_id="GOV-CS-028", phase=10,
             required_dependencies={"configuration": "validated",
                                    "postgresql": "connected_schema_current" if database_ok else "unavailable_or_migrations_missing",
                                    "authentication": "configured" if auth_ok else "unconfigured"},

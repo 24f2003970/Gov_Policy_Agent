@@ -46,3 +46,19 @@ class SavedAnswer(Base):
     run_id: Mapped[UUID] = mapped_column(primary_key=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now())
     __table_args__ = (ForeignKeyConstraint(['user_id','run_id'],['answer_runs.user_id','answer_runs.id'],ondelete='CASCADE'),)
+
+
+class AnswerFeedback(Base):
+    __tablename__ = 'answer_feedback'
+    user_id: Mapped[UUID] = mapped_column(primary_key=True)
+    run_id: Mapped[UUID] = mapped_column(primary_key=True)
+    vote: Mapped[str] = mapped_column(String(12))
+    reason: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    comment: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now())
+    __table_args__ = (
+        ForeignKeyConstraint(['user_id','run_id'],['answer_runs.user_id','answer_runs.id'],ondelete='CASCADE'),
+        CheckConstraint("vote IN ('helpful','not_helpful')",name='ck_feedback_vote'),
+        CheckConstraint("reason IS NULL OR reason IN ('unclear_wording','incomplete_answer','citation_issue','language_issue','suspected_factual_error')",name='ck_feedback_reason'),
+    )

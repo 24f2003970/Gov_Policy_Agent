@@ -18,7 +18,7 @@ def client():
 def test_live_without_models_or_database(client):
     response = client.get("/health/live")
     assert response.status_code == 200
-    assert response.json() == {"status": "alive", "project_id": "GOV-CS-028", "phase": 9}
+    assert response.json() == {"status": "alive", "project_id": "GOV-CS-028", "phase": 10}
     UUID(response.headers["x-request-id"])
 
 

@@ -16,7 +16,7 @@ const hindi:Record<string,string> = {
   faithfulness:'मौजूदा नियम और उत्तर बनाने वाला वही मॉडल समर्थन जाँचते हैं। यह स्वतंत्र सत्यापन नहीं है और स्रोत-कवरेज से जुड़ा है; इसकी सटीकता का मान्य संख्यात्मक माप नहीं है।',
   consistency:'एक ही स्रोत के अंश, प्रतियाँ या संस्करण स्वतंत्र पुष्टि नहीं हैं। स्वतंत्र सहमति स्थापित नहीं हुई है।',
   calibration:'अलग, पहले न इस्तेमाल किए गए मूल्यांकन से विश्वसनीयता नहीं मापी गई है। विकास के दौरान जाँचे गए उदाहरण पर्याप्त नहीं हैं।',
-  feedback:'वास्तविक प्रतिक्रियाओं और उन्हें मिलाने की उचित विधि का अभाव है। अनुमानित मान नहीं भरा गया है।',
+  feedback:'प्रतिक्रिया वोट अलग से संतुष्टि बताते हैं। उन्हें प्रमाण-गुणवत्ता में बदलने की मान्य विधि नहीं है; अनुमानित मान नहीं भरा गया है।',
 }
 const english:Record<string,string> = {
   recency:'Source dates and scope appear in details. Age alone cannot tell whether policy is still in force; old sources can support historical answers.',
@@ -24,7 +24,7 @@ const english:Record<string,string> = {
   faithfulness:'The support check uses the model that also wrote the answer, with the same evidence as citation coverage. Its agreement is not independent proof; no validated numerical measure is available.',
   consistency:'Chunks, copies and versions of one source are not independent confirmation. Independent agreement has not been established.',
   calibration:'Reliability has not been measured using a separate, unused set of questions. Development examples are not enough.',
-  feedback:'Real feedback and a suitable way to combine it are not available. No guessed value is used.',
+  feedback:'Feedback votes measure satisfaction separately. No validated method converts them into evidence quality; no guessed value is used.',
 }
 const statuses:Record<string,[string,string]> = {
   assessed_limited:['Limited assessment','सीमित आकलन'], not_evaluated:['Not evaluated — historical answer was not rescored','आकलन नहीं हुआ — पुराने उत्तर की दोबारा जाँच नहीं की गई'],

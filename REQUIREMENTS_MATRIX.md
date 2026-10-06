@@ -13,8 +13,8 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | S1 500 documents/10 ministries; p.14 | 3–4,11 | Adapted toward 10–20 verified files/3–5 schemes; actual four PDFs/three schemes/171 pages, one eligible historical PIB text source and three excluded |
 | S2 retrieval P@5 ≥0.80; pp.14,30 | 11 | Aspirational; Part 4 dev gold-span hit@5 4/4 per language on one source, not precision or held-out evidence |
 | S3 PDF, scanned PDF, HTML, text; pp.14–15,19 | 3,7 | Part 3 digital PDF/UTF-8 TXT implemented; scanned/mixed quality flags delivered, Part 7 bounded English/Hindi OCR with versioned artifacts and manual review; HTML/DOCX deferred |
-| S4 feedback improvement; pp.14,22 | 10 | Planned; manual review, no automatic training from user ratings |
-| S5 admin corpus/system dashboard; pp.14,22 | 3,9–10 | Part 3 upload/list/status/page inspection/preview/retry/archive delivered; wider analytics deferred |
+| S4 feedback improvement; pp.14,22 | 10 | Part 10 private current votes/reasons/comments delivered; no automatic training or numerical trust component |
+| S5 admin corpus/system dashboard; pp.14,22 | 3,9–10 | Part 3 upload/list/status/page inspection/preview/retry/archive delivered; Part 10 bounded admin aggregates delivered; no private question/comment browsing |
 | S6 MLflow/model monitoring; pp.14,30 | 10–11 | Reproducible experiment records planned; MLflow optional only if useful |
 | S7 research publication; pp.14,31 | 12 | Optional future research; no acceptance promise |
 | User management/profile/guest-user-admin; p.19 | 2,9 | Part 2 verified with real PostgreSQL and browser: user/admin, protected language profile; guest access limited to health/public registration/login |
@@ -29,9 +29,9 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | Ollama Mistral/Llama, temp0.1/context4096/streaming; p.21 | 5,9 | Part 5 pinned Qwen3 4B Q4/Ollama, full LLM-token budgets, structured final-only answers, deadlines/cancellation and real GPU measurements; no unchecked streaming |
 | Claim extraction/cosine source mapping; p.21 | 6 | Part 6 exact SQL provenance + lexical scope/value guards + bounded same-Qwen heuristic; similarity cannot prove support; old answers not_evaluated |
 | Personal dashboard/history/saved answers/trust timeline; p.22 | 2,9 | Part 9 responsive protected History/Saved pagination and owner-only persistent bookmarks delivered; no copied answer snapshots or extended retention; decorative dashboard/trust timeline deferred, unavailable scores absent |
-| Admin analytics/topics/P@5/feedback/error rates; p.22 | 10–11 | Actual persisted events and labeled evaluation only; feedback ≠ accuracy |
-| Feedback ratings/comments/review flags; p.22 | 10 | Planned with ownership, privacy and moderation |
-| PostgreSQL users/documents/chunks/queries/citations/trust/feedback; pp.23–27 | 2–10 | Auth/ingestion plus Part 4 audited reviews, generations, active pointer and exact passages verified on PostgreSQL 18.6; Part 5 owned queries/answers and exact grounding snapshots delivered; Part 6 additive claim/citation tables delivered; Part 8 nullable versioned evidence-quality snapshot and Part 9 additive owned bookmark references delivered; feedback deferred |
+| Admin analytics/topics/P@5/feedback/error rates; p.22 | 10–11 | Part 10 retained run/latency/feedback/processing aggregates delivered; topics/P@5/independent evaluation deferred to Part 11; feedback ≠ accuracy |
+| Feedback ratings/comments/review flags; p.22 | 10 | Part 10 owned current-access feedback with fixed reasons, 500-character plain comments, update/removal and cascade retention; no moderation/private-comment browser |
+| PostgreSQL users/documents/chunks/queries/citations/trust/feedback; pp.23–27 | 2–10 | Auth/ingestion plus Part 4 audited reviews, generations, active pointer and exact passages verified on PostgreSQL 18.6; Part 5 owned queries/answers and exact grounding snapshots delivered; Part 6 additive claim/citation tables delivered; Part 8 nullable versioned evidence-quality snapshot and Part 9 additive owned bookmark references delivered; Part 10 private feedback delivered |
 | Source versioning/amendments/supersession; pp.10,12 | 3–6 | Part 3 immutable versions and explicitly verified relationship APIs; legal dates separate from ingestion/verification, no automatic supersession |
 | Swagger/OpenAPI; p.15 | 1 | Implemented at /docs and /openapi.json |
 | React/Tailwind/FastAPI layered architecture; pp.3,16–18 | 1 | Implemented starter, modular monolith; TypeScript/Vite added |

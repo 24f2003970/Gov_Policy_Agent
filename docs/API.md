@@ -103,3 +103,26 @@ All routes require an active authenticated user; guessed foreign answer IDs retu
 | GET /ask/history/{run_id} | Shared History/Saved protected detail; adds saved and can_save; existing source redaction and assessment contract apply |
 
 Answered/partial terminal results need nonempty claims and accessible citations. Unassessed older factual results remain unassessed. Saving does not refresh the original answer creation/expiry date. Deleting an answer during normal worker retention cascades its bookmark. Concurrent writes serialize on the parent answer; the last database-serialized membership change wins, not necessarily the request that arrived last. Duplicate saves preserve saved_at. Pagination rejects page <1; an out-of-range positive page is empty. Saved summaries omit expired answers and never include quote text or scores. History uses existing retention cleanup timing. No endpoint reassesses a historical answer.
+
+## Private answer feedback
+
+| Route | Behavior |
+| --- | --- |
+| GET /ask/history/{run_id}/feedback | Owned current-access check; returns feedback or null |
+| PUT /ask/history/{run_id}/feedback | Origin/CSRF required; create/replace current vote, preserving creation time |
+| DELETE /ask/history/{run_id}/feedback | Origin/CSRF required; idempotent removal under the same access gates |
+| GET /admin/analytics?days=7 | Admin-only aggregates; days must be 1, 7 or 30 |
+
+PUT accepts `vote: helpful|not_helpful`, optional `reason` and `comment`. Reasons: `unclear_wording`, `incomplete_answer`, `citation_issue`, `language_issue`, `suspected_factual_error`; null means unspecified. Comment maximum is 500 Unicode characters before trimming; blank becomes null. Control/surrogate characters except newline/tab and extra fields are rejected (422). HTML-like/prompt-like text is stored literally, never interpreted. Responses contain only feedback fields and timestamps. Owned protected detail adds `can_feedback`/`feedback`; list summaries omit feedback. Foreign IDs return 404; missing auth 401, insufficient role/CSRF 403. Ineligible status, expiry or revoked source returns 409 on every feedback endpoint, including DELETE. Only accessible done answered/partial results with displayed claims/citations qualify. Failed, pending, cancelled, abstained and clarification runs do not accept ratings. Identical PUT preserves timestamps; concurrent writes are serialized on the parent and last serialized change wins. Retention cascades deletion without extending the original answer lifetime.
+
+Analytics accepts optional timezone-aware `end` no later than now; the UTC answer-created cohort is `[end-days,end)`. Output includes window/snapshot timestamp, outcome and language groups, latency samples/exclusions, current feedback vote/reason/outcome groups, denominators and processing counts. `data_environment` labels isolated test data separately from the local application. All rows use one read-only snapshot; there are no private-content lists.
+
+| Metric | Definition |
+| --- | --- |
+| Participation | Current votes / retained completed answered or partial runs in the cohort, including subsequently revoked sources |
+| Helpful rate | Helpful current votes / all current votes; descriptive satisfaction, not accuracy |
+| Worker latency | Recorded numeric `worker_total_ms` from terminal done/error/cancelled runs, 0 through 30 days in milliseconds; missing, nonnumeric, negative/oversized values excluded and counted; pending runs excluded |
+| Latency summaries | Mean and PostgreSQL continuous P50/P95 over valid samples; no samples yields null |
+| Processing | Versions by ingested_at; ingestion/OCR/index jobs by created_at and current state; OCR reviews by decision created_at, not distinct pages |
+
+Feedback is the current selection on the answer cohort, including edits made after a historical end; it is not a feedback activity timeline. Zero denominators yield null. Thirty-day terminal cleanup removes answer/vote records, so older windows are incomplete and totals can change. Source/job records have different retention. The evidence-quality feedback component remains null; no backfill, recalibration, token/cost/live-user metrics or unrecorded stage timings are inferred.

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from .auth import current_user,csrf,now,throttle
 from .database import get_db
 from .models import User
-from .answer_models import AnswerRun, AnswerWorker, SavedAnswer
+from .answer_models import AnswerRun, AnswerWorker, SavedAnswer, AnswerFeedback
 from .search_api import SearchInput
 from .eligibility import eligibility
 from .document_models import DocumentVersion
@@ -69,7 +69,9 @@ def view(db,run,detail=True):
         if withheld:
             for s in sources:s['text']=None
             for c in citations:c['quote']=None;c['claim_text']=None
-        result.update(result=answer,sources=sources,citations=citations,claim_checks=checks,source_access_withheld=withheld,current_support_method=METHOD,
+        can_feedback=bool(run.state=='done' and answer and answer['status'] in ('answered','partial') and answer['claims'] and citations and not withheld and run.created_at>now()-timedelta(days=30))
+        feedback=db.get(AnswerFeedback,(run.user_id,run.id)) if can_feedback else None
+        result.update(can_feedback=can_feedback,feedback=({'vote':feedback.vote,'reason':feedback.reason,'comment':feedback.comment,'created_at':feedback.created_at,'updated_at':feedback.updated_at} if feedback else None),result=answer,sources=sources,citations=citations,claim_checks=checks,source_access_withheld=withheld,current_support_method=METHOD,
             saved=db.get(SavedAnswer,(run.user_id,run.id)) is not None,
             can_save=bool(run.state=='done' and answer and answer['status'] in ('answered','partial') and answer['claims']
                 and citations and not withheld and run.created_at>now()-timedelta(days=30)),

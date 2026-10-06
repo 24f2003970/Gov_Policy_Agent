@@ -113,8 +113,10 @@ def inspect_page(version_id: UUID, ordinal: int, offset: int = Query(default=0, 
     version = require_version(db, version_id)
     pointer = db.get(IndexState, 1)
     job = db.get(IndexGeneration, pointer.active_id) if pointer and pointer.active_id else None
-    e = eligibility(db, version)
     snapshot = next((v for v in job.versions if v['id'] == str(version.id)), None) if job and job.state == 'ready' else None
+    e = eligibility(db, version,snapshot.get('extraction_revision_id') if snapshot else None)
     if not e['eligible'] or not snapshot or e['review_id'] != snapshot['review_id']:
         raise HTTPException(403, 'Source is not in the active reviewed eligible generation')
-    return page_text(version_id, ordinal, offset, db)
+    from .extraction_artifacts import pages_for
+    artifact=next((p for original,p in pages_for(db,version_id,snapshot.get('extraction_revision_id')) if original.ordinal==ordinal),None)
+    return page_text(version_id, ordinal, offset, db,artifact.id if artifact and snapshot.get('extraction_revision_id') else None)

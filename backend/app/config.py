@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     max_pages: int = Field(default=500, ge=1, le=500)
     max_text_chars: int = Field(default=2_000_000, ge=100, le=2_000_000)
     job_lease_seconds: int = Field(default=45, ge=10, le=120)
+    ocr_dpi: int = Field(default=300, ge=150, le=300)
+    ocr_max_pixels: int = Field(default=12_000_000, ge=1_000_000, le=12_000_000)
+    ocr_page_seconds: int = Field(default=30, ge=1, le=60)
 
     @field_validator("cors_origins")
     @classmethod

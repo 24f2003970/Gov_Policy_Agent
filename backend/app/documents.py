@@ -216,11 +216,18 @@ def pages(version_id: UUID, page: int = Query(default=1, ge=1), db: Session = De
 
 
 @router.get("/versions/{version_id}/pages/{ordinal}")
-def page_text(version_id: UUID, ordinal: int, offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
+def page_text(version_id: UUID, ordinal: int, offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), extraction_page_id: UUID | None = None):
     require_version(db, version_id)
     page = db.scalar(select(ExtractedPage).where(ExtractedPage.version_id == version_id, ExtractedPage.ordinal == ordinal))
     if page is None:
         raise HTTPException(404, "Extracted page/section not available")
+    if extraction_page_id:
+        from .ocr_models import ExtractionPage
+        artifact=db.get(ExtractionPage,extraction_page_id)
+        if not artifact or artifact.page_id!=page.id:raise HTTPException(404,'Extraction artifact not available')
+        from types import SimpleNamespace
+        page=SimpleNamespace(pdf_page_number=page.pdf_page_number,source_start=page.source_start,
+            text=artifact.text,paragraphs=artifact.paragraphs,quality_flags=artifact.quality_flags)
     return {"ordinal": ordinal, "pdf_page_number": page.pdf_page_number, "offset": offset, "source_start": page.source_start,
             "text": page.text[offset:offset + 20000], "total_characters": len(page.text),
             "paragraphs": [p for p in page.paragraphs if p["end"] > offset and p["start"] < offset + 20000], "quality_flags": page.quality_flags}
@@ -240,7 +247,7 @@ def retry(version_id: UUID, db: Session = Depends(get_db)):
     if db.get(Document, version.document_id).archived_at is not None:
         raise HTTPException(409, "Unarchive document before retry")
     if job.state != "failed" or job.attempts >= 3:
-        raise HTTPException(409, "Only failed jobs with fewer than three attempts can retry; OCR awaits Part 7")
+        raise HTTPException(409, "Only failed initial jobs below three attempts can retry; use a separate OCR revision for flagged pages")
     job.state, job.progress, job.error_code, job.finished_at = "queued", 0, None, None
     db.commit()
     return job_data(job)

@@ -10,6 +10,8 @@ from .document_models import Document, DocumentVersion, ExtractedPage, Scheme
 from .eligibility import eligibility, source_snapshot
 from .embedding import SPEC, Encoder
 from .index_models import IndexGeneration, IndexPassage, IndexState
+from .extraction_artifacts import pages_for, page_for, metadata_for
+from .language import normalize
 
 LEASE_SECONDS = 180
 MAX_PASSAGES = 20_000
@@ -21,7 +23,7 @@ def queue(db):
     if pending: return pending
     sources = source_snapshot(db)
     versions = [{'id': str(v.id), 'review_id': e['review_id'], 'checksum': v.checksum,
-                 'extraction_revision': v.extraction_revision} for v, e in sources if e['eligible']]
+                 'extraction_revision': v.extraction_revision, 'extraction_revision_id':e['extraction_revision_id']} for v, e in sources if e['eligible']]
     generation = IndexGeneration(spec=SPEC, versions=versions)
     db.add(generation); db.commit()
     return generation
@@ -101,14 +103,12 @@ class Runtime:
                 if not passages:
                     for snapshot in job.versions:
                         version = db.get(DocumentVersion, UUID(snapshot['id']))
-                        if not eligibility(db, version)['eligible']: raise ValueError('source_became_ineligible')
-                        pages = db.scalars(select(ExtractedPage).where(ExtractedPage.version_id == version.id)
-                            .order_by(ExtractedPage.ordinal))
-                        for page in pages:
+                        if not eligibility(db, version, snapshot.get('extraction_revision_id'))['eligible']: raise ValueError('source_became_ineligible')
+                        for original, page in pages_for(db,version.id,snapshot.get('extraction_revision_id')):
                             for chunk in self.encoder.chunks(page.text):
                                 pid = uuid5(job.id, f'{page.id}:{chunk["start_offset"]}:{chunk["end_offset"]}')
                                 passage = IndexPassage(id=pid, generation_id=job.id, version_id=version.id,
-                                                      page_id=page.id, **chunk)
+                                                      page_id=original.id, extraction_page_id=page.id if snapshot.get('extraction_revision_id') else None, **chunk)
                                 db.add(passage); passages.append(passage)
                                 if len(passages) > MAX_PASSAGES: raise ValueError('index_passage_limit')
                     job.total = len(passages)
@@ -129,7 +129,7 @@ class Runtime:
                     v = db.get(DocumentVersion, UUID(snapshot['id']))
                     e = eligibility(db, v)
                     if (not e['eligible'] or e['review_id'] != snapshot['review_id'] or
-                            v.extraction_revision != snapshot['extraction_revision']):
+                            v.extraction_revision != snapshot['extraction_revision'] or e['extraction_revision_id'] != snapshot.get('extraction_revision_id')):
                         raise ValueError('source_review_changed')
                 pointer = db.get(IndexState, 1)
                 if not pointer: pointer = IndexState(id=1); db.add(pointer)
@@ -169,7 +169,21 @@ class Runtime:
                 db.commit()
             return {'missing': len(missing), 'removed_stale': len(extra), 'state': 'failed' if missing else 'ready'}
 
-    def search(self, question, count=5, scheme=None, issuer=None, document_type=None,
+    def search(self, question, count=5, normalize_query=True, **filters):
+        normalization=normalize(question)
+        original=self.baseline_search(question,count=count,**filters)
+        if normalize_query and normalization['retrieval_question']!=question:
+            changed=self.baseline_search(normalization['retrieval_question'],count=count,**filters)
+            response=original if original['items'] else changed
+            normalization['selection']='original' if original['items'] else 'normalized_fallback'
+            normalization['original_top_ids']=[p['chunk_id'] for p in original['items']]
+            normalization['normalized_top_ids']=[p['chunk_id'] for p in changed['items']]
+        else:
+            response=original;normalization['selection']='original'
+        response['question']=question;response['query_normalization']=normalization
+        return response
+
+    def baseline_search(self, question, count=5, scheme=None, issuer=None, document_type=None,
                published_after=None, published_before=None, unknown_dates='exclude'):
         started = time.perf_counter()
         if self.encoder.tokens(question, query=True) > 512: raise ValueError('query_token_limit')
@@ -181,7 +195,7 @@ class Runtime:
             allowed = []
             eligibility_map = {}
             for snapshot in job.versions:
-                v = db.get(DocumentVersion, UUID(snapshot['id'])); e = eligibility(db, v)
+                v = db.get(DocumentVersion, UUID(snapshot['id'])); e = eligibility(db, v, snapshot.get('extraction_revision_id'))
                 if not e['eligible'] or e['review_id'] != snapshot['review_id']: continue
                 doc = db.get(Document, v.document_id)
                 sch = db.get(Scheme, doc.scheme_id) if doc.scheme_id else None
@@ -206,12 +220,12 @@ class Runtime:
             for pid, distance in zip(result['ids'][0], result['distances'][0]):
                 passage = db.get(IndexPassage, UUID(pid))
                 if not passage or passage.generation_id != job.id: raise ValueError('stale_vector_reconcile_required')
-                page = db.get(ExtractedPage, passage.page_id)
-                if page.text[passage.start_offset:passage.end_offset] != passage.text:
+                page = page_for(db, passage)
+                if not page or page.text[passage.start_offset:passage.end_offset] != passage.text:
                     raise ValueError('source_span_mismatch')
                 version = db.get(DocumentVersion, passage.version_id)
                 if str(version.id) not in allowed: continue
-                current = eligibility(db, version)
+                current = eligibility(db, version, eligibility_map[str(version.id)]['extraction_revision_id'])
                 if not current['eligible'] or current['review_id'] != eligibility_map[str(version.id)]['review_id']:
                     continue
                 doc = db.get(Document, version.document_id)
@@ -223,7 +237,8 @@ class Runtime:
                     'start_offset': passage.start_offset, 'end_offset': passage.end_offset, 'text': passage.text,
                     'section_label': passage.section_label, 'continued_clause': passage.continued_clause,
                     'cosine_distance': float(distance), 'cosine_similarity': 1-float(distance),
-                    'verification': eligibility_map[str(version.id)], 'publication_date': version.publication_date})
+                    'verification': eligibility_map[str(version.id)], 'publication_date': version.publication_date,
+                    **metadata_for(db,passage)})
                 if len(items) == count: break
             return {'status': 'results' if items else 'empty', 'question': question, 'items': items,
                 'generation': str(job.id), 'model': SPEC, 'heuristic_min_similarity': 0.78,

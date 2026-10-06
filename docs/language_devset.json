@@ -1,0 +1,206 @@
+{
+  "source_sha256": "cb739585b7794b79dc61a164fcd744de4fc5bc1de75b1402db387b03eac40df8",
+  "review_status": "Implementing-agent development labels against the existing PIB physical page anchors; not independent human or held-out review. Monthly-question label permits only source-supported correction, never a monthly payment claim.",
+  "cases": [
+    {
+      "id": "annual-en",
+      "language": "en",
+      "question": "According to the 2025 PM-KISAN factsheet: How much annual financial assistance does PM-KISAN provide and in how many instalments?",
+      "expected_page": 2,
+      "anchor": "6,000/- per year",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "annual-hi",
+      "language": "hi",
+      "question": "2025 के पीएम किसान दस्तावेज़ के अनुसार: पीएम किसान में हर साल कितनी आर्थिक सहायता मिलती है और कितनी किस्तों में?",
+      "expected_page": 2,
+      "anchor": "6,000/- per year",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "objectives-en",
+      "language": "en",
+      "question": "According to the 2025 PM-KISAN factsheet: How does PM-KISAN help farmers purchase crop inputs and avoid moneylenders?",
+      "expected_page": 3,
+      "anchor": "moneylenders",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "objectives-hi",
+      "language": "hi",
+      "question": "2025 के पीएम किसान दस्तावेज़ के अनुसार: पीएम किसान किसानों को खेती के सामान खरीदने और साहूकारों से बचने में कैसे सहायता करता है?",
+      "expected_page": 3,
+      "anchor": "moneylenders",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "face-en",
+      "language": "en",
+      "question": "According to the 2025 PM-KISAN factsheet: How can remote farmers complete e-KYC using the mobile app without OTP or fingerprint?",
+      "expected_page": 4,
+      "anchor": "without OTP or fingerprint",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "face-hi",
+      "language": "hi",
+      "question": "2025 के पीएम किसान दस्तावेज़ के अनुसार: दूर के किसान मोबाइल ऐप में ओटीपी या फिंगरप्रिंट के बिना ई केवाईसी कैसे कर सकते हैं?",
+      "expected_page": 4,
+      "anchor": "without OTP or fingerprint",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "chatbot-en",
+      "language": "en",
+      "question": "According to the 2025 PM-KISAN factsheet: Which organisations supported the development of the PM-KISAN AI chatbot?",
+      "expected_page": 5,
+      "anchor": "EKstep foundation and Bhashini",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "chatbot-hi",
+      "language": "hi",
+      "question": "2025 के पीएम किसान दस्तावेज़ के अनुसार: पीएम किसान एआई चैटबॉट के विकास में किन संस्थाओं ने सहयोग दिया?",
+      "expected_page": 5,
+      "anchor": "EKstep foundation and Bhashini",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "ambiguous-en",
+      "language": "en",
+      "question": "Am I eligible for assistance?",
+      "kind": "ambiguous",
+      "note": "No applicant facts or scheme specified; candidate passages cannot determine eligibility.",
+      "expected_status": "needs_clarification"
+    },
+    {
+      "id": "ambiguous-hi",
+      "language": "hi",
+      "question": "मुझे सहायता मिलेगी क्या?",
+      "kind": "ambiguous",
+      "note": "No entitlement decision is supported.",
+      "expected_status": "needs_clarification"
+    },
+    {
+      "id": "outside-en",
+      "language": "en",
+      "question": "What is the orbital period of Neptune?",
+      "kind": "out_of_corpus",
+      "expected_status": "insufficient_evidence"
+    },
+    {
+      "id": "outside-hi",
+      "language": "hi",
+      "question": "नेपच्यून ग्रह का परिक्रमण काल कितना है?",
+      "kind": "out_of_corpus",
+      "expected_status": "insufficient_evidence"
+    },
+    {
+      "id": "annual-roman1",
+      "question": "2025 PM Kisan factsheet ke anusaar saalana kitna paisa aur kitni kiste?",
+      "language": "hi",
+      "expected_page": 2,
+      "anchor": "6,000/- per year",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "annual-roman2",
+      "question": "2025 pradhan mantri kisan samman nidhi ke anusar salana rashi aur kitni kishton me?",
+      "language": "hi",
+      "expected_page": 2,
+      "anchor": "6,000/- per year",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "annual-mixed",
+      "question": "२०२५ पीएम किसान factsheet के अनुसार annual ६,००० रुपये aur ३ kiste ka kya vivaran hai?",
+      "language": "hi",
+      "expected_page": 2,
+      "anchor": "6,000/- per year",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "face-roman",
+      "question": "2025 PM Kisan factsheet ke anusaar bina OTP ya fingerprint e-KYC kaise hoti hai?",
+      "language": "hi",
+      "expected_page": 4,
+      "anchor": "without OTP or fingerprint",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "chatbot-roman",
+      "question": "2025 PM Kisan factsheet ke anusaar AI chatbot ko kin organisations ne banaya?",
+      "language": "hi",
+      "expected_page": 5,
+      "anchor": "EKstep foundation and Bhashini",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "annual-qualifier",
+      "question": "2025 PM Kisan factsheet: भूमिधारक किसान परिवारों की वार्षिक सहायता और किस्तें क्या हैं?",
+      "language": "hi",
+      "expected_page": 2,
+      "anchor": "6,000/- per year",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial"
+    },
+    {
+      "id": "current-roman",
+      "question": "aaj PM Kisan me paatra hun aur kitna paisa milega?",
+      "language": "hi",
+      "kind": "current",
+      "expected_status": "insufficient_evidence"
+    },
+    {
+      "id": "current-mixed",
+      "question": "2026 में PM Kisan ki current annual rashi kya hai?",
+      "language": "hi",
+      "kind": "current",
+      "expected_status": "insufficient_evidence"
+    },
+    {
+      "id": "current-hi",
+      "question": "आज पीएम किसान में मुझे कितनी सहायता मिलेगी?",
+      "language": "hi",
+      "kind": "current",
+      "expected_status": "insufficient_evidence"
+    },
+    {
+      "id": "ambiguous-roman",
+      "question": "mujhe madad milegi kya?",
+      "language": "hi",
+      "kind": "ambiguous",
+      "expected_status": "needs_clarification"
+    },
+    {
+      "id": "short-scheme",
+      "question": "PM-KISAN",
+      "language": "hi",
+      "kind": "ambiguous",
+      "expected_status": "needs_clarification"
+    },
+    {
+      "id": "annual-monthly-negation",
+      "question": "2025 PM Kisan factsheet के अनुसार सहायता monthly है, annual नहीं?",
+      "language": "hi",
+      "kind": "grounded",
+      "expected_status": "answered_or_partial",
+      "expected_page": 2,
+      "anchor": "6,000/- per year"
+    }
+  ]
+}

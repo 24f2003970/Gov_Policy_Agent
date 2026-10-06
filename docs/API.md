@@ -53,7 +53,7 @@ Defined by [Ask routes](../backend/app/ask_api.py); all require live authenticat
 | GET /ask/history/{run_id}/citations/{citation_id}/text | Exact authorized original-page text window for a retained citation, including historical index generations |
 | POST /ask/history/{run_id}/cancel | Cancel queued job or signal processing cancellation |
 
-Input: Search question/filters/date rules, `language: en|hi` (default en), fixed `count: 5`. Throttling defaults to 50 Ask requests/IP/15 minutes. Generation is asynchronous: poll the returned record ID. States are `queued`, `processing`, `done`, `error`, `cancelled`; terminal result statuses are `answered`, `partial`, `needs_clarification`, `insufficient_evidence`. A failed job has a sanitized `error_code`, not a fabricated answer. Other-owner/missing IDs return 404; no global private-history listing exists.
+Input: Search question/filters/date rules, `language: en|hi` (optional; profile default, Hinglish profile maps to Hindi), fixed `count: 5`. Throttling defaults to 50 Ask requests/IP/15 minutes. Generation is asynchronous: poll the returned record ID. States are `queued`, `processing`, `done`, `error`, `cancelled`; terminal result statuses are `answered`, `partial`, `needs_clarification`, `insufficient_evidence`. A failed job has a sanitized `error_code`, not a fabricated answer. Other-owner/missing IDs return 404; no global private-history listing exists.
 
 Successful details include server-built answer/claims, exact quoted excerpt offsets, original passage/version/page/review metadata, pinned model/settings, prompt/schema/index revision and nanosecond Ollama counts/timings plus millisecond worker time. No raw prompts, reasoning or confidence percentages are returned. Trust is null. Historical snapshots carry limitations; later archive/review changes trigger current-source warnings. Terminal records expire at 30 days on worker startup/hourly cleanup.
 
@@ -64,3 +64,24 @@ Details include ordered `claim_checks` (stable claim ID, position, retained flag
 Citation text returns the bounded original text window plus citation/quote offsets, actual physical page or TXT span, original paragraph spans and total characters. Owner mismatch/missing citation is 404; revoked current access is 403; missing/mismatched original provenance is withheld (history reasons) or 503 during final span validation. Current access is checked on every read. If any recorded source/review/provenance changes, history withholds the whole answer and all source/citation excerpt text; stored snapshots remain unchanged. Index rebuild alone does not revoke old-generation citations.
 
 `current_support_method` identifies the running method. An earlier recorded assessment retains its original method/outcome; the citation panel warns about the mismatch and does not claim that the current method reassessed it.
+
+
+## Versioned OCR
+
+[OCR routes](../backend/app/ocr_api.py) require live admin authorization on **every** route and Origin/CSRF on POSTs. Normal users receive 403; no original image privilege is added.
+
+| Route | Purpose |
+| --- | --- |
+| POST /admin/ocr/versions/{version_id}/queue | Queue/reuse pending revision for flagged PDF pages; requires prepared packs and initial extraction |
+| GET /admin/ocr/versions/{version_id} | Latest 20 revisions, page progress/method/flags/signals/review |
+| GET /admin/ocr/{revision_id} | Exact job state/spec and latest page attempts |
+| POST /admin/ocr/{revision_id}/retry | Failed/partial below three attempts; reuse successful pages |
+| POST /admin/ocr/{revision_id}/cancel | Fence queued/processing child; historical artifacts remain |
+| GET /admin/ocr/pages/{page_id}/text?offset=0 | Immutable raw/digital text window, word boxes and labeled engine signals |
+| POST /admin/ocr/pages/{page_id}/reviews | Append decision/reason; requires checked_values_dates_categories_negation=true |
+
+Review accepts `decision: accepted|rejected`, reason (20–2000 chars) and the explicit critical-value checkbox. Low-quality OCR cannot be accepted. Review is disabled for active/cancelled/failed/archived jobs and superseded attempts. No text-editing/correction API exists. Complete means every original physical page is represented, successful digital text is preserved and every OCR page passes quality plus latest manual acceptance. Rights, official review, archive and supersession are independent gates.
+
+Index passages and citations return `extraction_revision_id`, `extraction_page_id`, `extraction_method`, `extraction_quality_flags`, `extraction_review_status` and `ocr_notice`. The original physical page ID remains separate from the artifact ID. Normal Search inspection resolves the active generation's recorded artifact; owned historical citation inspection resolves its recorded artifact independent of the newest revision/index. Current rejection of that artifact blocks access. Legacy null artifact IDs resolve original digital pages without backfill.
+
+Search/Ask preserve `question` and expose `retrieval_question`/`query_normalization`: revision, transformations, uncertain detection, ranking selection and original/normalized passage ID comparisons. Detection never controls response language. Ask timings record narrow Hindi annual complete-excerpt context selection, optional `annual-hi-digital-fields-v1`/`chatbot-hi-digital-names-v1` source-field response construction and up to two total generations, including a constrained condition/scope retry. Rejected attempts remain private; displayed text still passes Part 6 support. API failure/abstention/retention rules are unchanged.

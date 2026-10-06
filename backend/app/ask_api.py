@@ -19,12 +19,14 @@ from .document_models import ExtractedPage
 from .documents import page_text
 from copy import deepcopy
 from .support import METHOD
+from .language import normalize
+from .extraction_artifacts import page_for
 
 router=APIRouter(tags=['answers'])
 
 
 class AskInput(SearchInput):
-    language: Literal['en','hi']='en'
+    language: Literal['en','hi'] | None=None
     count: Literal[5]=5  # The preserved retrieval baseline uses five candidates.
 
 
@@ -36,12 +38,14 @@ def owned(db,user,run_id):
 
 def view(db,run,detail=True):
     result={'id':str(run.id),'question':run.question,'language':run.language,'state':run.state,
-        'status':run.result['status'] if run.result else None,'created_at':run.created_at,'error_code':run.error_code}
+        'status':run.result['status'] if run.result else None,'created_at':run.created_at,'error_code':run.error_code,
+        'retrieval_question':run.retrieval_question,'query_normalization':run.query_normalization}
     if detail:
         warnings=[]
         withheld=False
         for p in sorted(run.sources,key=lambda p:p['version_id']):
-            access=access_status(db,{'version_id':p['version_id'],'passage_id':p['chunk_id'],'review':p['verification']})
+            access=access_status(db,{'version_id':p['version_id'],'passage_id':p['chunk_id'],'review':p['verification'],
+                'extraction_revision_id':p.get('extraction_revision_id')})
             if not access['allowed']:
                 withheld=True
                 warnings.append({'version_id':p['version_id'],'reasons':access['reasons'],
@@ -77,11 +81,11 @@ def citation_text(run_id:UUID,citation_id:UUID,user:User=Depends(current_user),d
     if not citation:raise HTTPException(404,'Citation not found')
     if not citation['current_access']['allowed']:raise HTTPException(403,'Current source-access policy withholds this excerpt')
     m=citation['metadata'];passage=db.get(IndexPassage,UUID(m['passage_id']))
-    page=db.get(ExtractedPage,passage.page_id) if passage else None
+    page=page_for(db,passage)
     start,end=citation['start_offset'],citation['end_offset']
     if not page or str(page.version_id)!=m['version_id'] or not (passage.start_offset<=start<end<=passage.end_offset) or page.text[start:end]!=citation['quote']:
         raise HTTPException(503,'Referenced original provenance is unavailable or changed')
-    window=page_text(UUID(m['version_id']),page.ordinal,max(0,start-300),db)
+    window=page_text(UUID(m['version_id']),page.ordinal,max(0,start-300),db,passage.extraction_page_id)
     return {'citation_id':str(citation_id),'quote_start_offset':start,'quote_end_offset':end,**window}
 
 
@@ -101,7 +105,10 @@ def ask(body:AskInput,request:Request,user:User=Depends(current_user),db:Session
     if db.scalar(select(AnswerRun.id).where(AnswerRun.state.in_(['queued','processing'])).limit(1)):
         raise HTTPException(503,'Answer service busy; one pending request is allowed')
     filters=body.model_dump(mode='json',exclude={'question','language','count'})
-    run=AnswerRun(user_id=user.id,question=body.question,language=body.language,filters=filters)
+    normalized=normalize(body.question)
+    preferred='hi' if user.preferred_language in ('hi','hinglish') else 'en'
+    run=AnswerRun(user_id=user.id,question=body.question,language=body.language or preferred,filters=filters,
+        retrieval_question=normalized['retrieval_question'],query_normalization=normalized)
     db.add(run);db.commit()
     return view(db,run)
 

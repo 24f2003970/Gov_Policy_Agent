@@ -7,12 +7,12 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | O1 grounded policy Q&A; pp.5,10,14 | 4–5 | Parts 4–6 eligible-source retrieval, bounded local answers, exact citations and limited same-model support checks delivered; complete semantic/legal verification not established |
 | O2 clause/claim-level citations; pp.14,21 | 6 | Part 6 stable ordered claim/citation records, original version/page/span, controlled support reasons and authorized citation panel delivered; section heuristic, absent clauses null |
 | O3 six-dimensional trust; pp.14,22,26 | 8 | Design documented; all components currently unavailable; experimental index |
-| O4 Hindi/English; pp.14,18,29 | 4,7,9 | Part 4 real multilingual retrieval and paired source-checked Hindi/English dev queries; Part 5 real English/Hindi generation samples with documented Hindi limitations; broader language/Hinglish evaluation deferred |
+| O4 Hindi/English; pp.14,18,29 | 4,7,9 | Part 4 real multilingual retrieval and paired source-checked Hindi/English dev queries; Part 5 real English/Hindi generation samples with documented Hindi limitations; Part 7 bounded recorded Hinglish/mixed normalization and real paired development comparison; independent evaluation pending |
 | O5 hallucination <5%; p.14 | 11 | Aspirational; not measured or guaranteed |
 | O6 Docker/cloud production; pp.14,30 | 12 | Local Compose planned; cloud outside free baseline; not production-ready now |
 | S1 500 documents/10 ministries; p.14 | 3–4,11 | Adapted toward 10–20 verified files/3–5 schemes; actual four PDFs/three schemes/171 pages, one eligible historical PIB text source and three excluded |
 | S2 retrieval P@5 ≥0.80; pp.14,30 | 11 | Aspirational; Part 4 dev gold-span hit@5 4/4 per language on one source, not precision or held-out evidence |
-| S3 PDF, scanned PDF, HTML, text; pp.14–15,19 | 3,7 | Part 3 digital PDF/UTF-8 TXT implemented; scanned/mixed quality flags delivered, OCR/HTML/DOCX deferred |
+| S3 PDF, scanned PDF, HTML, text; pp.14–15,19 | 3,7 | Part 3 digital PDF/UTF-8 TXT implemented; scanned/mixed quality flags delivered, Part 7 bounded English/Hindi OCR with versioned artifacts and manual review; HTML/DOCX deferred |
 | S4 feedback improvement; pp.14,22 | 10 | Planned; manual review, no automatic training from user ratings |
 | S5 admin corpus/system dashboard; pp.14,22 | 3,9–10 | Part 3 upload/list/status/page inspection/preview/retry/archive delivered; wider analytics deferred |
 | S6 MLflow/model monitoring; pp.14,30 | 10–11 | Reproducible experiment records planned; MLflow optional only if useful |
@@ -20,7 +20,7 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | User management/profile/guest-user-admin; p.19 | 2,9 | Part 2 verified with real PostgreSQL and browser: user/admin, protected language profile; guest access limited to health/public registration/login |
 | OAuth2/JWT/login/logout/refresh/brute-force limits; p.19 | 2,11 | Part 2 verified: Argon2id, JWT bearer (no third-party OAuth login), rotating/revocable cookie sessions, persistent throttling |
 | Admin drag/drop upload, formats/size/virus scan; p.19 | 3,9,11 | Part 3 native file selector, actual stream 50 MiB cap, content validation and private storage; virus scanning unavailable |
-| Scanned PDF detection/Tesseract eng+hin/300 DPI; pp.19–20 | 7 | Part 3 conservative low-text detection and needs_ocr/partial states; Tesseract/OCR deferred |
+| Scanned PDF detection/Tesseract eng+hin/300 DPI; pp.19–20 | 7 | Part 3 conservative low-text detection and needs_ocr/partial states; Part 7 real eng+hin Tesseract, page bounds, durable retries and mandatory review delivered; unreadable/oversized pages excluded |
 | PDF text/headings/tables/metadata PyMuPDF; p.20 | 3 | Part 3 PyMuPDF exact physical-page text/spans; unknown dates null; heuristic headings, table layout not guaranteed |
 | Clause-aware chunking, 512 tokens/50 overlap; p.20 | 3–4 | Part 4 actual tokenizer: 448-token passages/48 overlap including prefix/special-token safety, exact spans/heuristic sections/continuation; old chunks retained |
 | SBERT+MuRIL, 768 dimensions; p.20 | 4 | Adapted to one pinned Sentence-Transformers multilingual E5-small, 384 normalized dimensions, documented official-card selection |

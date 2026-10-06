@@ -42,7 +42,7 @@ export default function AuthApp() {
     {page === 'home' ? <Foundation /> : <main className={`mx-auto ${['admin','search','ask'].includes(page) ? 'max-w-3xl' : 'max-w-xl'} px-6 py-12`}>
       {restoring ? <p role="status">Restoring your session…</p>
         : page === 'login' || page === 'register' ? <AuthForm kind={page} onLogin={() => { location.hash = 'account' }} />
-        : user ? page === 'ask' ? <Ask /> : page === 'search' ? <Search user={user} /> : page === 'admin' ? <AdminPage /> : <AccountPage user={user} onUpdate={setUser} />
+        : user ? page === 'ask' ? <Ask user={user} /> : page === 'search' ? <Search user={user} /> : page === 'admin' ? <AdminPage /> : <AccountPage user={user} onUpdate={setUser} />
         : <div><h1 className="text-2xl font-semibold">Sign in required</h1><p className="mt-4">This page requires an active session.</p><a className="mt-4 inline-block text-teal-800 underline" href="#login">Go to login</a></div>}
     </main>}
   </>

@@ -31,7 +31,7 @@ Apply migrations for both fresh and existing application installations:
 .\.venv\Scripts\python.exe -m alembic -c backend/alembic.ini current
 ```
 
-Expected head: `0004_answers`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
+Expected head: `0006_language_ocr`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
 
 Create the first administrator only when none exists:
 
@@ -153,7 +153,7 @@ If old Windows pytest temporary directories are inaccessible, supply `--basetemp
 | --- | --- |
 | Ready returns 503 | PostgreSQL service, private settings and `upgrade head` |
 | Queued job | Worker running, schema current, document not archived |
-| Partial/needs_ocr | Inspect flagged pages; OCR is deferred |
+| Partial/needs_ocr | Queue a separate OCR revision below; inspect quality and review every OCR page |
 | Upload 409 | Same bytes with conflicting metadata; inspect the existing version |
 | Upload 413/422 | Actual stream size or parser/file validation limits |
 | Inspection 401/403 | Session, admin role and approved 127.0.0.1 origin |
@@ -180,3 +180,41 @@ For read-only claim-support evaluation, keep Terminal 4 running and stop Termina
 This uses [support_devset.json](support_devset.json), writes ignored `runtime/support-results.json`, and never imports synthetic mutations. It measures false accepts/rejects, exact provenance, candidate retention and latency with the existing pinned Qwen. Restart `backend\rag.py` afterwards. Labels are implementing-agent development review, not independent human or held-out validation.
 
 `verification_unavailable`/`verification_timeout` publish no answer; check the worker and pinned project Ollama, then submit a new request. `verification_invalid_output` is an explicit error with no fallback. `unsupported`/`conflicting` candidates are omitted with a reason; zero retained claims abstain. Large complete context yields `insufficient_context` without truncation. Revoked history shows metadata and a withheld notice; restore eligibility through an evidence-backed review and rebuild for new retrieval. Do not change original snapshots or weaken guards. Historical citations retain the old review: a changed review remains withheld even when a new positive review is added.
+
+
+## English/Hindi OCR and multilingual queries
+
+Use the tested trusted Windows package; an admin/UAC action may be required on a fresh machine:
+
+```powershell
+winget install --id UB-Mannheim.TesseractOCR --exact --version 5.4.0.20240606 --source winget --accept-source-agreements --accept-package-agreements
+.\.venv\Scripts\python.exe backend\prepare_ocr.py
+```
+
+Preparation detects PATH, standard per-user/Program Files folders and Tesseract registry paths. It verifies the tested engine version, downloads pinned official `tessdata_fast` English/Hindi data and checks both SHA256 hashes. Expected: `tesseract v5.4.0.20240606`, language list `eng`, `hin`. Private `%LOCALAPPDATA%\GovPolicyAgent\ocr\prepared.json` records the actual executable path/hash and pack pins. No Poppler or Python OCR wrapper is needed. Preparation is explicit; worker startup never installs or downloads. Stop the ingestion worker before preparation.
+
+After `upgrade head`, the existing Terminal 3 worker processes initial extraction and OCR jobs under one owner lock. Admin → select a PDF → **OCR extraction and review** → Queue OCR revision. Inspect each physical page, use Compare original page, and record acceptance/rejection with a reason and critical-value check. Readable OCR always requires review. Low-quality/failed pages cannot be accepted. Retry is capped at three attempts; digital/legible published pages are reused. Cancellation fences the child. Raw text editing is deferred; do not guess corrections.
+
+Optional local-owner commands, root PowerShell; replace the value with the selected Admin version reference:
+
+```powershell
+$versionId = 'replace-with-version-uuid-from-admin'
+.\.venv\Scripts\python.exe backend\ocr_manage.py queue $versionId
+.\.venv\Scripts\python.exe backend\ocr_manage.py status $versionId
+.\.venv\Scripts\python.exe backend\worker.py --once
+```
+
+Stop the running worker before `--once`; do not create a duplicate owner. Use Admin for review/retry/cancel. After every required page is accepted, perform the separate evidence-backed rights/applicability review if needed, then explicitly rebuild via Admin Search or `backend\index.py rebuild` from root. A rebuild cannot clear rights restrictions. Old index/citations keep their recorded extraction; neither OCR failure nor pending review switches the active index.
+
+OCR defaults: 300 DPI, maximum 12 million rendered pixels, 30 seconds/page, grayscale and PDF-declared rotation only, one child/Tesseract tree, one OpenMP thread. Optional private settings `GOV_OCR_DPI` (150–300), `GOV_OCR_MAX_PIXELS` (1–12 million), `GOV_OCR_PAGE_SECONDS` (1–60) apply to **newly queued revisions**. Existing revisions retain their recorded settings. Oversized pages report `ocr_pixel_limit`; low quality remains excluded. The tested one-hour orphan cleanup is `worker.py --reconcile`; current page temporary files are removed immediately on success/error/timeout/cancel. No hard RAM quota or automatic deskew is claimed.
+
+Search/Ask accept English, Hindi, Hinglish and mixed input. Original question is preserved; recorded retrieval normalization handles NFC, whitespace, Devanagari digits and bounded common phrases/aliases. Original-query ranking stays primary; changed-query hits are compared and used only when original retrieval is empty. No general retrieval improvement is claimed. Short scheme names yield uncertain detection. Ask defaults to the profile preference (Hinglish preference maps to Hindi); explicit English/Hindi selection wins. Current-policy questions still abstain. Examples: `2025 PM Kisan factsheet ke anusaar saalana kitna paisa aur kitni kiste?` and `aaj PM Kisan me paatra hun?`.
+
+Read-only development measurements (stop Terminal 4 and Terminal 5; keep personal Ollama untouched):
+
+```powershell
+.\.venv\Scripts\python.exe backend\evaluate_language.py
+.\.venv\Scripts\python.exe backend\evaluate_ocr.py
+```
+
+The language runner owns the existing E5/vector store and project Ollama exclusively; it does not write answers or import sources. Baseline uses the recorded Part 6 prompt/retrieval with shared current guards; the changed branch uses normalization and complete-excerpt selection. OCR runner generates four isolated self-authored scans with installed Windows Nirmala.ttc; no fixtures enter the application corpus. Results containing quoted/transcribed text remain ignored under `runtime`. Restart Terminals 4/5 afterward. Measurement scope and limitations are in [VERIFICATION.md](VERIFICATION.md).

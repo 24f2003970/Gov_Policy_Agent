@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { authorized } from './auth'
+import { authorized, type User } from './auth'
 
 type Evidence = {id: string; quote: string; quote_start_offset: number; quote_end_offset: number}
 type Support = {outcome:string; method:string|null; reason:string; judge_called?:boolean; independent_verification:boolean}
 type Citation = {citation_id:string; claim_id:string; claim_position:number; marker:number; claim_text:string|null; quote:string|null; start_offset:number; end_offset:number;
-  metadata:{title:string; issuer:string; source_url:string; version_id:string; version_number?:number; pdf_page_number:number|null; page_ordinal:number; publication_date:string|null; effective_date:string|null; section_label:string|null; section_is_heuristic:boolean; clause:null; review:{applicability:string}};
+  metadata:{extraction_method?:string;extraction_revision_id?:string;ocr_notice?:string;title:string; issuer:string; source_url:string; version_id:string; version_number?:number; pdf_page_number:number|null; page_ordinal:number; publication_date:string|null; effective_date:string|null; section_label:string|null; section_is_heuristic:boolean; clause:null; review:{applicability:string}};
   provenance:{status:string; method:string; reason:string}; support:Support; current_access:{allowed:boolean; reasons:string[]; applicability?:string}}
 type Result = {status: string; language: string; answer: string; claims: {claim_id?:string; text: string; evidence: Evidence[]; support?:Support; citation_markers?:number[]}[]; limitations: string[]; trust_score: null; grounding: string}
 type Source = {chunk_id: string; version_id: string; title: string; issuer: string; source_url: string; pdf_page_number: number | null; start_offset: number; end_offset: number; text: string|null; verification: {applicability: string; scope: string}}
-type Run = {id: string; question: string; language: string; state: string; status: string | null; error_code: string | null; created_at: string; result?: Result | null; sources?: Source[]; citations?:Citation[]; claim_checks?:{position:number;retained:boolean;assessment:Support}[]; source_access_withheld?:boolean; current_support_method?:string; current_source_warnings?: {warning: string}[]; model?: {tag: string; digest: string}; timings?: {worker_total_ms: number;verification?:{total_ms:number}}}
+type Run = {retrieval_question?:string;query_normalization?:{transformations:string[];selection?:string};id: string; question: string; language: string; state: string; status: string | null; error_code: string | null; created_at: string; result?: Result | null; sources?: Source[]; citations?:Citation[]; claim_checks?:{position:number;retained:boolean;assessment:Support}[]; source_access_withheld?:boolean; current_support_method?:string; current_source_warnings?: {warning: string}[]; model?: {tag: string; digest: string}; timings?: {worker_total_ms: number;verification?:{total_ms:number}}}
 const input='mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2'
 const button='rounded bg-teal-900 px-4 py-2 text-white disabled:opacity-50'
 const failure=(e:unknown)=>e instanceof Error?e.message:'Request failed'
 
-export default function Ask() {
+export default function Ask({user}:{user:User}) {
   const [run,setRun]=useState<Run|null>(null),[history,setHistory]=useState<Run[]>([])
   const [error,setError]=useState(''),[busy,setBusy]=useState(false),[worker,setWorker]=useState<boolean|null>(null)
   const [historyPage,setHistoryPage]=useState(1)
@@ -60,14 +60,14 @@ export default function Ask() {
     {error&&<p role="alert" className="rounded bg-red-50 p-3 text-red-800">{error}</p>}
     <form onSubmit={e=>void submit(e)} className="space-y-3 rounded border bg-white p-4">
       <label className="block">Question<textarea className={input} name="question" minLength={2} maxLength={2000} required rows={3}/></label>
-      <label className="block">Response language<select className={input} name="language"><option value="en">English</option><option value="hi">Hindi</option></select></label>
+      <label className="block">Response language<select className={input} name="language" defaultValue={user.preferred_language==='en'?'en':'hi'}><option value="en">English</option><option value="hi">Hindi</option></select></label>
       {['scheme','issuer','document_type'].map(k=><label className="block" key={k}>{k==='scheme'?'Scheme filter':k==='issuer'?'Ministry / issuer filter':'Document type filter'}<input name={k} className={input} maxLength={k==='document_type'?80:200}/></label>)}
       <label className="block">Published on/after<input type="date" name="published_after" className={input}/></label>
       <label className="block">Published on/before<input type="date" name="published_before" className={input}/></label>
       <label className="block">Unknown publication dates<select name="unknown_dates" className={input}><option value="exclude">Exclude when filtering dates</option><option value="include">Include as unknown</option></select></label>
       <button className={button} disabled={pending}>{pending?'Working…':'Ask sources'}</button>
     </form>
-    {run&&<section className="space-y-3 rounded border bg-white p-4"><h2 className="text-xl font-semibold">Request: {run.state}</h2><p>{run.question}</p>
+    {run&&<section className="space-y-3 rounded border bg-white p-4"><h2 className="text-xl font-semibold">Request: {run.state}</h2><p>{run.question}</p>{run.query_normalization&&<p className="text-sm">Retrieval query: {run.retrieval_question}. Changes: {run.query_normalization.transformations.join(', ')||'none'}. Input detection never changes your selected response language.</p>}
       {['queued','processing'].includes(run.state)&&<><p role="status">Retrieving and checking local evidence. No unchecked claims are shown.</p><button className="underline" onClick={()=>void cancel()}>Cancel request</button></>}
       {run.state==='error'&&<p role="alert">Service or grounding error: {run.error_code}. No policy answer published.</p>}
       {run.state==='cancelled'&&<p>Request cancelled; no answer published.</p>}
@@ -85,7 +85,7 @@ export default function Ask() {
           {citation.support.method&&run.current_support_method&&citation.support.method!==run.current_support_method&&<p className="rounded bg-amber-50 p-3">Recorded assessment uses an earlier method. It has not been reassessed by {run.current_support_method}.</p>}
           <p className="text-sm">The support judge uses the same model as the generator; this is not independent fact verification. Trust score is unavailable.</p>
           <p>{citation.metadata.title} · {citation.metadata.issuer}</p><p>Version {citation.metadata.version_number||'recorded'} · physical page {citation.metadata.pdf_page_number??'TXT'} · source characters [{citation.start_offset}, {citation.end_offset})</p>
-          <p>Published: {citation.metadata.publication_date||'unknown'} · effective date: {citation.metadata.effective_date||'unknown'} · recorded applicability: {citation.metadata.review.applicability}. Historical sources do not establish current entitlement.</p>
+          <p>Extraction: {citation.metadata.extraction_method||'digital'} · revision {citation.metadata.extraction_revision_id||'original'}. {citation.metadata.ocr_notice}</p><p>Published: {citation.metadata.publication_date||'unknown'} · effective date: {citation.metadata.effective_date||'unknown'} · recorded applicability: {citation.metadata.review.applicability}. Historical sources do not establish current entitlement.</p>
           {citation.metadata.section_label&&<p>Detected section (heuristic): {citation.metadata.section_label}</p>}
           <a className="break-all underline" href={citation.metadata.source_url} target="_blank" rel="noreferrer">Official source</a>
           <p>Current access: {citation.current_access.allowed?'eligible under the recorded review':`withheld (${citation.current_access.reasons.join(', ')})`}</p>

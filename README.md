@@ -10,14 +10,15 @@ GOV-CS-028 is a B.Tech student project for exploring document-grounded governmen
 - Physical PDF pages, extracted text spans, provisional chunks, protected original download/page preview and archive controls.
 - PostgreSQL migrations, health endpoints and tests using an isolated PostgreSQL database.
 - Audited source eligibility reviews, token-aware exact-span chunks, persistent Chroma generations and recoverable indexing jobs.
-- Protected Hindi/English Search with filters, source-page text inspection, historical-status notices and measured retrieval timings.
+- Versioned English/Hindi OCR for flagged PDF pages, protected original comparison and append-only admin decisions.
+- Protected English/Hindi/Hinglish Search with filters, source-page text inspection, historical-status notices and measured retrieval timings.
 
 - Protected Ask with bounded local Ollama generation, validated claim/excerpt references, clarification/abstention, cancellation and private query history.
 - Stable per-claim citations with original version/page/span inspection, separate provenance/support states and current-access checks.
 
 ## Stack
 
-React, TypeScript, Vite and Tailwind CSS; FastAPI, SQLAlchemy, psycopg and Alembic; PostgreSQL; PyMuPDF; Sentence-Transformers with multilingual E5-small, CPU PyTorch and Chroma; local Ollama Qwen3 4B Q4_K_M; Argon2id and JWT authentication. Dependencies are pinned in the backend lock and frontend package-lock.
+React, TypeScript, Vite and Tailwind CSS; FastAPI, SQLAlchemy, psycopg and Alembic; PostgreSQL; PyMuPDF; Sentence-Transformers with multilingual E5-small, CPU PyTorch and Chroma; Tesseract English/Hindi OCR; local Ollama Qwen3 4B Q4_K_M; Argon2id and JWT authentication. Dependencies are pinned in the backend lock and frontend package-lock.
 
 ## Setup and usage
 
@@ -27,7 +28,7 @@ Run the API, frontend, ingestion worker, single-owner index service and answer w
 
 ## Current limitations
 
-Claim support uses deterministic scope/value guards and a bounded heuristic judge using the same Qwen model as generation. This is not independent fact verification or complete semantic/legal interpretation. Pre-Part-6 answers remain not_evaluated; current source revocation withholds historical answer/excerpt content without rewriting private snapshots. Trust scores and OCR remain unavailable. Hindi output can contain language errors or hit the bounded output limit; failures publish no policy answer. Retrieval similarity is relevance, not correctness or current entitlement advice. A 0.78 cosine-similarity cutoff is a development heuristic, not calibrated abstention. Low-text/scanned pages remain OCR-pending; partial sources are excluded. Uploads have size/time/page/text limits but no malware scanner, OS parser sandbox or hard memory quota. Deployment is local development HTTP, not production-ready.
+Claim support uses deterministic scope/value guards and a bounded heuristic judge using the same Qwen model as generation. This is not independent fact verification or complete semantic/legal interpretation. Pre-Part-6 answers remain not_evaluated; current source revocation withholds historical answer/excerpt content without rewriting private snapshots. Trust scores remain unavailable. Flagged PDF pages support bounded English/Hindi OCR with mandatory review and versioned extraction. Hindi output can contain language errors or hit the bounded output limit; failures publish no policy answer. Retrieval similarity is relevance, not correctness or current entitlement advice. A 0.78 cosine-similarity cutoff is a development heuristic, not calibrated abstention. Unreadable/unreviewed OCR remains excluded; source rights still require separate approval. Uploads have size/time/page/text limits but no malware scanner, OS parser sandbox or hard memory quota. Deployment is local development HTTP, not production-ready.
 
 The local corpus contains four PDFs across three schemes: one reviewed historical PIB factsheet is indexed into nine token-aware passages; three original local-reference PDFs remain excluded. Permitted scope covers attributed PIB narrative text, excluding third-party graphics and linked-source content. Original PDFs, extracted corpus text, models, vectors, secrets and runtime data are excluded from Git. The small source-checked development set is not a held-out benchmark; see [recorded measurements](docs/VERIFICATION.md).
 

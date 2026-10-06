@@ -6,6 +6,7 @@ from app import document_models
 from app import index_models
 from app import answer_models
 from app import citation_models
+from app import ocr_models
 
 target_metadata = Base.metadata
 

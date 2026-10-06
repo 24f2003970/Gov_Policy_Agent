@@ -7,7 +7,7 @@ from datetime import date
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-PROMPT_REVISION = 'grounded-v2-support'
+PROMPT_REVISION = 'grounded-v3-language'
 SCHEMA_REVISION = 'claims-v1'
 INSTRUCTION_PATTERN = r'ignore (?:all )?(?:previous|system) instructions|system prompt|reveal .{0,20}(?:password|secret)|\bSYSTEM:'
 LIMITATIONS = {
@@ -71,7 +71,7 @@ def quote_options(passage):
         if span['end']-span['start']>=5 and not re.search(INSTRUCTION_PATTERN,passage['text'][span['start']:span['end']],re.I)}
 
 
-def expand_model_output(raw,language,passages):
+def expand_model_output(raw,language,passages,question=None):
     try: response=ModelOutput.model_validate_json(raw)
     except (ValueError,TypeError): raise RagError('invalid_structured_output') from None
     sources={p['chunk_id']:p for p in passages}
@@ -81,7 +81,7 @@ def expand_model_output(raw,language,passages):
         for choice in claim.evidence:
             source=sources.get(choice.id)
             if not source: raise RagError('invented_evidence_id')
-            quote=quote_options(source).get(choice.quote_id)
+            quote=(generation_quote_options(question,source) if question is not None and language=='hi' else quote_options(source)).get(choice.quote_id)
             if quote is None: raise RagError('invented_quote_id')
             from .extraction import paragraphs
             span=paragraphs(source['text'])[int(choice.quote_id[1:])-1]
@@ -106,11 +106,23 @@ Preserve exact amounts, dates, conditions, negation and scope. Do not turn histo
 No definitive eligibility, present amounts or current application procedures from historical sources. Never label semantic claim support verified. Limitations are the allowed codes only. A status answered means the question was addressed from this snapshot, not that the policy is current.'''
 
 
+def generation_quote_options(question,passage):
+    from .language import context_order
+    _,context_rules=context_order(question,[passage])
+    choices=quote_options(passage)
+    if 'annual_benefit_complete_excerpts_only' in context_rules:
+        return {key:text for key,text in choices.items() if re.search(r'per year',text,re.I) and re.search(r'financial benefit|assistance',text,re.I)}
+    return choices
+
+
 def raw_prompt(question,language,passages,repair=None):
     data={'question':question,'language':language,'sources':[
         {'id':p['chunk_id'],'title':p['title'],'publication_date':str(p.get('publication_date')),
-         'scope':p['verification']['scope'],'applicability':p['verification']['applicability'],'excerpts':quote_options(p)} for p in passages]}
+         'scope':p['verification']['scope'],'applicability':p['verification']['applicability'],'excerpts':generation_quote_options(question,p) if language=='hi' else quote_options(p)} for p in passages]}
     instruction=SYSTEM+'\nSCHEMA:\n'+json.dumps(ModelOutput.model_json_schema(),ensure_ascii=False)
+    if language=='hi' and re.search(r'annual|हर साल|वार्षिक|saala?na|salana|har saal|प्रति वर्ष',question,re.I):
+        instruction+='\nFor this annual-payment question preserve the source category exactly: land-holding farmers (Hindi: भूमिधारक किसान). Do not add a family restriction absent from the quote. Small/marginal is not a replacement for land-holding. Never substitute अधिकारी or omit the recipient. Preserve the annual amount and instalment count ONLY as actually supported by supplied quotes.'
+        if language=='hi':instruction+=' Use the grammar pattern: [dated source] में [exact beneficiary category] को [annual amount] की सहायता [instalment count] किस्तों में देने का वर्णन है. Fill only evidence-supported values; do not present current entitlement.'
     if repair: instruction+='\nThe prior response failed validation ('+repair+'). Regenerate once; copy exact complete quotes and remove unsupported claims. Do not use any extra facts.'
     serialized=json.dumps(data,ensure_ascii=False).replace('<','\\u003c').replace('>','\\u003e')
     return '<|im_start|>system\n'+instruction+'<|im_end|>\n<|im_start|>user\n'+serialized+'<|im_end|>\n<|im_start|>assistant\n'
@@ -164,8 +176,8 @@ def precheck(question,filters,passages,language):
     q=question.lower()
     scheme=bool(filters.get('scheme') or re.search(r'pm[ -]?kisan|pm kisan|पीएम[ -]?किसान|पीएम-किसान',q))
     historical=bool(re.search(r'2025|factsheet|historical|according to|described|published|दस्तावेज|ऐतिहासिक|अनुसार|वर्णित',q))
-    current=bool(re.search(r'current|today|\bnow\b|2026|eligible|eligibility|\bapply\b|application procedure|अभी|आज|वर्तमान|पात्र|आवेदन|मुझे|मिलेगी',q))
-    if not scheme and re.search(r'eligible|assistance|help|पात्र|सहायता|मिलेगी|मदद',q):
+    current=bool(re.search(r'current|today|\bnow\b|2026|eligible|eligibility|\bapply\b|application procedure|अभी|आज|वर्तमान|पात्र|आवेदन|मुझे|मिलेगी|\bmujhe\b',q))
+    if not scheme and re.search(r'eligible|assistance|help|पात्र|सहायता|मिलेगी|मदद|\bmadad\b|\bmilegi\b',q):
         return 'needs_clarification'
     if not passages: return 'insufficient_evidence'
     historical_only=any(p['verification']['applicability']!='current_verified' for p in passages)

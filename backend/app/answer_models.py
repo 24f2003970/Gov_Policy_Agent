@@ -12,6 +12,8 @@ class AnswerRun(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(ForeignKey('users.id'), index=True)
     question: Mapped[str] = mapped_column(Text)
+    retrieval_question: Mapped[str | None] = mapped_column(Text, nullable=True)
+    query_normalization: Mapped[dict] = mapped_column(JSONB, default=dict)
     language: Mapped[str] = mapped_column(String(2))
     filters: Mapped[dict] = mapped_column(JSONB)
     state: Mapped[str] = mapped_column(String(16), default='queued')

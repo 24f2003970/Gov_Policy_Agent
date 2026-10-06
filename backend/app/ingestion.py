@@ -66,6 +66,9 @@ def finish(engine, job_id, token, result):
             job.state, job.error_code = "failed", result["error"]
         else:
             version = db.get(DocumentVersion, job.version_id)
+            if db.scalar(select(ExtractedPage.id).where(ExtractedPage.version_id == version.id).limit(1)):
+                job.state,job.error_code='failed','existing_extraction_requires_revision'
+                job.lease_owner=job.lease_until=None;job.finished_at=now();db.commit();return True
             # Derived results replaced coherently in one transaction, never incrementally published.
             db.execute(delete(Chunk).where(Chunk.version_id == version.id))
             db.execute(delete(ExtractedPage).where(ExtractedPage.version_id == version.id))
@@ -145,12 +148,17 @@ def run_once(engine, settings):
 def reconcile(engine, settings):
     """Explicit cleanup: generated files only, no symlinks or traversal; grace periods."""
     import re
+    import shutil
     root = directories(settings)
     removed = 0
     with Session(engine) as db:
         known = set(db.scalars(select(DocumentVersion.storage_key)))
     for directory, minimum_age in [(root / "temporary", 3600), (root / "originals", 86400)]:
         for path in directory.iterdir():
+            if (directory.name=='temporary' and path.is_dir() and not path.is_symlink()
+                and re.fullmatch(r'ocr-[0-9a-f]{32}',path.name) and path.resolve().parent==directory.resolve()
+                and time.time()-path.stat().st_mtime>3600):
+                shutil.rmtree(path);removed+=1;continue
             if path.is_symlink() or not path.is_file() or not re.fullmatch(r"[0-9a-f]{32}\.(upload|json|progress|png|pdf|txt)(\.part)?", path.name):
                 continue
             if directory.name == "originals" and path.name in known:

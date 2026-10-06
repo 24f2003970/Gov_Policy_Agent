@@ -135,3 +135,51 @@ Final browser repeat of the same scoped Hindi question returned `insufficient_ev
 
 Final v2 English browser request took 6.020 s total, retained the land-holding/₹6,000/year/three-instalment claim, and opened exact page 2 with `layered-qwen-v2`. Current Hindi entitlement abstained and ambiguous English intent clarified.
 Final v2 answer and complete citation/source inspection text matched exactly after authenticated browser reload and history reselection.
+
+
+## Part 7 — multilingual input and versioned OCR (2026-10-06)
+
+### Environment and preserved state
+
+Same Windows/PostgreSQL 18.6, pinned multilingual E5-small CPU/two-thread encoder, Chroma, Ollama 0.17.1 and pinned Qwen3 4B Instruct 2507 Q4_K_M as Parts 4–6. No additional language model, paid translator, fine-tuning or guard relaxation. Tesseract 5.4.0.20240606/Leptonica 1.84.1 and official pinned fast English/Hindi packs were actually executed; hashes/licenses are in [SOURCES](SOURCES.md). Private preparation records the per-user executable and pack paths. Runtime startup performs no downloads.
+
+Additive migration `0006_language_ocr` and repeated upgrade were run against the existing application database. An in-memory comparison of every original column/row across 18 tables remained identical. Existing users/sessions, originals, 171 original pages, 410 provisional chunks, rights reviews and historical answer snapshots were not reset/reparsed/backfilled. The four-version corpus remains one eligible historical PIB narrative-text source/nine indexed passages and three excluded sources.
+
+### Real OCR measurements
+
+Four self-authored image-only scan fixtures were rendered with installed Windows Nirmala.ttc, then processed by actual PyMuPDF/Tesseract `eng+hin`, 300 DPI, grayscale/PDF rotation, OEM 1, PSM 3, one thread. No scan/font/PDF binaries entered Git or the application corpus. CER and WER compare reference and actual text after whitespace normalization; raw engine TXT and word-box TSV remain preserved privately. CER is character edit distance/reference length; WER applies the same calculation to words.
+
+| Fixture | CER | WER | Critical manual observation |
+| --- | ---: | ---: | --- |
+| English | 0 | 0 | Reference amounts, date, category, instalments and negation retained |
+| Hindi | 0 | 0 | Reference amounts, date, category, instalments and negation retained |
+| Mixed | 0.057554 | 0.041667 | `3 किस्तें` misread as `3 fed`; instalment meaning lost |
+| Noisy Hindi | 0.020942 | 0.028571 | `वर्ष` misread as `a¥`; yearly frequency wording damaged |
+
+All four passed the engine-signal legibility threshold, demonstrating why that threshold cannot establish transcription accuracy. Every OCR page still requires explicit critical-value/original comparison and an append-only admin decision. Labels/manual observations are implementing-agent review, not independent human evaluation or government-corpus accuracy.
+
+Existing local files: six flagged pages attempted in two additive revisions. Five PMAY pages (2, 4, 6, 8, 111) yielded empty low-quality OCR; one PMJDY page (32) exceeded the 12-million-pixel limit. **Zero accepted/reviewed OCR pages; six excluded.** Both revisions remain partial. Their other **146 digital pages were copied exactly**. No ready extraction pointer or live index was switched. Restricted originals stayed restricted. OCR extraction is not reuse permission or current-policy verification.
+
+Real isolated SQL/model/OCR tests cover physical-page preservation, unchanged digital text, mandatory review/rights gates, additive retry attempts/idempotency, stale lease fencing/resume, exact old citations across newer revisions/reindexing, failed-new-revision preservation, archive/rejection access, unauthorized/CSRF denial and token-aware E5 indexing. Actual short page deadlines, pixel caps and blank scans verify failure/temporary cleanup. A separately labeled controlled sleeper-descendant test verifies Windows Job tree termination; it is containment evidence, not a substitute for actual Tesseract smoke tests. Explicit live orphan reconciliation removed zero files. No hard RAM quota, malware sandbox, arbitrary deskew, table reconstruction or manual correction editor is claimed.
+
+### Paired language development comparison
+
+[language_devset.json](language_devset.json) has 24 cases: 15 grounded questions and nine ambiguous/outside/current-policy controls, including English/Hindi pairs, Roman variations, mixed/Devanagari digits, negation and beneficiary qualifiers. Gold spans were checked against the existing historical PIB factsheet by the implementing agent. The read-only runner used real E5/Chroma/SQL and pinned local Qwen with the unchanged Part 6 support stage. Baseline functions/prompt/token budget came from recorded Part 6 commit `31f64fdbfdbb7696f3fcc656634dc8588f0ad59d`; changed used the final implementation. Final two chatbot Hindi cases were rerun through actual index IPC/Qwen after manual proper-name/grammar correction; baseline rows remained fixed. Raw reports stay ignored in runtime.
+
+| Metric | Baseline | Changed |
+| --- | ---: | ---: |
+| Grounded questions with gold-span hit in top five | 15/15 | 15/15 |
+| Grounded questions retaining checked claims (`answered` or `partial`) | 7/15 | 14/15 |
+| Controls returning clarification/abstention without claims | 9/9 | 9/9 |
+
+There was **no demonstrated retrieval coverage gain**. Original rankings remain primary; normalized queries are compared and serve only as an empty-original fallback. Transparent normalization preserves the exact user question, safely maps bounded phrases/aliases/digits, and does not select response language. Explicit English/Hindi choice overrides profile; Hinglish profile maps to Hindi. Short scheme-name detection remains uncertain. The Roman current-policy control changes from clarification to abstention; neither variant supplies entitlement advice.
+
+Improvement is primarily narrow final Hindi handling: complete annual-benefit paragraphs survive budgeting and an exact positive digital pattern supplies recipient/annual amount/count; a second exact digital chatbot paragraph preserves EKstep foundation/Bhashini and completed-development grammar. These constructions still require an already selected exact quote and unchanged final support checks, skip OCR and are not general translation. A family-specific question returns partial scope rather than inventing a family category. One Hindi objectives query still conservatively abstains. Other generated Hindi may remain awkward; checks are same-model heuristics and cannot guarantee meaning/current applicability. Interim tuning exposed proper-name/grammar errors and same-model false rejects, including confusing document publication year with a past event; final wording separates those scopes. Retention is not accuracy, P@5, a hallucination rate or held-out evaluation. Labels were reused for tuning; independent review remains pending.
+
+The existing real-source 35-case support regression was repeated: zero false accepts among 26 negatives, zero false rejects among nine positives; 34/35 exact provenance valid, with the deliberate fabricated quote invalid. Selected-context conflict and two-candidate retention checks still passed. These are development guard regressions, not independent truth verification. Trust remains null.
+
+### Release checks
+
+After wake/resume, full required suite: **118 passed in 107.36 seconds**, one existing upstream Starlette/AnyIO deprecation; dedicated disposable PostgreSQL only. `pip check`: no broken requirements. Frontend typecheck and production build: 36 modules, build 2.69 seconds. Prior runs had Windows temporary/cache permission failures; fresh ignored test/cache directories resolved these without changing application data. Commands and service owner requirements are in [SETUP](SETUP.md).
+
+Browser checks use the existing private admin session without exposing credentials. Protected original page 32/pixel-limit exclusion and empty PMAY page 2/disabled acceptance were inspected. Switching documents now clears old revision state and keys the component by version; the correct 112-page revision loaded. Final Hinglish annual question with explicit Hindi output returned the exact land-holding/6,000-yearly/three-instalment construction with historical/current-applicability warnings and heuristic support. Real worker total was 12.653 seconds in that browser run, not a throughput benchmark. Citation inspection opened original physical page 2, exact quote [0,1056), legacy digital revision and bounded preserved page text. Reload/history reopened the stored answer unchanged. Source revocation/reindex/OCR citation access changes were exercised in isolated tests, without modifying live rights. A fresh Roman current-entitlement question returned Hindi insufficient_evidence with no policy claim. The final Hindi chatbot query returned the source-preserving EKstep foundation/Bhashini sentence in completed-event wording. Initial stale browser error-tab recovery required a fresh same-browser tab; a sandbox-started frontend was replaced by the verified host-loopback owner, with no duplicate services. Screenshot proof remains ignored locally. Public-file/relative-link/command and final diff checks passed before commit/push; release hash is verified against remote main separately.

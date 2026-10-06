@@ -45,6 +45,7 @@ class IndexPassage(Base):
     generation_id: Mapped[UUID] = mapped_column(ForeignKey('index_generations.id'), index=True)
     version_id: Mapped[UUID] = mapped_column(ForeignKey('document_versions.id'), index=True)
     page_id: Mapped[UUID] = mapped_column(ForeignKey('extracted_pages.id'), index=True)
+    extraction_page_id: Mapped[UUID | None] = mapped_column(ForeignKey('extraction_pages.id'), nullable=True)
     start_offset: Mapped[int] = mapped_column(Integer)
     end_offset: Mapped[int] = mapped_column(Integer)
     text: Mapped[str] = mapped_column(Text)

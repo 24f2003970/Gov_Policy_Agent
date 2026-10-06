@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { authorized, authorizedResponse } from './auth'
+import OcrReview from './OcrReview'
 
 type Job = { state: string; progress: number; attempts: number; processed_pages: number; total_pages: number; error_code: string | null }
 type Version = { id: string; document_id: string; version_number: number; checksum: string; original_name: string; format: string;
@@ -117,7 +118,7 @@ export default function DocumentAdmin() {
   const document = items.find(item => item.id === selected?.document_id)
   return <section className="mt-8 space-y-6">
     <h2 className="text-2xl font-semibold">Document ingestion</h2>
-    <p className="text-sm text-slate-600">PDF/UTF-8 TXT, up to 50 MiB. Uploads start unverified. Reviewed eligible text can be indexed for Search and historical-source Ask. OCR and HTML/DOCX remain deferred. Virus scanning is unavailable.</p>
+    <p className="text-sm text-slate-600">PDF/UTF-8 TXT, up to 50 MiB. Uploads start unverified. Reviewed eligible text can be indexed for Search and historical-source Ask. Flagged PDF pages support English/Hindi OCR with manual review. HTML/DOCX and virus scanning are unavailable.</p>
     <p className="rounded bg-slate-100 p-3 text-sm">Separate worker: from project root run <code>.\.venv\Scripts\python.exe backend\worker.py</code>. Jobs remain queued until it runs.</p>
     <form onSubmit={event => void upload(event)} className="space-y-4 rounded-xl border bg-white p-5">
       <h3 className="text-lg font-semibold">Upload source</h3>
@@ -140,10 +141,10 @@ export default function DocumentAdmin() {
       <label className="block">Version (latest 20)<select className={input} value={selected.id} onChange={event => { const value = versions.find(v => v.id === event.target.value); if (value) void choose(value) }}>{versions.map(v => <option key={v.id} value={v.id}>Version {v.version_number}: {v.original_name}</option>)}</select></label>
       <p role="status">Job: {selected.job.state} · {selected.job.progress}% · {selected.job.processed_pages}/{selected.job.total_pages} pages/sections · attempt {selected.job.attempts}/3</p>
       {selected.job.error_code && <p>Failure reason: {selected.job.error_code}</p>}
-      {['partial', 'needs_ocr'].includes(selected.job.state) && <p className="rounded bg-amber-50 p-3">Incomplete extraction: low-text/scanned pages need OCR in Part 7. Digital text remains available; this version is not ready for retrieval.</p>}
+      {['partial', 'needs_ocr'].includes(selected.job.state) && <p className="rounded bg-amber-50 p-3">Initial extraction contains low-text pages. Queue OCR below and review every OCR page; the initial digital extraction record is preserved.</p>}
       {pollStopped && <p>Automatic polling stopped. Use Refresh status.</p>}
       <button className="underline" onClick={() => void action(async () => { setSelected(await authorized<Version>(`${base}/versions/${selected.id}/status`)); setInspectionRevision(previous => previous + 1) })}>Refresh status</button>
-      <p className="break-all text-sm">SHA256: {selected.checksum}</p><p className="text-sm">Extraction: {selected.extraction_revision || 'pending'} · Chunk profile: {selected.chunk_profile || 'pending'}</p>
+      <p className="break-all text-sm">Version reference: {selected.id}</p><p className="break-all text-sm">SHA256: {selected.checksum}</p><p className="text-sm">Extraction: {selected.extraction_revision || 'pending'} · Chunk profile: {selected.chunk_profile || 'pending'}</p>
       <p>Provenance: {selected.provenance_status} · Future retrieval eligible: {String(selected.eligible_for_future_retrieval)}</p>
       <details><summary>Source metadata</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(selected.metadata_snapshot, null, 2)}</pre></details>
       <div className="flex flex-wrap gap-3"><button disabled={busy} className={button} onClick={() => void original()}>Load original preview</button>
@@ -152,6 +153,7 @@ export default function DocumentAdmin() {
       {originalUrl && <div><a href={originalUrl} download={`source.${selected.format}`} className="underline">Download authenticated original</a>{preview && <><p className="text-sm">Rendered original PDF page {ordinal}; changing source page requires Load original preview again.</p><img alt="Original PDF page preview" src={preview} className="mt-3 w-full border" /></>}{selected.format === 'txt' && <p>TXT original downloads as plain text; extracted text is below.</p>}</div>}
       {selected.provenance_status === 'unverified' && <div><label className="block">Verification note (official origin, title, rights and limitations)<textarea value={verification} onChange={event => setVerification(event.target.value)} className={input} minLength={20} maxLength={2000} /></label><button disabled={busy || verification.length < 20} className={button} onClick={() => void action(() => authorized(`${base}/versions/${selected.id}/provenance`, { method: 'PATCH', body: JSON.stringify({ status: 'verified', note: verification }) }))}>Record manual verification</button></div>}
       <h4 className="font-semibold">Extracted pages / TXT sections ({pageTotal})</h4>
+      {selected.format==='pdf'&&<OcrReview key={selected.id} versionId={selected.id}/>}
       {!!pages.length && <><label className="block">Source page/section<select className={input} value={ordinal} onChange={event => { setOrdinal(Number(event.target.value)); setOffset(0) }}>{pages.map(p => <option key={p.ordinal} value={p.ordinal}>{p.pdf_page_number ? `PDF page ${p.pdf_page_number}` : `TXT section ${p.ordinal}`} · {p.character_count} characters · {p.quality_flags.join(', ')}</option>)}</select></label>
         <div className="flex gap-3"><button disabled={pageList === 1} onClick={() => { setPageList(pageList - 1); setOrdinal((pageList - 2) * 50 + 1); setOffset(0) }}>Previous source pages</button><button disabled={pageList * 50 >= pageTotal} onClick={() => { setPageList(pageList + 1); setOrdinal(pageList * 50 + 1); setOffset(0) }}>Next source pages</button></div></>}
       {text && <><p className="text-sm">Exact characters [{text.offset}, {Math.min(text.offset + 20000, text.total_characters)}) of {text.total_characters}. {text.quality_flags.join(', ')}</p><pre className="max-h-[500px] overflow-auto whitespace-pre-wrap break-words rounded bg-slate-50 p-4 text-sm">{text.text || 'No digital text. OCR pending.'}</pre><div className="flex gap-4"><button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 20000))}>Previous text</button><button disabled={offset + 20000 >= text.total_characters} onClick={() => setOffset(offset + 20000)}>Next text</button></div><details><summary>Detected paragraph spans</summary><pre className="overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(text.paragraphs, null, 2)}</pre></details></>}

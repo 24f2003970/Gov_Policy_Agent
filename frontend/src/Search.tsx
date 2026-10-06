@@ -2,8 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { authorized, type User } from './auth'
 type Source = { version_id: string; title: string; eligible: boolean; reasons: string[]; applicability: string }
 type Status = { state: string; active_generation: string | null; latest_job: {state: string; processed: number; total: number; error_code: string | null} | null; sources: Source[]; model: {model: string; revision: string; chunk_profile: string} }
-type Passage = { chunk_id: string; version_id: string; title: string; issuer: string; source_url: string; page_ordinal: number; pdf_page_number: number | null; start_offset: number; end_offset: number; text: string; cosine_similarity: number; cosine_distance: number; verification: {applicability: string; scope: string; provenance: string} }
-type Results = { status: string; items: Passage[]; generation?: string; notice?: string; heuristic_min_similarity?: number; timings_ms?: {embedding: number; total: number} }
+type Passage = { extraction_method?:string; extraction_revision_id?:string; ocr_notice?:string; chunk_id: string; version_id: string; title: string; issuer: string; source_url: string; page_ordinal: number; pdf_page_number: number | null; start_offset: number; end_offset: number; text: string; cosine_similarity: number; cosine_distance: number; verification: {applicability: string; scope: string; provenance: string} }
+type Results = { query_normalization?:{retrieval_question:string;transformations:string[];selection:string}; status: string; items: Passage[]; generation?: string; notice?: string; heuristic_min_similarity?: number; timings_ms?: {embedding: number; total: number} }
 const input = 'mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2'
 const button = 'rounded bg-teal-900 px-4 py-2 text-white disabled:opacity-50'
 const message = (e: unknown) => e instanceof Error ? e.message : 'Request failed'
@@ -63,6 +63,7 @@ export default function Search({ user }: { user: User }) {
       <button disabled={busy} className={button}>{busy?'Searching…':'Search passages'}</button>
     </form>
     {results && <section className="space-y-4"><h2 className="text-xl font-semibold">Retrieval: {results.status}</h2><p>{results.notice}</p>
+      {results.query_normalization&&<p className="text-sm">Retrieval query: {results.query_normalization.retrieval_question}. Changes: {results.query_normalization.transformations.join(', ')||'none'} · selection {results.query_normalization.selection}. Original-query retrieval is retained for comparison/fallback.</p>}
       {results.timings_ms && <p>Embedding {results.timings_ms.embedding} ms · total {results.timings_ms.total} ms · heuristic minimum similarity {results.heuristic_min_similarity}</p>}
       {results.status==='unavailable' && <p>No coherent index active. Prepare model, queue rebuild and run index service.</p>}
       {results.status==='empty' && <p>No eligible candidate exceeded the heuristic threshold with these filters. This does not prove an answer or policy does not exist.</p>}
@@ -70,7 +71,7 @@ export default function Search({ user }: { user: User }) {
         <p>{p.issuer} · {p.pdf_page_number?`Physical PDF page ${p.pdf_page_number}`:`TXT section ${p.page_ordinal}`} · characters [{p.start_offset}, {p.end_offset})</p>
         <a className="break-all underline" href={p.source_url} target="_blank" rel="noreferrer">Official source</a>
         <p>Provenance {p.verification.provenance} · applicability {p.verification.applicability}. {p.verification.scope}</p>
-        <p>Cosine similarity {p.cosine_similarity.toFixed(4)} · distance {p.cosine_distance.toFixed(4)}</p>
+        <p>Extraction: {p.extraction_method||'digital'} · revision {p.extraction_revision_id||'original'}. {p.ocr_notice}</p><p>Cosine similarity {p.cosine_similarity.toFixed(4)} · distance {p.cosine_distance.toFixed(4)}</p>
         <p className="break-all text-xs">Version {p.version_id} · chunk {p.chunk_id} · index {results.generation}</p>
         <pre className="mt-3 whitespace-pre-wrap break-words text-sm">{p.text}</pre>
         <button disabled={busy} className="mt-3 underline" onClick={()=>void inspect(p)}>Inspect extracted source page</button></article>)}

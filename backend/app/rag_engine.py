@@ -99,32 +99,49 @@ class LocalGenerator:
 async def pipeline(question,language,filters,retriever,generator,verifier=None):
     started=time.perf_counter(); response=await retriever.retrieve(question,filters)
     passages=response['items']
-    state=precheck(question,filters,passages,language)
-    timings={'retrieval_ms':round((time.perf_counter()-started)*1000,2),'generation_attempts':0}
+    from .language import normalize
+    state=precheck(normalize(question)['retrieval_question'],filters,passages,language)
+    timings={'retrieval_ms':round((time.perf_counter()-started)*1000,2),'generation_attempts':0,
+        'query_normalization':response.get('query_normalization',normalize(question))}
     if state:
         output=GroundedOutput(status=state,language=language,claims=[],limitations=[])
         return final_result(output,passages,language),passages,response.get('generation'),timings
+    from .language import context_order
+    original_count=len(passages)
+    passages,rules=context_order(question,passages) if language=='hi' else (passages,[])
+    context_omitted=len(passages)<original_count
+    timings['context_selection']={'rules':rules,'passage_order':[p['chunk_id'] for p in passages],
+        'notice':'Complete source excerpts prioritized before token budgeting; this is not claim support.'}
     failures={'invalid_structured_output','response_language_mismatch','invented_evidence_id','invented_quote_id','non_exact_evidence_quote','unsupported_numeric_claim','unsupported_claim_markup','contradictory_condition'}
-    repair=None; attempts=[]
+    repair=None; attempts=[]; rejected=[]
     for _ in range(2):
         prompt,tokens,selected,omitted=generator.budget(question,language,passages,repair)
+        omitted=omitted or context_omitted
         if not selected:
             output=GroundedOutput(status='insufficient_evidence',language=language,claims=[],limitations=['incomplete_context'])
             return final_result(output,[],language,True),[],response.get('generation'),timings
         raw,metrics=await generator.generate(prompt,tokens); attempts.append(metrics)
         timings.update(generation_attempts=len(attempts),inference=attempts)
-        try: output=expand_model_output(raw,language,selected)
+        try: output=expand_model_output(raw,language,selected,question)
         except RagError as exc:
             if exc.code not in failures: raise
             repair=exc.code
             continue
         checks=[]
         if output.claims:
+            from .language import hindi_annual,hindi_chatbot
+            output,construction=hindi_annual(output,question,selected)
+            if not construction:output,construction=hindi_chatbot(output,question,selected)
+            if construction:timings['response_construction']=construction
             if verifier is None:raise RagError('verification_unavailable')
             output,checks,verification=await verifier.evaluate(output,selected,response.get('generation'))
             timings['verification']=verification
+            if not output.claims and len(attempts)<2 and checks and all(c['assessment'].get('reason_code') in ('condition_omitted','scope_mismatch') for c in checks):
+                rejected.extend(checks)
+                repair='support_condition_or_scope_omitted'
+                continue
         result=final_result(output,selected,language,omitted)
-        result['_claim_checks']=checks
+        result['_claim_checks']=rejected+checks
         result['grounding']='Exact SQL provenance + deterministic guards + same-model heuristic support judge; not independent fact verification.'
         from .support import METHOD
         result['support_method']=METHOD if checks else 'not_evaluated'

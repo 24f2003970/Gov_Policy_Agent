@@ -7,6 +7,7 @@ from .index_models import IndexGeneration,IndexPassage
 from .document_models import Document,DocumentVersion,ExtractedPage
 from .eligibility import eligibility
 from .citation_models import AnswerClaim,ClaimCitation
+from .extraction_artifacts import page_for, metadata_for
 
 PROVENANCE_METHOD='sql-original-span-v1'
 
@@ -19,10 +20,12 @@ def validate_sources(db,passages,generation):
         version=db.get(DocumentVersion,UUID(p['version_id']),with_for_update=True)
         if not version:raise RagError('source_status_changed')
         db.get(Document,version.document_id,with_for_update=True)
-        e=eligibility(db,version)
+        e=eligibility(db,version,p.get('extraction_revision_id'))
         if not e['eligible'] or e['review_id']!=p['verification']['review_id']:raise RagError('source_status_changed')
         passage=db.get(IndexPassage,UUID(p['chunk_id']))
-        page=db.get(ExtractedPage,passage.page_id) if passage else None
+        page=page_for(db,passage)
+        if passage and any(p.get(k)!=metadata_for(db,passage)[k] for k in ('extraction_revision_id','extraction_page_id')):
+            raise RagError('source_span_changed')
         if not passage or str(passage.generation_id)!=generation or str(passage.version_id)!=p['version_id'] or not page or page.version_id!=version.id:
             raise RagError('source_span_changed')
         if (passage.start_offset!=p['start_offset'] or passage.end_offset!=p['end_offset'] or passage.text!=p['text'] or
@@ -31,7 +34,7 @@ def validate_sources(db,passages,generation):
 
 def context_for(db,evidence,passage_snapshot):
     passage=db.get(IndexPassage,UUID(evidence.id))
-    page=db.get(ExtractedPage,passage.page_id) if passage else None
+    page=page_for(db,passage)
     version=db.get(DocumentVersion,passage.version_id) if passage else None
     start,end=evidence.quote_start_offset,evidence.quote_end_offset
     if not page or not version or start is None or end is None or not (passage.start_offset<=start<end<=passage.end_offset):
@@ -52,7 +55,7 @@ def context_for(db,evidence,passage_snapshot):
         'section_is_heuristic':bool(passage.section_label),'clause':None,'continued_clause':passage.continued_clause,
         'index_generation':str(passage.generation_id),'review':passage_snapshot['verification'],
         'paragraph_spans':[{'start':p['start'],'end':p['end']} for p in spans],
-        'context_start':context_start,'context_end':context_end}
+        'context_start':context_start,'context_end':context_end,**metadata_for(db,passage)}
     return {'id':str(passage.id),'quote':evidence.quote,'start_offset':start,'end_offset':end,
         'context':page.text[context_start:context_end],'metadata':metadata,
         'provenance':{'status':'valid','method':PROVENANCE_METHOD,'reason':'Exact quote, passage and version/page offsets matched authoritative SQL text.'}}
@@ -79,15 +82,17 @@ def persist_claims(db,run,records):
 def access_status(db,metadata):
     version=db.get(DocumentVersion,UUID(metadata['version_id']),with_for_update=True)
     if version:db.get(Document,version.document_id,with_for_update=True)
-    e=eligibility(db,version) if version else None
+    e=eligibility(db,version,metadata.get('extraction_revision_id',metadata.get('review',{}).get('extraction_revision_id'))) if version else None
     if not e:return {'allowed':False,'reasons':['source_missing']}
     reasons=list(e['reasons'])
     if e['review_id']!=metadata.get('review',{}).get('review_id'):reasons.append('review_changed')
     passage=db.get(IndexPassage,UUID(metadata['passage_id'])) if metadata.get('passage_id') else None
-    page=db.get(ExtractedPage,passage.page_id) if passage else None
+    page=page_for(db,passage)
     if not passage or not page:reasons.append('provenance_missing')
     elif page.version_id!=version.id or passage.version_id!=version.id or page.text[passage.start_offset:passage.end_offset]!=passage.text:
         reasons.append('provenance_changed')
+    elif metadata.get('extraction_revision_id',metadata.get('review',{}).get('extraction_revision_id'))!=metadata_for(db,passage)['extraction_revision_id']:
+        reasons.append('extraction_revision_changed')
     return {'allowed':not reasons,'reasons':reasons,'applicability':e['applicability']}
 
 

@@ -96,6 +96,9 @@ class Worker:
             record.model={**self.generator.manifest,'prompt_revision':PROMPT_REVISION,'schema_revision':SCHEMA_REVISION,'index_generation':generation}
             if not error:persist_claims(db,record,checks)
             record.timings=timings
+            if timings.get('query_normalization'):
+                record.query_normalization=timings['query_normalization']
+                record.retrieval_question=record.query_normalization['retrieval_question']
             record.state='cancelled' if error=='cancelled' else 'error' if error else 'done'
             record.error_code=error;record.finished_at=now();db.commit()
         return True

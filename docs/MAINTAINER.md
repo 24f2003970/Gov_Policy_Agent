@@ -1,6 +1,6 @@
 # Maintainer state
 
-Updated 2026-10-06. Parts 1–10 are implemented. Part 11 requires a new user instruction; do not begin it automatically. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
+Updated 2026-10-06. Parts 1–11 are implemented. Stop here; Part 12 requires a new user instruction. The recurring beginner-explanation requirement is withdrawn; future work uses concise technical documentation.
 
 ## Continuation baseline
 
@@ -25,7 +25,6 @@ Keep pinned multilingual E5-small on CPU/two threads, normalized 384-dimensional
 
 | Part | Planned work |
 | --- | --- |
-| 11 | Held-out evaluation, security review and resource profiling |
 | 12 | Local Compose packaging, backup/restore and final project deliverables |
 
 HTML remains after baseline and DOCX deferred. No paid API, fine-tuning or cloud baseline. Reranking, HyDE, translation frameworks and monitoring frameworks require measured need. Model selection must check license, language support and memory; never mix embedding revisions/dimensions. Start conservatively and benchmark before increasing model/context/batch sizes.
@@ -36,7 +35,15 @@ Measure retrieval P@k/recall, claim support, citation correctness, abstention, l
 
 Proposed score dimensions/weights are unvalidated: recency 20%, citation coverage 25%, semantic faithfulness 25%, consistency 15%, calibration 10%, feedback 5%. Part 8 measures factual citation coverage; the other five numerical values stay unavailable. Full/partial aggregates are null. Preserve missing values, formula version and available weight coverage; do not invent components or silently reweight. Thresholds and calibration need evaluation.
 
-Known gaps: manual OCR correction/deskew, table/encoding quality, wider corpus rights clearance, malware scanning, parser isolation/hard memory quotas, production HTTPS/security, CPU generation fallback, throughput and held-out retrieval evaluation. The 12-case development set was source-checked by the implementing agent; independent human review is pending. Ambiguous questions still return candidates; the 0.78 cutoff is not calibrated. Historical upstream TestClient deprecation remains. Update technical records with actual results when future work is authorized.
+Known gaps: manual OCR correction/deskew, table/encoding quality, wider corpus rights clearance, malware scanning, parser isolation/hard memory quotas, production HTTPS/security, CPU generation fallback, throughput and independent evaluation. The 12-case development set was source-checked by the implementing agent; independent human review is pending. Ambiguous questions still return candidates; the 0.78 cutoff is not calibrated. Historical upstream TestClient deprecation remains. Update technical records with actual results when future work is authorized.
+
+## Part 11 decisions
+
+Preserve [frozen evaluation](EVALUATION.md), its original 30-case baseline and source/development hashes. There are 24 new pipeline cases plus six known failure-class controls; the separate three-case installment freeze adds explicit count controls after security-only changes. All labels are agent-authored/source-reviewed. Baseline: gold hit@5 9/9, retained factual output 1/9 (partial), behavioral matches 16/24; original six controls and supplemental three reject. Independent semantic labels/calibration remain unavailable. Do not tune on this set and continue calling it untouched evaluation. No answer prompt/guard/rights changes were made to improve these results.
+
+Read-only evaluation owns only the existing project Ollama while the idle RAG worker stops; index stays running. Engine blocks non-SELECT statements and verifies ten live table hashes unchanged. Raw outputs/source text/UUIDs remain ignored runtime files. A blank human-review template is supplied; future independent review must freeze labels before accuracy calculations.
+
+Preserve actual-stream 64 KiB non-upload API/index cap and strict Host parsing; raw uploads keep their existing limits. Compatible dependency patches passed regression/build; [security review](SECURITY_REVIEW.md) records unresolved Chroma/sentence-transformers/Starlette/Transformers advisories and supplemental torch findings. No broad incompatible upgrades or replacement models. Local HTTP/trusted profile, no parser sandbox/hard memory quotas, small historical corpus and conservative generation remain practical limits. Schema remains 0009_answer_feedback; no data/config reset or assessment backfill.
 
 ## Answer baseline to preserve
 

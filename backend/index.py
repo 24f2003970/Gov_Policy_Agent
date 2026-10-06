@@ -12,6 +12,7 @@ from app.config import Settings
 from app.database import make_engine, schema_ready
 from app.search_api import SearchInput, internal_key
 from app.vector_index import Runtime, queue, status
+from app.request_limits import BodyLimitMiddleware, StrictHostMiddleware
 
 
 def service(runtime, key):
@@ -33,6 +34,8 @@ def service(runtime, key):
         stop.set(); worker.join(timeout=5)
 
     app = FastAPI(lifespan=lifespan, docs_url=None, openapi_url=None)
+    app.add_middleware(BodyLimitMiddleware)
+    app.add_middleware(StrictHostMiddleware, allowed_hosts=['127.0.0.1','localhost'], www_redirect=False)
 
     def authorize(x_index_key: str = Header(default='')):
         if not hmac.compare_digest(x_index_key, key): raise HTTPException(403, 'Forbidden')

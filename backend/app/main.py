@@ -2,6 +2,7 @@
 import logging
 from contextlib import asynccontextmanager
 from uuid import uuid4
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -20,6 +21,7 @@ from .ask_api import router as ask_router
 from .ocr_api import router as ocr_router
 from .feedback_api import router as feedback_router
 from .analytics_api import router as analytics_router
+from .request_limits import BodyLimitMiddleware, StrictHostMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +45,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if application.state.engine is not None:
             application.state.engine.dispose()
 
-    app = FastAPI(title=settings.app_name, version="0.10.0", lifespan=lifespan)
+    app = FastAPI(title=settings.app_name, version="0.11.0", lifespan=lifespan)
     app.state.settings = settings
     install_database(app, settings)
     app.include_router(router)
@@ -75,6 +77,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             clear_cookie(response, settings)
         response.headers["X-Request-ID"] = request.state.request_id
         response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 
     @app.exception_handler(HTTPException)
@@ -95,20 +98,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/health/live", response_model=LiveResponse)
     async def live():
-        return LiveResponse(status="alive", project_id="GOV-CS-028", phase=10)
+        return LiveResponse(status="alive", project_id="GOV-CS-028", phase=11)
 
     @app.get("/health/ready", response_model=ReadyResponse)
     def ready():
         database_ok = schema_ready(app.state.engine)
         auth_ok = settings.jwt_secret is not None
         data = ReadyResponse(
-            status="ready" if database_ok and auth_ok else "not_ready", project_id="GOV-CS-028", phase=10,
+            status="ready" if database_ok and auth_ok else "not_ready", project_id="GOV-CS-028", phase=11,
             required_dependencies={"configuration": "validated",
                                    "postgresql": "connected_schema_current" if database_ok else "unavailable_or_migrations_missing",
                                    "authentication": "configured" if auth_ok else "unconfigured"},
             optional_services={"chroma": "separate_index_service", "ollama": "separate_local_rag_worker"})
         return JSONResponse(status_code=200 if database_ok and auth_ok else 503, content=data.model_dump())
 
+    app.add_middleware(BodyLimitMiddleware, upload_path='/admin/documents/upload')
+    hosts = {'127.0.0.1', 'localhost'} | {urlsplit(origin).hostname for origin in settings.cors_origins}
+    app.add_middleware(StrictHostMiddleware, allowed_hosts=sorted(hosts), www_redirect=False)
     # Keep CORS outermost so even error responses have the allowed CORS headers.
     app.add_middleware(
         CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=True,

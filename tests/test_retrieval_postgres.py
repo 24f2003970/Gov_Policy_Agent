@@ -190,7 +190,7 @@ def test_search_api_permission_inspection_and_validation(docs,encoder,tmp_path):
 def test_internal_service_auth_and_real_query(docs,encoder,tmp_path):
     runtime,v,jid=indexed(docs,encoder,tmp_path)
     from backend.index import service
-    with TestClient(service(runtime,'synthetic-internal-test-key')) as client:
+    with TestClient(service(runtime,'synthetic-internal-test-key'),base_url='http://127.0.0.1:8011') as client:
         assert client.post('/query',json={'question':'farmers annual financial support'}).status_code==403
         import time
         for _ in range(40):

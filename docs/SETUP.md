@@ -230,3 +230,31 @@ Part 9 adds only the bookmark migration; keep the existing private configuration
 ## Feedback and analytics
 
 Existing startup commands are unchanged. After the additive migration, restart only the API if it is already running. Feedback is available on accessible answered/partial details in Ask, History and Saved; it requires no model service. Admin Analytics is at `/#analytics`, with 1/7/30-day UTC windows. Feedback comments are private plain text, maximum 500 Unicode characters (the browser may conservatively count supplementary characters as two). No analytics package or synthetic live feedback seed is required.
+
+## Frozen evaluation and dependency audit
+
+Part 11 has no migration or model preparation. Install the updated backend lock/frontend lock using the existing commands, then restart only the existing API/index/frontend owners. Non-upload API/index bodies have a 65,536-byte actual-stream cap; raw admin uploads retain the 50 MiB limit. Hosts must be loopback or, for the API, explicitly configured origin hostnames. Keep private configuration unchanged.
+
+For evaluation, keep Terminal 4 (index) running. Wait for zero queued/processing answers, stop only Terminal 5 (project RAG) with Ctrl+C, and keep personal Ollama untouched. From project-root PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe backend\evaluate_frozen.py --check
+.\.venv\Scripts\python.exe backend\evaluate_frozen.py --run-id local-review-v1
+.\.venv\Scripts\python.exe backend\evaluate_frozen.py --check --set evaluation_installment_controls_v1
+.\.venv\Scripts\python.exe backend\evaluate_frozen.py --set evaluation_installment_controls_v1 --run-id local-installment-v1
+.\.venv\Scripts\python.exe backend\rag.py
+```
+
+Expected checks: `part11-agent-v1 30` and `part11-installment-controls-v1 3`, followed by recorded SHA256 values. Runs refuse an existing output directory; choose a new ID for each repetition. Success writes private outputs and an allowlisted summary under ignored `runtime/evaluation/<run-id>` and verifies application records unchanged. Source/gold/development hash mismatch is a failure, not permission to alter the freeze. An owner-lock error means another project RAG/evaluation process is running; inspect it instead of starting a duplicate. Results vary with hardware and model execution; do not overwrite the committed original baseline. See [EVALUATION](EVALUATION.md) for denominators and independent review.
+
+Optional reproducible audit tool setup, project root (separate environment; no application/model upgrades):
+
+```powershell
+.\.venv\Scripts\python.exe -m venv runtime\audit-env
+.\runtime\audit-env\Scripts\python.exe -m pip install pip-audit==2.10.1
+.\runtime\audit-env\Scripts\python.exe -m pip_audit --path .venv\Lib\site-packages --format json --output runtime\pip-audit.json
+npm.cmd --prefix frontend audit --json
+.\.venv\Scripts\python.exe -m pip check
+```
+
+Audits may return a nonzero exit code when advisories exist. Network/advisory-service failure is not a clean audit. The CPU torch wheel may be skipped; the recorded supplemental normalized query and unresolved package findings are in [SECURITY_REVIEW](SECURITY_REVIEW.md). Tested installer pip version was 26.2. Keep raw audit logs private; publish only reviewed aggregate records.

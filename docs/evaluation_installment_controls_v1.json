@@ -1,0 +1,71 @@
+{
+  "source_sha256": "cb739585b7794b79dc61a164fcd744de4fc5bc1de75b1402db387b03eac40df8",
+  "source_version_number": 1,
+  "development_files": {
+    "docs\\language_devset.json": "50671895ed2615ef0f08970bf8ced1635e919eb8912fba38d1325688c9f96101",
+    "docs\\retrieval_devset.json": "46a64d33f7654b20e22e14c52af68177ed37d91e5f7bad49095d6b9327a2ea5a",
+    "docs\\support_devset.json": "c8d35e5190f456d93af542bb0844385079062947cbb0dd99ce6cbe4ebd5d8258"
+  },
+  "version": "part11-installment-controls-v1",
+  "frozen_at": "2026-10-06T17:35:31.858439+00:00",
+  "label_status": "Agent-authored installment-count regression controls; known development failure class; no independent semantic labels",
+  "cases": [
+    {
+      "id": "installment-count-en",
+      "mode": "probe",
+      "input_language": "en",
+      "response_language": "en",
+      "kind": "adversarial_regression",
+      "mutation": "claim",
+      "claim": "Land-holding farmers receive Rs 6,000 per year in 12 equal instalments.",
+      "gold": {
+        "page": 2,
+        "ordinal": 2,
+        "start": 581,
+        "end": 597,
+        "text_sha256": "7a28015056671e0dc509ded0942e87504922c24dc249e758a83c6c9e96a97cb8"
+      },
+      "expected_accept": false,
+      "label_provenance": "Agent source inspection; known annual-payment guard class, not novel held-out accuracy",
+      "separation": "Supplement to preserved 30-case baseline, frozen after security-only changes and before this control run"
+    },
+    {
+      "id": "installment-count-hi",
+      "mode": "probe",
+      "input_language": "hi",
+      "response_language": "hi",
+      "kind": "adversarial_regression",
+      "mutation": "claim",
+      "claim": "भूमिधारक किसानों को प्रति वर्ष 6,000 रुपये की सहायता 8 समान किस्तों में दी जाती थी।",
+      "gold": {
+        "page": 2,
+        "ordinal": 2,
+        "start": 581,
+        "end": 597,
+        "text_sha256": "7a28015056671e0dc509ded0942e87504922c24dc249e758a83c6c9e96a97cb8"
+      },
+      "expected_accept": false,
+      "label_provenance": "Agent source inspection; known annual-payment guard class, not novel held-out accuracy",
+      "separation": "Supplement to preserved 30-case baseline, frozen after security-only changes and before this control run"
+    },
+    {
+      "id": "installment-count-hinglish",
+      "mode": "probe",
+      "input_language": "hinglish",
+      "response_language": "hi",
+      "kind": "adversarial_regression",
+      "mutation": "claim",
+      "claim": "भूमिधारक किसानों को वार्षिक 6,000 रुपये की सहायता 25 समान किस्तों में दी जाती थी।",
+      "gold": {
+        "page": 2,
+        "ordinal": 2,
+        "start": 581,
+        "end": 597,
+        "text_sha256": "7a28015056671e0dc509ded0942e87504922c24dc249e758a83c6c9e96a97cb8"
+      },
+      "expected_accept": false,
+      "label_provenance": "Agent source inspection; known annual-payment guard class, not novel held-out accuracy",
+      "separation": "Supplement to preserved 30-case baseline, frozen after security-only changes and before this control run"
+    }
+  ]
+}

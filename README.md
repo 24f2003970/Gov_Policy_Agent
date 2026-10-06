@@ -19,6 +19,7 @@ GOV-CS-028 is a B.Tech student project for exploring document-grounded governmen
 - Responsive Ask/Search/History/Saved/Account navigation, protected answer details and persistent private answer bookmarks.
 - Private helpful/not-helpful feedback with optional fixed reasons and plain-text comments; update/removal on accessible factual answers.
 - Admin-only aggregate analytics with explicit UTC windows, outcome/language counts, recorded latency, feedback participation and processing counts.
+- Frozen local evaluation with separate development controls, exact provenance checks and private raw outputs; bounded API/index requests and a dated security review.
 
 ## Stack
 
@@ -42,5 +43,6 @@ The local corpus contains four PDFs across three schemes: one reviewed historica
 - [Maintainer state and roadmap](docs/MAINTAINER.md)
 - [Evidence-quality contract](docs/TRUST_SCORING.md)
 - [Recorded verification](docs/VERIFICATION.md)
+- [Frozen evaluation and its limitations](docs/EVALUATION.md) and [practical security review](docs/SECURITY_REVIEW.md)
 - [Sources and licensing disclosures](docs/SOURCES.md) and [corpus manifest](docs/corpus_manifest.json)
 - [Proposal requirement mapping](REQUIREMENTS_MATRIX.md)

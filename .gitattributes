@@ -1,1 +1,6 @@
 * text=auto eol=lf
+# Preserve measured/frozen JSON byte hashes across Git checkouts.
+docs/evaluation_set_v1.json -text whitespace=cr-at-eol
+docs/evaluation_installment_controls_v1.json -text whitespace=cr-at-eol
+docs/evaluation_baseline_v1.json -text whitespace=cr-at-eol
+docs/evaluation_installment_controls_results_v1.json -text whitespace=cr-at-eol

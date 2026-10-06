@@ -4,6 +4,8 @@ Interactive schemas: `http://127.0.0.1:8000/docs`; machine schema: `/openapi.jso
 
 Protected requests use `Authorization: Bearer <access-token>`. Mutations require the approved Origin and `X-CSRF-Protection: 1`. Browser requests include credentials for refresh cookies. Document routes require a live admin role; unauthenticated and non-admin requests return 401 and 403 respectively.
 
+Part 11 health reports phase 11. Before route/body parsing, unrelated or malformed Host headers return 400. The API accepts loopback and explicitly configured origin hostnames; the private index accepts loopback only. Non-upload API/index bodies exceeding 65,536 actual bytes return 413 (`request_body_limit`), including absent/understated Content-Length. Invalid/duplicate Content-Length returns 400. The exact POST raw upload route retains authenticated streaming limits (50 MiB). Responses use nosniff; oversized-body errors omit input and use no-store/request IDs.
+
 | Method / route | Purpose |
 | --- | --- |
 | GET /health/live, /health/ready | Process liveness; configured DB/schema/auth readiness |

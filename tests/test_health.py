@@ -11,14 +11,14 @@ from app.main import create_app
 
 @pytest.fixture
 def client():
-    with TestClient(create_app(Settings(_env_file=None, environment="test"))) as test_client:
+    with TestClient(create_app(Settings(_env_file=None, environment="test")), base_url="http://127.0.0.1:8000") as test_client:
         yield test_client
 
 
 def test_live_without_models_or_database(client):
     response = client.get("/health/live")
     assert response.status_code == 200
-    assert response.json() == {"status": "alive", "project_id": "GOV-CS-028", "phase": 10}
+    assert response.json() == {"status": "alive", "project_id": "GOV-CS-028", "phase": 11}
     UUID(response.headers["x-request-id"])
 
 
@@ -95,7 +95,7 @@ def test_error_paths_do_not_leak_input_or_internal_details():
     async def http():
         raise HTTPException(status_code=429, detail="Try later", headers={"Retry-After": "1"})
 
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1:8000") as client:
         invalid = client.get("/test/validate?value=private-input")
         assert invalid.status_code == 422
         assert "private-input" not in invalid.text

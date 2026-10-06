@@ -1,0 +1,846 @@
+{
+  "metadata": {
+    "set_version": "part11-agent-v1",
+    "set_sha256": "a29266a8dcf11f4bda434573bc4c6fc0990629d4ddf959f708fe848602e5c6a2",
+    "started_at": "2026-10-06T17:19:34.395370+00:00",
+    "code_commit": "ddfaf3361705d82ea1e8fc8215ca922e0ca945a0",
+    "model": {
+      "tag": "qwen3:4b-instruct-2507-q4_K_M",
+      "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+      "quantization": "Q4_K_M",
+      "parameters": "4.0B",
+      "ollama_version": "0.17.1",
+      "tokenizer_repository": "Qwen/Qwen3-4B-Instruct-2507",
+      "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "context_tokens": 4096,
+      "output_tokens": 768,
+      "temperature": 0,
+      "seed": 28,
+      "think": false
+    },
+    "prompt_revision": "grounded-v3-language",
+    "support_method": "layered-qwen-v2",
+    "label_status": "Agent-authored/source-reviewed frozen evaluation; independent human review pending; not independent accuracy",
+    "index_state": "Existing warm index service; fresh owned LLM process",
+    "independent_human_labels": 0,
+    "runner_sha256": "3da8578b52ff754c296e8f717344841fe415c03f5ed2f0a633b9cb143468e239",
+    "evaluation_helpers_sha256": "c497acdd22e8b68fe5ba87979e8a89c3b228ddcb75e7ac1da70813342549bddf"
+  },
+  "application_records_unchanged": true,
+  "metrics": {
+    "pipeline": {
+      "en": {
+        "cases": 8,
+        "behavior_matches": 6,
+        "outcomes": {
+          "insufficient_evidence": 6,
+          "partial": 1,
+          "needs_clarification": 1
+        },
+        "retrieval_denominator": 3,
+        "gold_hit_at_k": {
+          "1": 2,
+          "3": 3,
+          "5": 3
+        },
+        "retrieval_unavailable_cases": 0,
+        "candidate_claims": 2,
+        "accepted_candidates": 1,
+        "candidate_count_unavailable_cases": 0,
+        "valid_citations": 1,
+        "citation_attempts": 1,
+        "deterministic_decisions": 0,
+        "same_model_decisions": 2,
+        "independent_semantic_labels": 0,
+        "semantic_accuracy": null,
+        "latency": {
+          "cold_llm": {
+            "sample_count": 1,
+            "median_ms": 13775.85,
+            "min_ms": 13775.85,
+            "max_ms": 13775.85
+          },
+          "warm_llm": {
+            "sample_count": 4,
+            "median_ms": 1932.265,
+            "min_ms": 1833.31,
+            "max_ms": 6504.08
+          },
+          "no_generation": {
+            "sample_count": 3,
+            "median_ms": 126.66,
+            "min_ms": 117.03,
+            "max_ms": 131.86
+          },
+          "unknown_error": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          }
+        }
+      },
+      "hi": {
+        "cases": 8,
+        "behavior_matches": 5,
+        "outcomes": {
+          "insufficient_evidence": 7,
+          "needs_clarification": 1
+        },
+        "retrieval_denominator": 3,
+        "gold_hit_at_k": {
+          "1": 2,
+          "3": 3,
+          "5": 3
+        },
+        "retrieval_unavailable_cases": 0,
+        "candidate_claims": 2,
+        "accepted_candidates": 0,
+        "candidate_count_unavailable_cases": 0,
+        "valid_citations": 0,
+        "citation_attempts": 0,
+        "deterministic_decisions": 0,
+        "same_model_decisions": 2,
+        "independent_semantic_labels": 0,
+        "semantic_accuracy": null,
+        "latency": {
+          "cold_llm": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "warm_llm": {
+            "sample_count": 6,
+            "median_ms": 2103.055,
+            "min_ms": 1813.85,
+            "max_ms": 10596.3
+          },
+          "no_generation": {
+            "sample_count": 2,
+            "median_ms": 163.44,
+            "min_ms": 117.88,
+            "max_ms": 209.0
+          },
+          "unknown_error": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          }
+        }
+      },
+      "hinglish": {
+        "cases": 8,
+        "behavior_matches": 5,
+        "outcomes": {
+          "insufficient_evidence": 7,
+          "needs_clarification": 1
+        },
+        "retrieval_denominator": 3,
+        "gold_hit_at_k": {
+          "1": 2,
+          "3": 3,
+          "5": 3
+        },
+        "retrieval_unavailable_cases": 0,
+        "candidate_claims": 3,
+        "accepted_candidates": 0,
+        "candidate_count_unavailable_cases": 0,
+        "valid_citations": 0,
+        "citation_attempts": 0,
+        "deterministic_decisions": 1,
+        "same_model_decisions": 2,
+        "independent_semantic_labels": 0,
+        "semantic_accuracy": null,
+        "latency": {
+          "cold_llm": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "warm_llm": {
+            "sample_count": 6,
+            "median_ms": 4569.63,
+            "min_ms": 1728.42,
+            "max_ms": 9917.86
+          },
+          "no_generation": {
+            "sample_count": 2,
+            "median_ms": 172.825,
+            "min_ms": 111.89,
+            "max_ms": 233.76
+          },
+          "unknown_error": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          }
+        }
+      }
+    },
+    "guard_probes": {
+      "cases": 6,
+      "expected_rejections": 6,
+      "label_origin": "Agent-authored negative controls sharing development failure classes; not held-out accuracy"
+    }
+  },
+  "cases": [
+    {
+      "id": "scheduled-en",
+      "mode": "pipeline",
+      "input_language": "en",
+      "kind": "answerable",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": false,
+      "hits": {
+        "1": true,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 1,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 1,
+      "wall_ms": 13775.85,
+      "latency_category": "cold_llm"
+    },
+    {
+      "id": "scheduled-hi",
+      "mode": "pipeline",
+      "input_language": "hi",
+      "kind": "answerable",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": false,
+      "hits": {
+        "1": true,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 1,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 1,
+      "wall_ms": 7183.0,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "scheduled-hinglish",
+      "mode": "pipeline",
+      "input_language": "hinglish",
+      "kind": "answerable",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": false,
+      "hits": {
+        "1": true,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 1,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 1,
+      "wall_ms": 6897.06,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "drive-en",
+      "mode": "pipeline",
+      "input_language": "en",
+      "kind": "answerable",
+      "status": "partial",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 1,
+      "accepted_count": 1,
+      "valid_citations": 1,
+      "citation_attempts": 1,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 1,
+      "wall_ms": 6504.08,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "drive-hi",
+      "mode": "pipeline",
+      "input_language": "hi",
+      "kind": "answerable",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": false,
+      "hits": {
+        "1": false,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 1,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 1,
+      "wall_ms": 10596.3,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "drive-hinglish",
+      "mode": "pipeline",
+      "input_language": "hinglish",
+      "kind": "answerable",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": false,
+      "hits": {
+        "1": false,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 2242.2,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "neighbour-en",
+      "mode": "pipeline",
+      "input_language": "en",
+      "kind": "answerable",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": false,
+      "hits": {
+        "1": true,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 1884.39,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "neighbour-hi",
+      "mode": "pipeline",
+      "input_language": "hi",
+      "kind": "answerable",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": false,
+      "hits": {
+        "1": true,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 2069.62,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "neighbour-hinglish",
+      "mode": "pipeline",
+      "input_language": "hinglish",
+      "kind": "answerable",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": false,
+      "hits": {
+        "1": true,
+        "3": true,
+        "5": true
+      },
+      "retrieval_available": true,
+      "candidate_count": 1,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 1,
+      "wall_ms": 9917.86,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "unnamed-en",
+      "mode": "pipeline",
+      "input_language": "en",
+      "kind": "clarification",
+      "status": "needs_clarification",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 126.66,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "unnamed-hi",
+      "mode": "pipeline",
+      "input_language": "hi",
+      "kind": "clarification",
+      "status": "needs_clarification",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 117.88,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "unnamed-hinglish",
+      "mode": "pipeline",
+      "input_language": "hinglish",
+      "kind": "clarification",
+      "status": "needs_clarification",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 111.89,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "present-en",
+      "mode": "pipeline",
+      "input_language": "en",
+      "kind": "current",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 117.03,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "present-hi",
+      "mode": "pipeline",
+      "input_language": "hi",
+      "kind": "current",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 209.0,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "present-hinglish",
+      "mode": "pipeline",
+      "input_language": "hinglish",
+      "kind": "current",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 233.76,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "other-en",
+      "mode": "pipeline",
+      "input_language": "en",
+      "kind": "outside",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 131.86,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "other-hi",
+      "mode": "pipeline",
+      "input_language": "hi",
+      "kind": "outside",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 2136.49,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "other-hinglish",
+      "mode": "pipeline",
+      "input_language": "hinglish",
+      "kind": "outside",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 1728.42,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "guarantee-en",
+      "mode": "pipeline",
+      "input_language": "en",
+      "kind": "unsupported_scope",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 1980.14,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "guarantee-hi",
+      "mode": "pipeline",
+      "input_language": "hi",
+      "kind": "unsupported_scope",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 1920.64,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "guarantee-hinglish",
+      "mode": "pipeline",
+      "input_language": "hinglish",
+      "kind": "unsupported_scope",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 1831.11,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "inject-en",
+      "mode": "pipeline",
+      "input_language": "en",
+      "kind": "untrusted_instruction",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 1833.31,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "inject-hi",
+      "mode": "pipeline",
+      "input_language": "hi",
+      "kind": "untrusted_instruction",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 0,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 1813.85,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "inject-hinglish",
+      "mode": "pipeline",
+      "input_language": "hinglish",
+      "kind": "untrusted_instruction",
+      "status": "insufficient_evidence",
+      "error": null,
+      "behavior_match": true,
+      "hits": {
+        "1": false,
+        "3": false,
+        "5": false
+      },
+      "retrieval_available": true,
+      "candidate_count": 1,
+      "accepted_count": 0,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 1,
+      "same_model_decisions": 0,
+      "wall_ms": 9237.59,
+      "latency_category": "warm_llm"
+    },
+    {
+      "id": "probe-frequency",
+      "mode": "probe",
+      "input_language": "en",
+      "kind": "adversarial_regression",
+      "status": "unsupported",
+      "error": null,
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 22.95,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "probe-recipient",
+      "mode": "probe",
+      "input_language": "en",
+      "kind": "adversarial_regression",
+      "status": "unsupported",
+      "error": null,
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 17.64,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "probe-quote",
+      "mode": "probe",
+      "input_language": "en",
+      "kind": "adversarial_regression",
+      "status": "error",
+      "error": "citation_provenance_invalid",
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 20.05,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "probe-citation",
+      "mode": "probe",
+      "input_language": "en",
+      "kind": "adversarial_regression",
+      "status": "error",
+      "error": "citation_provenance_invalid",
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 13.72,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "probe-conflict",
+      "mode": "probe",
+      "input_language": "en",
+      "kind": "adversarial_regression",
+      "status": "conflicting",
+      "error": null,
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 19.63,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "probe-language",
+      "mode": "probe",
+      "input_language": "en",
+      "kind": "adversarial_regression",
+      "status": "error",
+      "error": "response_language_mismatch",
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 16.91,
+      "latency_category": "no_generation"
+    }
+  ]
+}

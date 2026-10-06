@@ -218,7 +218,7 @@ def test_throttle_persists_and_does_not_trust_forwarded_ip(api):
     replacement = create_app(settings)
     replacement.state.engine.dispose()
     replacement.state.engine = engine; replacement.state.sessions = sessionmaker(engine)
-    with TestClient(replacement) as restarted:
+    with TestClient(replacement, base_url="http://127.0.0.1:8000") as restarted:
         result = restarted.post("/auth/login", headers={**ORIGIN, "X-Forwarded-For": "8.8.8.8"}, json={"email": REG["email"], "password": "wrong"})
         assert result.status_code == 429
     with engine.begin() as connection:
@@ -233,7 +233,7 @@ def test_session_survives_app_recreation_and_schema_readiness(api):
     replacement = create_app(settings)
     replacement.state.engine.dispose()
     replacement.state.engine = engine; replacement.state.sessions = sessionmaker(engine)
-    with TestClient(replacement) as restarted:
+    with TestClient(replacement, base_url="http://127.0.0.1:8000") as restarted:
         assert restarted.get("/auth/me", headers=auth_header(result["access_token"])).status_code == 200
         assert restarted.post("/auth/refresh", headers={**ORIGIN, "Cookie": f"{COOKIE}={cookie}"}).status_code == 200
     with engine.begin() as connection:
@@ -251,7 +251,7 @@ def test_configured_but_unreachable_database_readiness(postgres):
         unavailable.bind(("127.0.0.1", 0))
         port = unavailable.getsockname()[1]
         app = create_app(settings.model_copy(update={"db_port": port}))
-        with TestClient(app) as client:
+        with TestClient(app, base_url="http://127.0.0.1:8000") as client:
             assert client.get("/health/live").status_code == 200
             response = client.get("/health/ready")
             assert response.status_code == 503

@@ -1,0 +1,233 @@
+{
+  "metadata": {
+    "set_version": "part11-installment-controls-v1",
+    "set_sha256": "37cdfac224bc03ab0e65b2d81197441cd7513a7a02f71d5b407c90c9a8e690ac",
+    "started_at": "2026-10-06T17:41:10.118675+00:00",
+    "code_commit": "ddfaf3361705d82ea1e8fc8215ca922e0ca945a0",
+    "model": {
+      "tag": "qwen3:4b-instruct-2507-q4_K_M",
+      "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+      "quantization": "Q4_K_M",
+      "parameters": "4.0B",
+      "ollama_version": "0.17.1",
+      "tokenizer_repository": "Qwen/Qwen3-4B-Instruct-2507",
+      "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "context_tokens": 4096,
+      "output_tokens": 768,
+      "temperature": 0,
+      "seed": 28,
+      "think": false
+    },
+    "prompt_revision": "grounded-v3-language",
+    "support_method": "layered-qwen-v2",
+    "label_status": "Agent-authored installment-count regression controls; known development failure class; no independent semantic labels",
+    "index_state": "Existing warm index service; fresh owned LLM process",
+    "independent_human_labels": 0,
+    "runner_sha256": "ce393daba1552ce9cfa58bcfadab693a75dd57dc728e3799bf02398299bd0c3d",
+    "evaluation_helpers_sha256": "1f5fdb5b428c8f3585ecdd0c2ad991956e96c0e2da59fd4c67fd3eac4258b7bf"
+  },
+  "application_records_unchanged": true,
+  "metrics": {
+    "pipeline": {
+      "en": {
+        "cases": 0,
+        "behavior_matches": 0,
+        "outcomes": {},
+        "retrieval_denominator": 0,
+        "gold_hit_at_k": {
+          "1": 0,
+          "3": 0,
+          "5": 0
+        },
+        "retrieval_unavailable_cases": 0,
+        "candidate_claims": 0,
+        "accepted_candidates": 0,
+        "candidate_count_unavailable_cases": 0,
+        "valid_citations": 0,
+        "citation_attempts": 0,
+        "deterministic_decisions": 0,
+        "same_model_decisions": 0,
+        "independent_semantic_labels": 0,
+        "semantic_accuracy": null,
+        "latency": {
+          "cold_llm": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "warm_llm": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "no_generation": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "unknown_error": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          }
+        }
+      },
+      "hi": {
+        "cases": 0,
+        "behavior_matches": 0,
+        "outcomes": {},
+        "retrieval_denominator": 0,
+        "gold_hit_at_k": {
+          "1": 0,
+          "3": 0,
+          "5": 0
+        },
+        "retrieval_unavailable_cases": 0,
+        "candidate_claims": 0,
+        "accepted_candidates": 0,
+        "candidate_count_unavailable_cases": 0,
+        "valid_citations": 0,
+        "citation_attempts": 0,
+        "deterministic_decisions": 0,
+        "same_model_decisions": 0,
+        "independent_semantic_labels": 0,
+        "semantic_accuracy": null,
+        "latency": {
+          "cold_llm": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "warm_llm": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "no_generation": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "unknown_error": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          }
+        }
+      },
+      "hinglish": {
+        "cases": 0,
+        "behavior_matches": 0,
+        "outcomes": {},
+        "retrieval_denominator": 0,
+        "gold_hit_at_k": {
+          "1": 0,
+          "3": 0,
+          "5": 0
+        },
+        "retrieval_unavailable_cases": 0,
+        "candidate_claims": 0,
+        "accepted_candidates": 0,
+        "candidate_count_unavailable_cases": 0,
+        "valid_citations": 0,
+        "citation_attempts": 0,
+        "deterministic_decisions": 0,
+        "same_model_decisions": 0,
+        "independent_semantic_labels": 0,
+        "semantic_accuracy": null,
+        "latency": {
+          "cold_llm": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "warm_llm": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "no_generation": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          },
+          "unknown_error": {
+            "sample_count": 0,
+            "median_ms": null,
+            "min_ms": null,
+            "max_ms": null
+          }
+        }
+      }
+    },
+    "guard_probes": {
+      "cases": 3,
+      "expected_rejections": 3,
+      "label_origin": "Agent-authored negative controls sharing development failure classes; not held-out accuracy"
+    }
+  },
+  "cases": [
+    {
+      "id": "installment-count-en",
+      "mode": "probe",
+      "input_language": "en",
+      "kind": "adversarial_regression",
+      "status": "unsupported",
+      "error": null,
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 16.87,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "installment-count-hi",
+      "mode": "probe",
+      "input_language": "hi",
+      "kind": "adversarial_regression",
+      "status": "unsupported",
+      "error": null,
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 7.7,
+      "latency_category": "no_generation"
+    },
+    {
+      "id": "installment-count-hinglish",
+      "mode": "probe",
+      "input_language": "hinglish",
+      "kind": "adversarial_regression",
+      "status": "unsupported",
+      "error": null,
+      "behavior_match": true,
+      "candidate_count": null,
+      "accepted_count": null,
+      "valid_citations": 0,
+      "citation_attempts": 0,
+      "deterministic_decisions": 0,
+      "same_model_decisions": 0,
+      "wall_ms": 7.38,
+      "latency_category": "no_generation"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # Architecture
 
+Part 11 adds [strict Host and actual-stream request bounds](../backend/app/request_limits.py) to API/private index before JSON parsing (64 KiB; exact raw upload path retains its existing stream limit). The API permits loopback/configured origin hostnames; index permits loopback only. No new service or schema is introduced. [Frozen evaluation](EVALUATION.md) runs the existing pipeline with a SELECT-only database engine, source locks rolled back, private raw outputs and explicit safe aggregate fields; it verifies live table digests unchanged and never publishes history/feedback/bookmarks. Existing pins and guards remain unchanged; [security record](SECURITY_REVIEW.md) separates mitigations from unresolved upstream findings.
+
 One React frontend calls a modular FastAPI application. PostgreSQL stores authentication, source metadata, exact passages and durable jobs. Separate ingestion, single-owner indexing and answer-worker processes handle parsing, embeddings and generation. Originals are private local files; no public static mount exists.
 
 ```mermaid

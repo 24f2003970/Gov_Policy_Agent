@@ -15,6 +15,7 @@ GOV-CS-028 is a B.Tech student project for exploring document-grounded governmen
 
 - Protected Ask with bounded local Ollama generation, validated claim/excerpt references, clarification/abstention, cancellation and private query history.
 - Stable per-claim citations with original version/page/span inspection, separate provenance/support states and current-access checks.
+- English/Hindi evidence-quality panels with factual citation coverage and versioned source/check audit details.
 
 ## Stack
 
@@ -28,7 +29,7 @@ Run the API, frontend, ingestion worker, single-owner index service and answer w
 
 ## Current limitations
 
-Claim support uses deterministic scope/value guards and a bounded heuristic judge using the same Qwen model as generation. This is not independent fact verification or complete semantic/legal interpretation. Pre-Part-6 answers remain not_evaluated; current source revocation withholds historical answer/excerpt content without rewriting private snapshots. Trust scores remain unavailable. Flagged PDF pages support bounded English/Hindi OCR with mandatory review and versioned extraction. Hindi output can contain language errors or hit the bounded output limit; failures publish no policy answer. Retrieval similarity is relevance, not correctness or current entitlement advice. A 0.78 cosine-similarity cutoff is a development heuristic, not calibrated abstention. Unreadable/unreviewed OCR remains excluded; source rights still require separate approval. Uploads have size/time/page/text limits but no malware scanner, OS parser sandbox or hard memory quota. Deployment is local development HTTP, not production-ready.
+Claim support uses deterministic scope/value guards and a bounded heuristic judge using the same Qwen model as generation. This is not independent fact verification or complete semantic/legal interpretation. Pre-Part-6 answers remain not_evaluated; current source revocation withholds historical answer/excerpt content without rewriting private snapshots. Overall and partial scores remain unavailable. Citation coverage is measured; other dimensions expose evidence and explicit unavailable reasons. Old evidence-quality snapshots are not fabricated or reassessed. Flagged PDF pages support bounded English/Hindi OCR with mandatory review and versioned extraction. Hindi output can contain language errors or hit the bounded output limit; failures publish no policy answer. Retrieval similarity is relevance, not correctness or current entitlement advice. A 0.78 cosine-similarity cutoff is a development heuristic, not calibrated abstention. Unreadable/unreviewed OCR remains excluded; source rights still require separate approval. Uploads have size/time/page/text limits but no malware scanner, OS parser sandbox or hard memory quota. Deployment is local development HTTP, not production-ready.
 
 The local corpus contains four PDFs across three schemes: one reviewed historical PIB factsheet is indexed into nine token-aware passages; three original local-reference PDFs remain excluded. Permitted scope covers attributed PIB narrative text, excluding third-party graphics and linked-source content. Original PDFs, extracted corpus text, models, vectors, secrets and runtime data are excluded from Git. The small source-checked development set is not a held-out benchmark; see [recorded measurements](docs/VERIFICATION.md).
 
@@ -36,6 +37,7 @@ The local corpus contains four PDFs across three schemes: one reviewed historica
 
 - [Architecture](docs/ARCHITECTURE.md) and [API conventions](docs/API.md)
 - [Maintainer state and roadmap](docs/MAINTAINER.md)
+- [Evidence-quality contract](docs/TRUST_SCORING.md)
 - [Recorded verification](docs/VERIFICATION.md)
 - [Sources and licensing disclosures](docs/SOURCES.md) and [corpus manifest](docs/corpus_manifest.json)
 - [Proposal requirement mapping](REQUIREMENTS_MATRIX.md)

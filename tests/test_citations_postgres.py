@@ -21,6 +21,7 @@ from test_retrieval_postgres import encoder,indexed
 from test_answers_postgres import HostDouble
 from app.answer_worker import Worker
 from app.grounding import quote_options
+from app.evidence_quality import assess
 
 
 class Judge:
@@ -51,11 +52,17 @@ def test_filter_persistence_legacy_owner_and_revoked_history(docs,encoder,tmp_pa
             result=final_result(checked,passages,'en'),sources=passages,model={'index_generation':str(jid),'digest':'synthetic-judge-double'})
         legacy=AnswerRun(user_id=user.id,question='Legacy fixture?',language='en',filters={},state='done',
             result=final_result(GroundedOutput(status='answered',language='en',claims=[good],limitations=[]),passages,'en'),sources=passages,model={})
-        db.add_all([run,legacy]);db.flush();persist_claims(db,run,records);db.commit()
+        db.add_all([run,legacy]);db.flush();persist_claims(db,run,records)
+        run.finished_at=now();run.evidence_quality=assess(run,records);db.commit()
         rid,lid=str(run.id),str(legacy.id);snapshot=deepcopy(legacy.result)
+        quality_snapshot=deepcopy(run.evidence_quality)
         assert db.scalar(select(func.count()).select_from(AnswerClaim).where(AnswerClaim.run_id==run.id))==2
     detail=client.get('/ask/history/'+rid,headers=headers).json()
     assert detail['result']['status']=='partial' and len(detail['result']['claims'])==1
+    assert detail['evidence_quality']['schema_version']==1
+    assert detail['evidence_quality']['components']['citation_coverage']['value']==1
+    assert detail['evidence_quality']['counts']['rejected_records']==1
+    assert detail['evidence_quality']['source_references'][0]['review']['review_id']
     assert '9,000' not in json.dumps(detail)
     citation=detail['citations'][0];cid=citation['citation_id']
     assert citation['support']['outcome']=='supported_by_check' and citation['provenance']['status']=='valid'
@@ -64,6 +71,7 @@ def test_filter_persistence_legacy_owner_and_revoked_history(docs,encoder,tmp_pa
     assert client.get(f"/admin/documents/versions/{v['id']}/original",headers=headers).status_code==403
     old=client.get('/ask/history/'+lid,headers=headers).json()
     assert old['citations'][0]['support']['outcome']=='not_evaluated'
+    assert old['evidence_quality']['status']=='not_evaluated'
     with Session(engine) as db:
         assert db.get(AnswerRun,UUID(lid)).result==snapshot
         assert db.scalar(select(func.count()).select_from(AnswerClaim).where(AnswerClaim.run_id==UUID(lid)))==0
@@ -71,21 +79,29 @@ def test_filter_persistence_legacy_owner_and_revoked_history(docs,encoder,tmp_pa
     assert runtime.run_once()  # New active index must not rewrite historical references.
     assert client.get(path,headers=headers).status_code==200
     assert client.get('/ask/history/'+rid,headers=headers).json()['citations'][0]['citation_id']==cid
+    assert client.get('/ask/history/'+rid,headers=headers).json()['evidence_quality']==quality_snapshot
     with Session(engine) as db:
         doc=db.get(Document,UUID(v['document_id']));doc.archived_at=now();db.commit()
     revoked=client.get('/ask/history/'+rid,headers=headers).json()
     assert revoked['source_access_withheld'] and revoked['result']['claims']==[]
+    assert revoked['evidence_quality']['status']=='source_unavailable'
+    assert revoked['evidence_quality']['source_references']==[] and revoked['evidence_quality']['counts']=={}
+    assert all(c['value'] is None for c in revoked['evidence_quality']['components'].values())
+    assert 'evidence_quality' not in client.get('/ask/history',headers=headers).json()['items'][0]
     assert all(c['quote'] is None and c['claim_text'] is None for c in revoked['citations'])
     assert all(p['text'] is None for p in revoked['sources'])
     assert client.get(path,headers=headers).status_code==403
     with Session(engine) as db:
         assert db.scalar(select(ClaimCitation)).quote==good.evidence[0].quote  # Private audit snapshot preserved.
         assert db.get(AnswerRun,UUID(lid)).result==snapshot
+        assert db.get(AnswerRun,UUID(rid)).evidence_quality==quality_snapshot
     client.post('/auth/logout',headers=headers)
     other={**REG,'email':'other@example.com','username':'other_user'}
     client.post('/auth/register',headers=ORIGIN,json=other)
     token=client.post('/auth/login',headers=ORIGIN,json={'email':other['email'],'password':other['password']}).json()['access_token']
     assert client.get(path,headers={'Authorization':'Bearer '+token}).status_code==404
+    assert client.get('/ask/history/'+rid,headers={'Authorization':'Bearer '+token}).status_code==404
+    assert client.get('/ask/history/'+rid).status_code==401
 
 
 @pytest.mark.parametrize('change',['archive','review'])
@@ -130,6 +146,8 @@ def test_worker_verifier_failure_publishes_no_claims(docs,encoder,tmp_path,error
     assert asyncio.run(worker.once())
     detail=client.get('/ask/history/'+rid,headers=headers).json()
     assert detail['state']=='error' and detail['error_code']==error and detail['result'] is None and detail['citations']==[]
+    assert detail['evidence_quality']['status']=='generation_failed'
+    assert detail['evidence_quality']['full_aggregate'] is None and detail['evidence_quality']['source_references']==[]
     assert host.restarts==int(error in ('verification_unavailable','verification_timeout'))
 
 

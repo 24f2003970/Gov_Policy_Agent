@@ -22,6 +22,9 @@ from app.eligibility import eligibility
 from app.citations import context_for,access_status
 from app.grounding import Evidence
 from app.grounding import raw_prompt,quote_options,expand_model_output
+from app.answer_worker import Worker
+from test_answers_postgres import HostDouble,NoGeneration
+import asyncio
 from app.vector_index import Runtime,queue as queue_index
 from app.ingestion import run_once as ingest
 from test_auth_postgres import postgres
@@ -71,6 +74,19 @@ def test_real_ocr_digital_preservation_review_and_revision_citations(docs,encode
         for key,(_,p) in zip(('english','hindi'),pairs[1:]):
             assert error_rate(REFERENCES[key],p.text)==0 and p.boxes and p.signals['mean_word_confidence']>0
             assert not eligibility(db,db.get(DocumentVersion,UUID(v['id'])))['eligible']
+    # Unreviewed OCR cannot enter retrieval or any new assessment.
+    pending_runtime=Runtime(settings,engine,encoder=encoder,vector_dir=tmp_path/'pending-ocr-vectors')
+    with Session(engine) as db:queue_index(db)
+    assert pending_runtime.run_once()
+    assert pending_runtime.search('Historical fictional policy annual assistance in 2025?')['items']==[]
+    class PendingRetriever:
+        async def retrieve(self,question,filters):return pending_runtime.search(question)
+    worker=Worker(settings,engine,HostDouble(),generator=NoGeneration(),retriever=PendingRetriever());worker.recover()
+    run_id=client.post('/ask',headers=headers,json={'question':'Historical fictional policy annual assistance in 2025?'}).json()['id']
+    assert asyncio.run(worker.once())
+    audit=client.get('/ask/history/'+run_id,headers=headers).json()['evidence_quality']
+    assert audit['status']=='needs_clarification' and audit['source_references']==[]
+    assert audit['available_weight_coverage']==0 and audit['components']['citation_coverage']['value'] is None
     accept_pages(docs,rid)
     assert client.get('/admin/ocr/'+rid,headers=headers).json()['state']=='completed'
     # OCR review cannot supply missing rights/provenance approval.

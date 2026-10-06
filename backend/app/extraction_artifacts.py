@@ -63,6 +63,7 @@ def metadata_for(db, passage):
         'extraction_page_id': str(page.artifact_id) if hasattr(page,'artifact_id') else None,
         'extraction_method': page.method if hasattr(page,'artifact_id') else 'digital',
         'extraction_quality_flags': page.quality_flags if page else ['missing'],
+        'extraction_review_id': str(review.id) if review else None,
         'extraction_review_status': review.decision if review else 'not_required' if not artifact or artifact.method=='digital' else 'unreviewed',
         'ocr_notice': 'OCR-derived text; manual review and OCR signals do not guarantee transcription or factual accuracy.'
             if hasattr(page,'artifact_id') and page.method == 'ocr' else None}

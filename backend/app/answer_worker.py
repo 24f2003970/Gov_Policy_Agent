@@ -16,6 +16,7 @@ from .grounding import RagError,PROMPT_REVISION,SCHEMA_REVISION
 from .rag_engine import LocalRetriever,LocalGenerator,pipeline
 from .citations import validate_sources,persist_claims
 from .support import SupportVerifier
+from .evidence_quality import assess
 
 DEADLINE_SECONDS=120
 
@@ -100,5 +101,7 @@ class Worker:
                 record.query_normalization=timings['query_normalization']
                 record.retrieval_question=record.query_normalization['retrieval_question']
             record.state='cancelled' if error=='cancelled' else 'error' if error else 'done'
-            record.error_code=error;record.finished_at=now();db.commit()
+            record.error_code=error;record.finished_at=now()
+            record.evidence_quality=assess(record,checks)
+            db.commit()
         return True

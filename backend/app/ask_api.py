@@ -21,6 +21,7 @@ from copy import deepcopy
 from .support import METHOD
 from .language import normalize
 from .extraction_artifacts import page_for
+from .evidence_quality import present
 
 router=APIRouter(tags=['answers'])
 
@@ -67,6 +68,7 @@ def view(db,run,detail=True):
             for s in sources:s['text']=None
             for c in citations:c['quote']=None;c['claim_text']=None
         result.update(result=answer,sources=sources,citations=citations,claim_checks=checks,source_access_withheld=withheld,current_support_method=METHOD,
+            evidence_quality=present(run,withheld),
             model=run.model,timings=run.timings,
             finished_at=run.finished_at,current_source_warnings=warnings,
             retention='Private records expire after 30 days; no raw prompts or thinking stored.')

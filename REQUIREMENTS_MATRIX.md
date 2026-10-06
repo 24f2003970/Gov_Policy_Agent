@@ -6,7 +6,7 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | --- | --- | --- |
 | O1 grounded policy Q&A; pp.5,10,14 | 4–5 | Parts 4–6 eligible-source retrieval, bounded local answers, exact citations and limited same-model support checks delivered; complete semantic/legal verification not established |
 | O2 clause/claim-level citations; pp.14,21 | 6 | Part 6 stable ordered claim/citation records, original version/page/span, controlled support reasons and authorized citation panel delivered; section heuristic, absent clauses null |
-| O3 six-dimensional trust; pp.14,22,26 | 8 | Design documented; all components currently unavailable; experimental index |
+| O3 six-dimensional trust; pp.14,22,26 | 8 | Part 8 versioned post-validation audit delivered: factual citation coverage, six explicit component availabilities/evidence, null aggregates, English/Hindi panel; no calibrated correctness or independent agreement |
 | O4 Hindi/English; pp.14,18,29 | 4,7,9 | Part 4 real multilingual retrieval and paired source-checked Hindi/English dev queries; Part 5 real English/Hindi generation samples with documented Hindi limitations; Part 7 bounded recorded Hinglish/mixed normalization and real paired development comparison; independent evaluation pending |
 | O5 hallucination <5%; p.14 | 11 | Aspirational; not measured or guaranteed |
 | O6 Docker/cloud production; pp.14,30 | 12 | Local Compose planned; cloud outside free baseline; not production-ready now |
@@ -31,7 +31,7 @@ Source: full local GOV-CS-028 proposal, 34 physical pages, read 2026-10-05. The 
 | Personal dashboard/history/saved answers/trust timeline; p.22 | 2,9 | Part 5 owned query/result history delivered; saved answers/dashboard/trust timeline deferred, unavailable scores absent |
 | Admin analytics/topics/P@5/feedback/error rates; p.22 | 10–11 | Actual persisted events and labeled evaluation only; feedback ≠ accuracy |
 | Feedback ratings/comments/review flags; p.22 | 10 | Planned with ownership, privacy and moderation |
-| PostgreSQL users/documents/chunks/queries/citations/trust/feedback; pp.23–27 | 2–10 | Auth/ingestion plus Part 4 audited reviews, generations, active pointer and exact passages verified on PostgreSQL 18.6; Part 5 owned queries/answers and exact grounding snapshots delivered; Part 6 additive claim/citation tables delivered; trust/feedback deferred |
+| PostgreSQL users/documents/chunks/queries/citations/trust/feedback; pp.23–27 | 2–10 | Auth/ingestion plus Part 4 audited reviews, generations, active pointer and exact passages verified on PostgreSQL 18.6; Part 5 owned queries/answers and exact grounding snapshots delivered; Part 6 additive claim/citation tables delivered; Part 8 nullable versioned evidence-quality snapshot delivered; feedback deferred |
 | Source versioning/amendments/supersession; pp.10,12 | 3–6 | Part 3 immutable versions and explicitly verified relationship APIs; legal dates separate from ingestion/verification, no automatic supersession |
 | Swagger/OpenAPI; p.15 | 1 | Implemented at /docs and /openapi.json |
 | React/Tailwind/FastAPI layered architecture; pp.3,16–18 | 1 | Implemented starter, modular monolith; TypeScript/Vite added |

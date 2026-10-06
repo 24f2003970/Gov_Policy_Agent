@@ -31,7 +31,7 @@ Apply migrations for both fresh and existing application installations:
 .\.venv\Scripts\python.exe -m alembic -c backend/alembic.ini current
 ```
 
-Expected head: `0006_language_ocr`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
+Expected head: `0007_evidence_quality`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
 
 Create the first administrator only when none exists:
 
@@ -218,3 +218,7 @@ Read-only development measurements (stop Terminal 4 and Terminal 5; keep persona
 ```
 
 The language runner owns the existing E5/vector store and project Ollama exclusively; it does not write answers or import sources. Baseline uses the recorded Part 6 prompt/retrieval with shared current guards; the changed branch uses normalization and complete-excerpt selection. OCR runner generates four isolated self-authored scans with installed Windows Nirmala.ttc; no fixtures enter the application corpus. Results containing quoted/transcribed text remain ignored under `runtime`. Restart Terminals 4/5 afterward. Measurement scope and limitations are in [VERIFICATION.md](VERIFICATION.md).
+
+## Evidence-quality panel
+
+The existing root `upgrade head` command adds the nullable assessment column without backfilling old answers. Restart only the existing API/answer worker after an upgrade; keep one owner per service. No model preparation, new downloads or database provisioning is required. New Ask results and opened history records show the same English/Hindi panel. Expand Methods, counts and source scope to inspect the saved evidence audit. Legacy answers show not evaluated; revoked sources hide saved values. Formula and availability rules: [TRUST_SCORING](TRUST_SCORING.md).

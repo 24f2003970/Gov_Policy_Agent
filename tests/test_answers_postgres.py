@@ -40,9 +40,15 @@ def test_owned_history_busy_cancel_and_restart_records(docs):
     detail=client.get('/ask/history/'+rid,headers=headers).json()
     assert detail['state']=='done' and detail['result']['status']=='insufficient_evidence'
     assert detail['result']['trust_score'] is None
+    assert detail['evidence_quality']['status']=='insufficient_evidence'
+    assert detail['evidence_quality']['saved_snapshot'] and detail['evidence_quality']['method']=='evidence-quality-v1'
+    assert detail['evidence_quality']['components']['citation_coverage']['value'] is None
     assert client.get('/ask/history',headers=headers).json()['items'][0]['id']==rid
     # New app connection still reads SQL, not process memory.
-    with Session(engine) as db:assert db.get(AnswerRun,UUID(rid)).result['status']=='insufficient_evidence'
+    with Session(engine) as db:
+        persisted=db.get(AnswerRun,UUID(rid))
+        assert persisted.result['status']=='insufficient_evidence'
+        assert persisted.evidence_quality==detail['evidence_quality']
     queued=client.post('/ask',headers=headers,json={'question':'2025 PM-KISAN support'}).json()['id']
     assert client.post(f'/ask/history/{queued}/cancel',headers=headers).json()['state']=='cancelled'
     client.post('/auth/logout',headers=headers)

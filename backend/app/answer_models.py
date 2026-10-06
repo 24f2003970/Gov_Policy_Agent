@@ -1,7 +1,7 @@
 """Owned bounded answer jobs and private grounding snapshots; no raw model traces."""
 from datetime import datetime
 from uuid import UUID, uuid4
-from sqlalchemy import CheckConstraint, ForeignKey, String, Text, DateTime, Boolean, Integer, Index, func, text
+from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, UniqueConstraint, String, Text, DateTime, Boolean, Integer, Index, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from .models import Base
@@ -27,6 +27,7 @@ class AnswerRun(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     __table_args__ = (
+        UniqueConstraint('user_id','id',name='uq_answer_owner_id'),
         CheckConstraint("state IN ('queued','processing','done','error','cancelled') AND language IN ('en','hi')",name='ck_answer_state'),
         Index('ix_single_pending_answer', text('(1)'), unique=True, postgresql_where=text("state IN ('queued','processing')")),
     )
@@ -37,3 +38,11 @@ class AnswerWorker(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     heartbeat: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     __table_args__ = (CheckConstraint('id = 1',name='ck_answer_worker_single'),)
+
+
+class SavedAnswer(Base):
+    __tablename__ = 'saved_answers'
+    user_id: Mapped[UUID] = mapped_column(primary_key=True)
+    run_id: Mapped[UUID] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now())
+    __table_args__ = (ForeignKeyConstraint(['user_id','run_id'],['answer_runs.user_id','answer_runs.id'],ondelete='CASCADE'),)

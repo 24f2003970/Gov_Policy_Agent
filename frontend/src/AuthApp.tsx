@@ -3,6 +3,9 @@ import Foundation from './App'
 import DocumentAdmin from './DocumentAdmin'
 import Search from './Search'
 import Ask from './Ask'
+import AnswerLibrary from './AnswerLibrary'
+import RecordPage from './RecordPage'
+import { translate } from './ui'
 import { authorized, login, logout, register, restoreSession, subscribe, type User } from './auth'
 
 const inputClass = 'mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-teal-700'
@@ -32,19 +35,26 @@ export default function AuthApp() {
     try { await logout(); location.hash = 'login' } catch (failure) { setError(`Logout not completed: ${messageOf(failure)}`) }
     finally { setBusy(false) }
   }
+  const t=user?translate(user):(en:string,_hi:string)=>en
+  const [path,query]=page.split('?')
+  const [route,id]=path.split('/')
+  const initialPage=Math.max(1,Number(new URLSearchParams(query).get('page'))||1)
+  const links=[['ask','Ask','प्रश्न'],['search','Search','खोज'],['history','History','इतिहास'],['saved','Saved','सहेजे उत्तर'],['account','Account','खाता']]
   return <>
-    <nav aria-label="Account navigation" className="flex flex-wrap items-center gap-5 border-b border-slate-200 bg-white px-6 py-4 text-sm">
-      <a href="#home">Foundation</a>{user && <><a href="#search">Search</a><a href="#ask">Ask</a></>}
-      {user ? <><a href="#account">Account</a>{user.role === 'admin' && <a href="#admin">Admin</a>}<button disabled={busy} onClick={() => void signOut()} className="ml-auto font-semibold text-teal-900">{busy ? 'Signing out…' : 'Logout'}</button></>
-        : <><a href="#login">Login</a><a href="#register">Register</a></>}
-    </nav>
-    {error && <p role="alert" className="mx-auto mt-4 max-w-xl rounded-lg bg-amber-50 p-4 text-amber-900">{error}</p>}
-    {page === 'home' ? <Foundation /> : <main className={`mx-auto ${['admin','search','ask'].includes(page) ? 'max-w-3xl' : 'max-w-xl'} px-6 py-12`}>
-      {restoring ? <p role="status">Restoring your session…</p>
-        : page === 'login' || page === 'register' ? <AuthForm kind={page} onLogin={() => { location.hash = 'account' }} />
-        : user ? page === 'ask' ? <Ask user={user} /> : page === 'search' ? <Search user={user} /> : page === 'admin' ? <AdminPage /> : <AccountPage user={user} onUpdate={setUser} />
-        : <div><h1 className="text-2xl font-semibold">Sign in required</h1><p className="mt-4">This page requires an active session.</p><a className="mt-4 inline-block text-teal-800 underline" href="#login">Go to login</a></div>}
-    </main>}
+    <a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus()}}>{t('Skip to content','मुख्य भाग पर जाएँ')}</a>
+    <header className="border-b bg-white"><div className="mx-auto max-w-5xl px-5 py-4"><a className="font-semibold text-lg no-underline" href="#home">Government Policy Assistant</a><p className="muted text-sm">GOV-CS-028 · {t('Student project · reviewed historical sources','छात्र परियोजना · जाँचे गए ऐतिहासिक स्रोत')}</p>
+    <nav aria-label={t('Main navigation','मुख्य नेविगेशन')} className="mt-4 flex flex-wrap items-center gap-3">
+      {user? <>{links.map(([key,en,hi])=><a className="nav-link" aria-current={route===key?'page':undefined} key={key} href={`#${key}`}>{t(en,hi)}</a>)}{user.role==='admin'&&<a className="nav-link" aria-current={route==='admin'?'page':undefined} href="#admin">{t('Admin','प्रशासन')}</a>}<button disabled={busy} onClick={()=>void signOut()}>{t('Logout','लॉग आउट')}</button></>:<><a href="#login">Login</a><a href="#register">Register</a></>}
+    </nav></div></header>
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-5 py-8">
+    {error&&<p role="alert" className="notice mb-4">{error}</p>}
+    {restoring?<p role="status">{t('Restoring session…','सत्र खुल रहा है…')}</p>:route==='home'?<section className="space-y-4"><h1>{t('Explore reviewed policy documents','जाँचे गए नीति दस्तावेज़ देखें')}</h1><p>{t('Search exact passages and ask questions about the reviewed historical corpus. Answers include source evidence and the limits of automated checks.','जाँचे गए ऐतिहासिक दस्तावेज़ों में पाठ खोजें और प्रश्न पूछें। उत्तर में स्रोत के साक्ष्य और स्वचालित जाँच की सीमाएँ दिखाई जाती हैं।')}</p><a href={user?'#ask':'#login'}>{t(user?'Ask a question':'Sign in to start','प्रश्न पूछें')}</a></section>
+    :route==='system'?<Foundation/>:route==='login'||route==='register'?<AuthForm kind={route} onLogin={()=>{location.hash='ask'}}/>
+    :!user?<section><h1>Sign in required</h1><p>This page requires an active session.</p><a href="#login">Login</a></section>
+    :route==='ask'?<Ask user={user}/>:route==='search'?<Search user={user}/>
+    :route==='history'||route==='saved'?id?<RecordPage key={id} user={user} id={id} library={route} backPage={initialPage}/>:<AnswerLibrary key={route} user={user} saved={route==='saved'} initialPage={initialPage}/>
+    :route==='admin'?<AdminPage/>:route==='account'?<AccountPage user={user} onUpdate={setUser}/>:<p>{t('Page not found. Choose a page from the navigation.','पृष्ठ नहीं मिला। नेविगेशन से पृष्ठ चुनें।')}</p>}
+    </main><footer className="mx-auto max-w-5xl border-t px-5 py-5 muted text-sm"><p>{t('Academic prototype. Historical evidence does not establish present eligibility.','शैक्षणिक परियोजना। ऐतिहासिक साक्ष्य वर्तमान पात्रता साबित नहीं करते।')}</p><a href="#system">{t('System status','सिस्टम स्थिति')}</a></footer>
   </>
 }
 
@@ -81,6 +91,7 @@ function AuthForm({ kind, onLogin }: { kind: 'login' | 'register'; onLogin: () =
 }
 
 function AccountPage({ user, onUpdate }: { user: User; onUpdate: (user: User) => void }) {
+  const t=translate(user)
   const [language, setLanguage] = useState(user.preferred_language)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -96,9 +107,9 @@ function AccountPage({ user, onUpdate }: { user: User; onUpdate: (user: User) =>
     try { const result = await authorized<User>('/auth/me', { method: 'PATCH', body: JSON.stringify({ preferred_language: language }) }); onUpdate(result); setNotice('Profile saved.') }
     catch (failure) { setError(messageOf(failure)) } finally { setBusy(false) }
   }
-  return <section className="rounded-2xl border border-slate-200 bg-white p-7"><h1 className="text-3xl font-semibold">Your account</h1>
+  return <section className="rounded-2xl border border-slate-200 bg-white p-7"><h1 className="text-3xl font-semibold">{t('Your account','आपका खाता')}</h1>
     <dl className="mt-6 space-y-3"><div><dt className="text-sm text-slate-500">Username</dt><dd>{user.username}</dd></div><div><dt className="text-sm text-slate-500">Email</dt><dd className="break-all">{user.email}</dd></div><div><dt className="text-sm text-slate-500">Role</dt><dd>{user.role}</dd></div></dl>
-    <form className="mt-6 space-y-4" onSubmit={(event) => void save(event)}><label className="block">Preferred language<select className={inputClass} value={language} onChange={(event) => setLanguage(event.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option><option value="hinglish">Hinglish</option></select></label><button className={buttonClass} disabled={busy}>{busy ? 'Saving…' : 'Save preference'}</button></form>
+    <form className="mt-6 space-y-4" onSubmit={(event) => void save(event)}><label className="block">{t('Preferred language','पसंदीदा भाषा')}<select className={inputClass} value={language} onChange={(event) => setLanguage(event.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option><option value="hinglish">Hinglish</option></select></label><button className={buttonClass} disabled={busy}>{busy ? t('Saving…','सहेज रहा है…') : t('Save preference','पसंद सहेजें')}</button></form>
     {error && <p role="alert" className="mt-4 text-red-800">{error}</p>}{notice && <p role="status" className="mt-4 text-teal-800">{notice}</p>}
   </section>
 }

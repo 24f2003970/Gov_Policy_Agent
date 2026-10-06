@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { translate } from './ui'
 import { authorized, type User } from './auth'
 type Source = { version_id: string; title: string; eligible: boolean; reasons: string[]; applicability: string }
 type Status = { state: string; active_generation: string | null; latest_job: {state: string; processed: number; total: number; error_code: string | null} | null; sources: Source[]; model: {model: string; revision: string; chunk_profile: string} }
@@ -9,6 +10,7 @@ const button = 'rounded bg-teal-900 px-4 py-2 text-white disabled:opacity-50'
 const message = (e: unknown) => e instanceof Error ? e.message : 'Request failed'
 
 export default function Search({ user }: { user: User }) {
+  const t=translate(user)
   const [status, setStatus] = useState<Status | null>(null)
   const [results, setResults] = useState<Results | null>(null)
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
@@ -40,10 +42,10 @@ export default function Search({ user }: { user: User }) {
     const body = Object.fromEntries(['decision','reuse_status','applicability','reason','evidence_url','scope'].map(k => [k,form.get(k)]))
     await action(async () => {await authorized(`/admin/documents/versions/${form.get('version')}/reviews`,{method:'POST',body:JSON.stringify(body)}); setNotice('Append-only review recorded. Rebuild explicitly for newly eligible sources.')})
   }
-  return <section className="space-y-6"><h1 className="text-3xl font-semibold">Search source passages</h1>
+  return <section className="space-y-6"><h1 className="text-3xl font-semibold">{t('Search source passages','स्रोत के पाठ खोजें')}</h1>
     <p>Hindi and English questions share one multilingual index. These are candidate excerpts, not generated answers or confirmed eligibility advice. Similarity is relevance, not correctness.</p>
     {error && <p role="alert" className="rounded bg-red-50 p-3 text-red-800">{error}</p>}{notice && <p role="status">{notice}</p>}
-    <section className="rounded border bg-white p-4"><h2 className="text-xl font-semibold">Index status</h2>
+    <details className="rounded border bg-white p-4"><summary>{t('Source availability and index details','स्रोत की उपलब्धता और सूचकांक विवरण')}</summary>
       {status ? <><p>Active: {status.state} · generation {status.active_generation || 'none'}</p>
         <p className="break-all">{status.model.model} · {status.model.revision} · {status.model.chunk_profile}</p>
         <p>{status.sources.filter(s=>s.eligible).length} eligible / {status.sources.length} sources</p>
@@ -51,16 +53,16 @@ export default function Search({ user }: { user: User }) {
         <ul>{status.sources.map(s=><li className="mt-2" key={s.version_id}>{s.title}: {s.eligible?'eligible':s.reasons.join(', ')} · applicability {s.applicability}</li>)}</ul></> : <p role="status">Loading index status…</p>}
       <button disabled={busy} className="mt-3 underline" onClick={()=>void action(refresh)}>Refresh index status</button>
       {user.role==='admin' && <button disabled={busy} className="ml-4 underline" onClick={()=>void action(async()=>{await authorized('/admin/index/rebuild',{method:'POST'});setNotice('Generation queued; index service must run.')})}>Queue index rebuild</button>}
-    </section>
+    </details>
     <form onSubmit={e=>void search(e)} className="space-y-3 rounded border bg-white p-4">
       <label className="block">Question (Hindi / English)<textarea name="question" required minLength={2} maxLength={2000} rows={3} className={input}/></label>
       <p className="text-sm">Maximum 512 tokenizer tokens including prefix; oversized questions are rejected without truncation.</p>
       <label className="block">Result count<input name="count" type="number" min={1} max={10} defaultValue={5} className={input}/></label>
-      {['scheme','issuer','document_type'].map(name=><label className="block" key={name}>{name==='issuer'?'Ministry / issuer filter':name==='scheme'?'Scheme filter':'Document type filter'}<input name={name} maxLength={name==='document_type'?80:200} className={input}/></label>)}
+      <details><summary>{t('Optional filters','वैकल्पिक फ़िल्टर')}</summary>{['scheme','issuer','document_type'].map(name=><label className="block" key={name}>{name==='issuer'?'Ministry / issuer filter':name==='scheme'?'Scheme filter':'Document type filter'}<input name={name} maxLength={name==='document_type'?80:200} className={input}/></label>)}
       <label className="block">Published on/after<input name="published_after" type="date" className={input}/></label>
       <label className="block">Published on/before<input name="published_before" type="date" className={input}/></label>
       <label className="block">Unknown publication dates<select name="unknown_dates" className={input}><option value="exclude">Exclude when filtering dates</option><option value="include">Include as unknown</option></select></label>
-      <button disabled={busy} className={button}>{busy?'Searching…':'Search passages'}</button>
+      </details><button disabled={busy} className={button}>{busy?t('Searching…','खोज चल रही है…'):t('Search passages','पाठ खोजें')}</button>
     </form>
     {results && <section className="space-y-4"><h2 className="text-xl font-semibold">Retrieval: {results.status}</h2><p>{results.notice}</p>
       {results.query_normalization&&<p className="text-sm">Retrieval query: {results.query_normalization.retrieval_question}. Changes: {results.query_normalization.transformations.join(', ')||'none'} · selection {results.query_normalization.selection}. Original-query retrieval is retained for comparison/fallback.</p>}

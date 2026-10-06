@@ -4,12 +4,13 @@ from uuid import UUID
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import Field
-from sqlalchemy import select,text
+from sqlalchemy import select,text,delete,func
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from .auth import current_user,csrf,now,throttle
 from .database import get_db
 from .models import User
-from .answer_models import AnswerRun, AnswerWorker
+from .answer_models import AnswerRun, AnswerWorker, SavedAnswer
 from .search_api import SearchInput
 from .eligibility import eligibility
 from .document_models import DocumentVersion
@@ -31,8 +32,9 @@ class AskInput(SearchInput):
     count: Literal[5]=5  # The preserved retrieval baseline uses five candidates.
 
 
-def owned(db,user,run_id):
-    run=db.scalar(select(AnswerRun).where(AnswerRun.id==run_id,AnswerRun.user_id==user.id))
+def owned(db,user,run_id,lock=False):
+    query=select(AnswerRun).where(AnswerRun.id==run_id,AnswerRun.user_id==user.id)
+    run=db.scalar(query.with_for_update() if lock else query)
     if not run: raise HTTPException(404,'Answer record not found')
     return run
 
@@ -68,6 +70,9 @@ def view(db,run,detail=True):
             for s in sources:s['text']=None
             for c in citations:c['quote']=None;c['claim_text']=None
         result.update(result=answer,sources=sources,citations=citations,claim_checks=checks,source_access_withheld=withheld,current_support_method=METHOD,
+            saved=db.get(SavedAnswer,(run.user_id,run.id)) is not None,
+            can_save=bool(run.state=='done' and answer and answer['status'] in ('answered','partial') and answer['claims']
+                and citations and not withheld and run.created_at>now()-timedelta(days=30)),
             evidence_quality=present(run,withheld),
             model=run.model,timings=run.timings,
             finished_at=run.finished_at,current_source_warnings=warnings,
@@ -117,8 +122,39 @@ def ask(body:AskInput,request:Request,user:User=Depends(current_user),db:Session
 
 @router.get('/ask/history')
 def history(page:int=Query(default=1,ge=1),user:User=Depends(current_user),db:Session=Depends(get_db)):
-    runs=db.scalars(select(AnswerRun).where(AnswerRun.user_id==user.id).order_by(AnswerRun.created_at.desc()).offset((page-1)*20).limit(20))
-    return {'items':[view(db,r,False) for r in runs]}
+    runs=db.scalars(select(AnswerRun).where(AnswerRun.user_id==user.id).order_by(AnswerRun.created_at.desc(),AnswerRun.id.desc()).offset((page-1)*20).limit(20))
+    total=db.scalar(select(func.count()).select_from(AnswerRun).where(AnswerRun.user_id==user.id))
+    return {'items':[view(db,r,False) for r in runs],'page':page,'has_next':page*20<total,'total':total}
+
+
+@router.get('/ask/saved')
+def saved_answers(page:int=Query(default=1,ge=1),user:User=Depends(current_user),db:Session=Depends(get_db)):
+    query=select(AnswerRun,SavedAnswer.created_at).join(SavedAnswer, (SavedAnswer.run_id==AnswerRun.id)&(SavedAnswer.user_id==AnswerRun.user_id)).where(
+        SavedAnswer.user_id==user.id,AnswerRun.created_at>now()-timedelta(days=30))
+    total=db.scalar(select(func.count()).select_from(query.subquery()))
+    items=[]
+    for run,saved_at in db.execute(query.order_by(SavedAnswer.created_at.desc(),SavedAnswer.run_id.desc()).offset((page-1)*20).limit(20)):
+        detail=view(db,run)  # Identical current source/citation gates; summaries have no excerpts/scores.
+        items.append({**view(db,run,False),'saved_at':saved_at,'available':not detail['source_access_withheld']})
+    return {'items':items,'page':page,'has_next':page*20<total,'total':total}
+
+
+@router.put('/ask/history/{run_id}/saved',dependencies=[Depends(csrf)])
+def save_answer(run_id:UUID,user:User=Depends(current_user),db:Session=Depends(get_db)):
+    run=owned(db,user,run_id,lock=True)  # Parent lock serializes all save/remove operations for this run.
+    detail=view(db,run)
+    if not detail['can_save']:raise HTTPException(409,'Only available answered or partial results with citations can be saved within 30 days')
+    db.execute(insert(SavedAnswer).values(user_id=user.id,run_id=run.id).on_conflict_do_nothing())
+    db.commit()
+    return view(db,run)
+
+
+@router.delete('/ask/history/{run_id}/saved',dependencies=[Depends(csrf)])
+def unsave_answer(run_id:UUID,user:User=Depends(current_user),db:Session=Depends(get_db)):
+    run=owned(db,user,run_id,lock=True)
+    db.execute(delete(SavedAnswer).where(SavedAnswer.user_id==user.id,SavedAnswer.run_id==run.id))
+    db.commit()
+    return view(db,run)
 
 
 @router.get('/ask/history/{run_id}')

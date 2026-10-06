@@ -43,10 +43,10 @@ def postgres():
         assert connection.scalar(text("SELECT current_database()")) == "gov_policy_test"
         assert connection.scalar(text("SELECT current_user")) == "gov_test"
         assert not connection.scalar(text("SELECT rolsuper FROM pg_roles WHERE rolname=current_user"))
-        allowed = {"users", "auth_sessions", "auth_throttles", "alembic_version", "schemes", "documents", "document_versions", "version_relationships", "extracted_pages", "chunks", "ingestion_jobs", "eligibility_reviews", "index_generations", "index_passages", "index_state", "answer_runs", "answer_worker", "answer_claims", "claim_citations", "extraction_revisions", "extraction_pages", "extraction_reviews", "extraction_state"}
+        allowed = {"saved_answers", "users", "auth_sessions", "auth_throttles", "alembic_version", "schemes", "documents", "document_versions", "version_relationships", "extracted_pages", "chunks", "ingestion_jobs", "eligibility_reviews", "index_generations", "index_passages", "index_state", "answer_runs", "answer_worker", "answer_claims", "claim_citations", "extraction_revisions", "extraction_pages", "extraction_reviews", "extraction_state"}
         assert set(inspect(connection).get_table_names()) <= allowed, "Refusing to reset unexpected test tables"
         # Only this explicitly dedicated disposable database may be reset.
-        for table in ["extraction_state", "extraction_reviews", "extraction_pages", "extraction_revisions", "claim_citations", "answer_claims", "answer_worker", "answer_runs", "index_state", "index_passages", "index_generations", "eligibility_reviews", "chunks", "version_relationships", "ingestion_jobs", "extracted_pages", "document_versions", "documents", "schemes", "auth_throttles", "auth_sessions", "users", "alembic_version"]:
+        for table in ["saved_answers", "extraction_state", "extraction_reviews", "extraction_pages", "extraction_revisions", "claim_citations", "answer_claims", "answer_worker", "answer_runs", "index_state", "index_passages", "index_generations", "eligibility_reviews", "chunks", "version_relationships", "ingestion_jobs", "extracted_pages", "document_versions", "documents", "schemes", "auth_throttles", "auth_sessions", "users", "alembic_version"]:
             connection.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))
         connection.execute(text("DROP FUNCTION IF EXISTS protect_document_version() CASCADE"))
         connection.execute(text("DROP FUNCTION IF EXISTS protect_eligibility_review() CASCADE"))

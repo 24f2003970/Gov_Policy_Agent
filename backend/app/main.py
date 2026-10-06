@@ -41,7 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if application.state.engine is not None:
             application.state.engine.dispose()
 
-    app = FastAPI(title=settings.app_name, version="0.8.0", lifespan=lifespan)
+    app = FastAPI(title=settings.app_name, version="0.9.0", lifespan=lifespan)
     app.state.settings = settings
     install_database(app, settings)
     app.include_router(router)
@@ -91,14 +91,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/health/live", response_model=LiveResponse)
     async def live():
-        return LiveResponse(status="alive", project_id="GOV-CS-028", phase=8)
+        return LiveResponse(status="alive", project_id="GOV-CS-028", phase=9)
 
     @app.get("/health/ready", response_model=ReadyResponse)
     def ready():
         database_ok = schema_ready(app.state.engine)
         auth_ok = settings.jwt_secret is not None
         data = ReadyResponse(
-            status="ready" if database_ok and auth_ok else "not_ready", project_id="GOV-CS-028", phase=8,
+            status="ready" if database_ok and auth_ok else "not_ready", project_id="GOV-CS-028", phase=9,
             required_dependencies={"configuration": "validated",
                                    "postgresql": "connected_schema_current" if database_ok else "unavailable_or_migrations_missing",
                                    "authentication": "configured" if auth_ok else "unconfigured"},
@@ -108,7 +108,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Keep CORS outermost so even error responses have the allowed CORS headers.
     app.add_middleware(
         CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=True,
-        allow_methods=["GET", "POST", "PATCH"], allow_headers=["Accept", "Content-Type", "Authorization", "X-CSRF-Protection", "X-Document-Metadata"],
+        allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"], allow_headers=["Accept", "Content-Type", "Authorization", "X-CSRF-Protection", "X-Document-Metadata"],
         expose_headers=["X-Request-ID"],
     )
     return app

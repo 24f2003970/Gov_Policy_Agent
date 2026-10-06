@@ -31,7 +31,7 @@ Apply migrations for both fresh and existing application installations:
 .\.venv\Scripts\python.exe -m alembic -c backend/alembic.ini current
 ```
 
-Expected head: `0007_evidence_quality`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
+Expected head: `0008_saved_answers`. Upgrade is additive and repeatable; startup does not create tables. Downgrades remove data and are not a setup step.
 
 Create the first administrator only when none exists:
 
@@ -222,3 +222,7 @@ The language runner owns the existing E5/vector store and project Ollama exclusi
 ## Evidence-quality panel
 
 The existing root `upgrade head` command adds the nullable assessment column without backfilling old answers. Restart only the existing API/answer worker after an upgrade; keep one owner per service. No model preparation, new downloads or database provisioning is required. New Ask results and opened history records show the same English/Hindi panel. Expand Methods, counts and source scope to inspect the saved evidence audit. Legacy answers show not evaluated; revoked sources hide saved values. Formula and availability rules: [TRUST_SCORING](TRUST_SCORING.md).
+
+## Existing installation upgrade
+
+Part 9 adds only the bookmark migration; keep the existing private configuration, accounts, corpus and model stores. Apply the migration using the existing command above, then restart the existing API owner. Frontend startup remains `npm.cmd --prefix frontend run dev`; no new service, model, package or provisioning step is required. Inspect listening ports/process owners before restarting a missing service; use one owner per API/frontend/worker/index/RAG service. A stopped frontend produces `ERR_CONNECTION_REFUSED`; run the existing dev command and confirm Vite reports `http://127.0.0.1:5173/`.

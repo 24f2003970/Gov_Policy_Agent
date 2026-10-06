@@ -16,6 +16,7 @@ GOV-CS-028 is a B.Tech student project for exploring document-grounded governmen
 - Protected Ask with bounded local Ollama generation, validated claim/excerpt references, clarification/abstention, cancellation and private query history.
 - Stable per-claim citations with original version/page/span inspection, separate provenance/support states and current-access checks.
 - English/Hindi evidence-quality panels with factual citation coverage and versioned source/check audit details.
+- Responsive Ask/Search/History/Saved/Account navigation, protected answer details and persistent private answer bookmarks.
 
 ## Stack
 
@@ -25,7 +26,7 @@ React, TypeScript, Vite and Tailwind CSS; FastAPI, SQLAlchemy, psycopg and Alemb
 
 See [Windows setup](docs/SETUP.md) for dependencies, private database configuration, migrations, startup and checks. Python 3.12, Node 22.12+ and PostgreSQL 18 are the documented baseline.
 
-Run the API, frontend, ingestion worker, single-owner index service and answer worker in separate terminals. Open `http://127.0.0.1:5173/`. Sign in, then use `/#search` for exact passages or `/#ask` for questions explicitly about a dated historical document. Admin can upload PDF/TXT, inspect extraction, record evidence-backed eligibility reviews and queue index rebuilds. API documentation is at `http://127.0.0.1:8000/docs`.
+Run the API, frontend, ingestion worker, single-owner index service and answer worker in separate terminals. Open `http://127.0.0.1:5173/`. Sign in, then use `/#search` for exact passages or `/#ask` for questions explicitly about a dated historical document. History and Saved provide paginated private records. Open an answered or partial result to save/unsave; saved records expire with the original answer after 30 days and cannot bypass source revocation. Account controls the English/Hindi interface preference (Hinglish uses Hindi). System status remains available in the footer. Admin can upload PDF/TXT, inspect extraction, record evidence-backed eligibility reviews and queue index rebuilds. API documentation is at `http://127.0.0.1:8000/docs`.
 
 ## Current limitations
 

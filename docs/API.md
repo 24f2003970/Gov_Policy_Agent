@@ -89,3 +89,17 @@ Search/Ask preserve `question` and expose `retrieval_question`/`query_normalizat
 ## Evidence-quality payload
 
 Owned Ask/detail responses include `evidence_quality`: schema/method/status, saved-snapshot indicator, nullable aggregates, available weight coverage, six component objects, counts and source references. Each component has value/availability/weight/method/explanation/evidence. Fractions lie in [0,1]; unavailable values remain null. [Contract](TRUST_SCORING.md) defines the calculation and statuses. Existing authorization/CSRF/ownership apply; there is no additional write or reassessment endpoint. History list summaries omit scores and references. Detail opens perform current access checks; source-unavailable responses hide all saved values/counts/references while preserving private SQL.
+
+## Saved answer bookmarks
+
+All routes require an active authenticated user; guessed foreign answer IDs return 404 regardless of admin role. PUT/DELETE also require existing exact-origin/CSRF headers. No public/export endpoint exists.
+
+| Route | Behavior |
+| --- | --- |
+| GET /ask/history?page=1 | Owned history summary, 20/page; returns items/page/has_next/total |
+| GET /ask/saved?page=1 | Owned bookmarks, 20/page, stable bookmark-time/id ordering; summaries add saved_at and current available flag |
+| PUT /ask/history/{run_id}/saved | Idempotent save; 200 returns current protected detail; 409 if status/content/current source access/30-day eligibility fails |
+| DELETE /ask/history/{run_id}/saved | Idempotent removal even when sources are withheld; 200 returns current protected detail |
+| GET /ask/history/{run_id} | Shared History/Saved protected detail; adds saved and can_save; existing source redaction and assessment contract apply |
+
+Answered/partial terminal results need nonempty claims and accessible citations. Unassessed older factual results remain unassessed. Saving does not refresh the original answer creation/expiry date. Deleting an answer during normal worker retention cascades its bookmark. Concurrent writes serialize on the parent answer; the last database-serialized membership change wins, not necessarily the request that arrived last. Duplicate saves preserve saved_at. Pagination rejects page <1; an out-of-range positive page is empty. Saved summaries omit expired answers and never include quote text or scores. History uses existing retention cleanup timing. No endpoint reassesses a historical answer.

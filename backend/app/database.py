@@ -6,7 +6,7 @@ from fastapi import Request
 
 from .config import Settings
 
-SCHEMA_HEAD = "0007_evidence_quality"
+SCHEMA_HEAD = "0008_saved_answers"
 
 
 def database_url(settings: Settings, test: bool = False):
@@ -58,6 +58,7 @@ def schema_ready(engine) -> bool:
             connection.execute(text("SELECT id, lease_owner, state FROM extraction_revisions LIMIT 0"))
             connection.execute(text("SELECT id, page_id, decision FROM extraction_reviews LIMIT 0"))
             connection.execute(text("SELECT version_id, ready_id FROM extraction_state LIMIT 0"))
+            connection.execute(text("SELECT user_id, run_id, created_at FROM saved_answers LIMIT 0"))
             return True
     except SQLAlchemyError:
         return False

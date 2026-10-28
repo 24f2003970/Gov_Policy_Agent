@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.auth import now
 from app.main import create_app
 from app.models import User, AuthSession
-from app.document_models import Document, DocumentVersion, ExtractedPage, Chunk, IngestionJob
+from app.document_models import Document, DocumentVersion, DocumentMetadataCorrection, ExtractedPage, Chunk, IngestionJob
 from app.ingestion import claim, finish, heartbeat, process_claim, reconcile, run_once
 from app.storage import original, directories
 from test_auth_postgres import postgres, ORIGIN, REG, signup_login, auth_header, migrate
@@ -44,7 +44,7 @@ def pdf(pages=('Section 1 Eligibility\nSynthetic policy: conditions and exclusio
 def docs(postgres, tmp_path):
     settings, engine = postgres
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE answer_runs, answer_worker, index_state, index_passages, index_generations, eligibility_reviews, auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
+        connection.execute(text("TRUNCATE answer_runs, answer_worker, index_state, index_passages, index_generations, eligibility_reviews, document_metadata_corrections, auth_throttles, auth_sessions, chunks, version_relationships, ingestion_jobs, extracted_pages, document_versions, documents, schemes, users CASCADE"))
     settings = settings.model_copy(update={"data_dir": tmp_path, "environment": "test"})
     app = create_app(settings)
     app.state.engine.dispose(); app.state.engine = engine
@@ -314,3 +314,28 @@ def test_local_reference_rights_never_retrieval_ready(docs):
     response = client.patch(f'/admin/documents/versions/{version}/provenance', headers=headers,
         json={'status': 'verified', 'note': 'Origin verified, local reference only. No reproduction permission granted.'})
     assert response.status_code == 200 and not response.json()['eligible_for_future_retrieval']
+
+
+def test_evidence_backed_date_correction_preserves_original_and_is_append_only(docs):
+    client, settings, engine, headers = docs
+    metadata = {**META, 'publication_date': '0012-10-24'}
+    version = upload(docs, pdf(), metadata=metadata).json()['version']['id']
+    correction = client.post(f'/admin/documents/versions/{version}/metadata-corrections', headers=headers, json={
+        'publication_date': '2024-10-12', 'effective_date': None,
+        'reason': 'The official PIB page identifies this factsheet as posted on 12 October 2024; the upload field was entered incorrectly.',
+        'evidence_url': 'https://www.pib.gov.in/PressNoteDetails.aspx?ModuleId=3&NoteId=153275&lang=1&reg=3',
+    })
+    assert correction.status_code == 201, correction.text
+    assert correction.json()['publication_date'] == '2024-10-12'
+    detail = status(docs, version)
+    assert detail['publication_date'] == '2024-10-12'
+    assert detail['original_publication_date'] == '0012-10-24'
+    assert detail['metadata_correction']['evidence_url'].startswith('https://www.pib.gov.in/')
+    with Session(engine) as db:
+        original = db.get(DocumentVersion, UUID(version))
+        assert str(original.publication_date) == '0012-10-24'
+        row = db.scalar(select(DocumentMetadataCorrection).where(DocumentMetadataCorrection.version_id == original.id))
+        with pytest.raises(DBAPIError):
+            row.reason = 'Attempt to rewrite audited history.'
+            db.commit()
+        db.rollback()

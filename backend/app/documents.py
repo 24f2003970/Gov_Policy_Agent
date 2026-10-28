@@ -19,7 +19,7 @@ from starlette.background import BackgroundTask
 from .auth import admin_user, csrf, now
 from .database import get_db
 from .models import User
-from .document_models import Chunk, Document, DocumentVersion, ExtractedPage, IngestionJob, Scheme, VersionRelationship
+from .document_models import Chunk, Document, DocumentVersion, DocumentMetadataCorrection, metadata_dates, ExtractedPage, IngestionJob, Scheme, VersionRelationship
 from .storage import checksum_file, directories, filename_format, original, parser_command, validate_file
 
 router = APIRouter(prefix="/admin/documents", tags=["admin documents"], dependencies=[Depends(admin_user)])
@@ -57,6 +57,14 @@ class VerificationInput(BaseModel):
     note: str = Field(min_length=20, max_length=2000)
 
 
+class MetadataCorrectionInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    publication_date: date | None = None
+    effective_date: date | None = None
+    reason: str = Field(min_length=20, max_length=2000)
+    evidence_url: HttpUrl
+
+
 class RelationshipInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     to_version_id: UUID
@@ -73,12 +81,34 @@ def version_data(db, version):
     job = db.scalar(select(IngestionJob).where(IngestionJob.version_id == version.id))
     document = db.get(Document, version.document_id)
     result = {key: getattr(version, key) for key in ("id", "document_id", "version_number", "checksum", "original_name", "format", "size_bytes", "metadata_snapshot", "source_url", "language", "publication_date", "effective_date", "ingested_at", "provenance_status", "verified_at", "verification_note", "extraction_revision", "chunk_profile")}
+    publication_date, effective_date, correction = metadata_dates(db, version)
+    result["original_publication_date"] = version.publication_date
+    result["original_effective_date"] = version.effective_date
+    result["publication_date"] = publication_date
+    result["effective_date"] = effective_date
+    result["metadata_correction"] = ({"id": correction.id, "reason": correction.reason,
+        "evidence_url": correction.evidence_url, "created_at": correction.created_at} if correction else None)
     result["job"] = job_data(job)
     # Completed extraction does not verify official provenance. Partial/OCR are ineligible.
     from .eligibility import eligibility
     result['eligibility'] = eligibility(db, version)
     result["eligible_for_future_retrieval"] = result['eligibility']['eligible']
     return result
+
+
+@router.post("/versions/{version_id}/metadata-corrections", status_code=201, dependencies=[Depends(csrf)])
+def correct_metadata(version_id: UUID, body: MetadataCorrectionInput, user: User = Depends(admin_user), db: Session = Depends(get_db)):
+    version = require_version(db, version_id)
+    if body.evidence_url.username or body.evidence_url.password or len(str(body.evidence_url)) > 1500:
+        raise HTTPException(422, "Evidence URL must have no credentials and fit 1500 characters")
+    correction = DocumentMetadataCorrection(version_id=version.id, reviewer_id=user.id,
+        publication_date=body.publication_date, effective_date=body.effective_date,
+        reason=body.reason, evidence_url=str(body.evidence_url))
+    db.add(correction)
+    db.commit()
+    return {"id": correction.id, "publication_date": correction.publication_date,
+        "effective_date": correction.effective_date, "reason": correction.reason,
+        "evidence_url": correction.evidence_url, "created_at": correction.created_at}
 
 
 def require_version(db, version_id):

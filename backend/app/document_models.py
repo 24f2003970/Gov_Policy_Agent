@@ -1,7 +1,7 @@
 """Part 3 source provenance and durable ingestion; no embeddings or answers."""
 from datetime import date, datetime
 from uuid import UUID, uuid4
-from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from .models import Base
@@ -54,6 +54,28 @@ class DocumentVersion(Base):
     verification_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     extraction_revision: Mapped[str | None] = mapped_column(String(80), nullable=True)
     chunk_profile: Mapped[str | None] = mapped_column(String(80), nullable=True)
+
+
+class DocumentMetadataCorrection(Base):
+    """Append-only, evidence-backed corrections to version metadata."""
+    __tablename__ = "document_metadata_corrections"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    version_id: Mapped[UUID] = mapped_column(ForeignKey("document_versions.id"), index=True)
+    reviewer_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    publication_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    effective_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    reason: Mapped[str] = mapped_column(Text)
+    evidence_url: Mapped[str] = mapped_column(String(1500))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+def metadata_dates(db, version):
+    correction = db.scalar(select(DocumentMetadataCorrection)
+        .where(DocumentMetadataCorrection.version_id == version.id)
+        .order_by(DocumentMetadataCorrection.created_at.desc(), DocumentMetadataCorrection.id.desc()).limit(1))
+    if correction:
+        return correction.publication_date, correction.effective_date, correction
+    return version.publication_date, version.effective_date, None
 
 
 class VersionRelationship(Base):

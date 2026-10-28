@@ -54,6 +54,12 @@ def period(text):
 def money_relations(text):
     """Amount + multiplier + nearby explicit frequency; not blanket number membership."""
     t=normalize(text);result=[]
+    components=re.search(r'\b(?:this|it)\s+consists of\b',t)
+    component_end=len(t)
+    if components:
+        boundary=re.search(r'\b(?:additionally|insurance coverage)\b',t[components.end():])
+        if boundary:component_end=components.end()+boundary.start()
+    component_frequency=(period(t[max(0,components.start()-180):components.start()]) if components else None)
     pattern=r'(?<!\w)(?:₹|rs\.?|inr|रुपये?|रु\.?|usd|\$)\s*(\d[\d,]*(?:\.\d+)?)(?:\s*(lakh crore|लाख करोड़|crore|lakh|thousand|करोड़|लाख|हजार|हज़ार))?'
     for m in re.finditer(pattern,t):
         multiplier={'lakh crore':1000000000000,'लाख करोड़':1000000000000,'crore':10000000,'करोड़':10000000,'lakh':100000,'लाख':100000,'thousand':1000,'हजार':1000,'हज़ार':1000}.get(m[2],1)
@@ -62,7 +68,10 @@ def money_relations(text):
         # After-value scope has priority; pre-value scope is a bounded sentence fragment.
         after=t[m.end():m.end()+100].split('. ')[0]
         before=t[max(0,m.start()-100):m.start()].split('. ')[-1]
-        result.append((str(value.normalize()),currency,period(after) or period(before)))
+        frequency=period(after) or period(before)
+        if frequency is None and components and components.end()<=m.start()<component_end:
+            frequency=component_frequency
+        result.append((str(value.normalize()),currency,frequency))
     # Hindi often places currency after the value.
     for m in re.finditer(r'(\d[\d,]*(?:\.\d+)?)\s*(हजार|हज़ार|लाख|करोड़)?\s*रुपये',t):
         value=Decimal(m[1].replace(',',''))*{'हजार':1000,'हज़ार':1000,'लाख':100000,'करोड़':10000000}.get(m[2],1)

@@ -1,5 +1,18 @@
 # Maintainer state
 
+## Full project snapshot and presentation prep — 2026-10-28
+
+The presentation branch includes the current project source snapshot: the updated React/Vite interface and India Gate/Ashoka visual assets, Ask/Search/Admin/History/Saved/Analytics screens, backend document and RAG/language/citation work, tests, setup assets, and presentation docs. Local configuration, databases, model weights, uploaded PDFs, virtual environments, caches, and generated frontend bundles remain local and are not committed.
+
+Added a Hinglish VS Code runbook at [VS_CODE_DEMO_RUNBOOK_HI.md](VS_CODE_DEMO_RUNBOOK_HI.md), with prepared-machine and fresh-machine startup paths, expected output/readiness checks, troubleshooting and safe shutdown. The verified eight-question list and source limitations are in [PRESENTATION_QA.md](PRESENTATION_QA.md). The current reviewed corpus supports only the historical 2024-10-12 PIB PM Internship Scheme factsheet; do not claim full scheme coverage or current eligibility.
+
+
+## Presentation QA checkpoint — 2026-10-27
+
+Saved the 8-question English/Hindi presentation set and full test notes in [PRESENTATION_QA.md](PRESENTATION_QA.md). The set is limited to the one eligible 2024-10-12 PIB PM Internship Scheme factsheet; per-question wording, expected answers, PDF pages, citation coverage, rejected queries, and evidence limitations are recorded there. Do not claim that the single-source demo validates all schemes or current eligibility.
+
+At handoff the native API, frontend, ingestion worker, index service and RAG worker all report managed running; the AnswerWorker heartbeat was fresh. Focused grounding tests passed: 13/13. Hindi age-group output is clean after the exact-source constructor; Hindi target-count output is factually supported but had one spelling error. Hindi monthly-support, grant and duration probes abstained and are excluded from the demo list. Other scheme PDFs remain outside the eligible index. Continue with [SETUP.md](SETUP.md) and inspect the question QA note before the presentation.
+
 Updated 2026-10-11. Parts 1–12 have implementation delivered, with partial/unverified requirements recorded below and in the requirement matrix. Native free-demo preparation is authorized; the tunnel stayed stopped during readiness and was subsequently activated by a separate explicit request. No further numbered phase is authorized. Beginner learning/viva documents remain withdrawn.
 
 ## Part 12 recovered release state

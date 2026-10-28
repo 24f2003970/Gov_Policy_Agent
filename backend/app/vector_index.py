@@ -6,7 +6,7 @@ from uuid import uuid4, uuid5, UUID
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 from .auth import now
-from .document_models import Document, DocumentVersion, ExtractedPage, Scheme
+from .document_models import Document, DocumentVersion, ExtractedPage, Scheme, metadata_dates
 from .eligibility import eligibility, source_snapshot
 from .embedding import SPEC, Encoder
 from .index_models import IndexGeneration, IndexPassage, IndexState
@@ -15,6 +15,11 @@ from .language import normalize
 
 LEASE_SECONDS = 180
 MAX_PASSAGES = 20_000
+_LEXICAL_STOP = {'about','after','before','from','into','that','this','then','what','when','where','which','who','will','with','would','how','the','and','for','was','were','are','is','a','an','to','of','in','on','by','it','its','as','do','does','did','can','could','should','may','might','me','my','you','your','ka','ki','ke','ko','kya','hai','tha','thi','the','h','aur','batao','according'}
+
+def _terms(text):
+    import re
+    return {word for word in re.findall(r"[a-z0-9]+", text.lower()) if len(word) > 2 and word not in _LEXICAL_STOP}
 
 
 def queue(db):
@@ -174,10 +179,29 @@ class Runtime:
         original=self.baseline_search(question,count=count,**filters)
         if normalize_query and normalization['retrieval_question']!=question:
             changed=self.baseline_search(normalization['retrieval_question'],count=count,**filters)
-            response=original if original['items'] else changed
-            normalization['selection']='original' if original['items'] else 'normalized_fallback'
+            if original['items'] and changed['items']:
+                # Fuse deterministic original/normalized rankings. Keeping only the
+                # original whenever it has any hits can bury the exact passage a
+                # Hinglish normalization was meant to recover.
+                fused={}
+                for ranked in (original['items'],changed['items']):
+                    for rank,item in enumerate(ranked,1):
+                        chunk_id=item['chunk_id']
+                        entry=fused.setdefault(chunk_id,{'item':item,'rank_score':0.0,'best_similarity':-1.0})
+                        entry['rank_score']+=1/(60+rank)
+                        similarity=float(item.get('cosine_similarity',-1.0))
+                        if similarity>entry['best_similarity']:
+                            entry['item']=item
+                            entry['best_similarity']=similarity
+                items=sorted(fused.values(),key=lambda e:(-e['rank_score'],-e['best_similarity'],e['item']['chunk_id']))
+                response={**original,'items':[e['item'] for e in items[:count]]}
+                normalization['selection']='rank_fusion'
+            else:
+                response=original if original['items'] else changed
+                normalization['selection']='original' if original['items'] else 'normalized_fallback'
             normalization['original_top_ids']=[p['chunk_id'] for p in original['items']]
             normalization['normalized_top_ids']=[p['chunk_id'] for p in changed['items']]
+            normalization['selected_top_ids']=[p['chunk_id'] for p in response['items']]
         else:
             response=original;normalization['selection']='original'
         response['question']=question;response['query_normalization']=normalization
@@ -202,11 +226,12 @@ class Runtime:
                 if scheme and (not sch or sch.name != scheme): continue
                 if issuer and doc.issuer != issuer: continue
                 if document_type and doc.document_type != document_type: continue
+                publication_date, _, _ = metadata_dates(db, v)
                 if published_after or published_before:
-                    if v.publication_date is None:
+                    if publication_date is None:
                         if unknown_dates == 'exclude': continue
-                    elif ((published_after and v.publication_date < published_after) or
-                          (published_before and v.publication_date > published_before)): continue
+                    elif ((published_after and publication_date < published_after) or
+                          (published_before and publication_date > published_before)): continue
                 allowed.append(str(v.id)); eligibility_map[str(v.id)] = e
             if not allowed: return {'status': 'empty', 'items': [], 'generation': str(job.id), 'model': SPEC}
             encode_start = time.perf_counter()
@@ -217,6 +242,7 @@ class Runtime:
                 where={'version_id': {'$in': allowed}}, include=['distances']) if n else {'ids':[[]], 'distances':[[]]}
             db.expire_all()  # Re-read SQL gates after model/vector work, not cached archive/review state.
             items = []
+            query_terms = _terms(question)
             for pid, distance in zip(result['ids'][0], result['distances'][0]):
                 passage = db.get(IndexPassage, UUID(pid))
                 if not passage or passage.generation_id != job.id: raise ValueError('stale_vector_reconcile_required')
@@ -229,17 +255,23 @@ class Runtime:
                 if not current['eligible'] or current['review_id'] != eligibility_map[str(version.id)]['review_id']:
                     continue
                 doc = db.get(Document, version.document_id)
-                # Heuristic relevance cutoff, never a truth/confidence score.
-                if 1-float(distance) < 0.78: continue
+                # Vector similarity and lexical overlap are retrieval hints only.
+                # The latter helps exact policy phrases survive multilingual queries.
+                similarity = 1-float(distance)
+                passage_terms = _terms(passage.text)
+                overlap = len(query_terms & passage_terms)
+                if similarity < 0.78 and overlap < 2: continue
                 items.append({'chunk_id': str(passage.id), 'document_id': str(doc.id), 'version_id': str(version.id),
                     'title': doc.title, 'issuer': doc.issuer, 'source_url': version.source_url,
                     'page_ordinal': page.ordinal, 'pdf_page_number': page.pdf_page_number,
                     'start_offset': passage.start_offset, 'end_offset': passage.end_offset, 'text': passage.text,
                     'section_label': passage.section_label, 'continued_clause': passage.continued_clause,
-                    'cosine_distance': float(distance), 'cosine_similarity': 1-float(distance),
-                    'verification': eligibility_map[str(version.id)], 'publication_date': version.publication_date,
+                    'cosine_distance': float(distance), 'cosine_similarity': similarity,
+                    'lexical_overlap': overlap,
+                    'verification': eligibility_map[str(version.id)], 'publication_date': metadata_dates(db, version)[0],
                     **metadata_for(db,passage)})
-                if len(items) == count: break
+            items.sort(key=lambda item: (-item['lexical_overlap'], -item['cosine_similarity'], item['chunk_id']))
+            items = items[:count]
             return {'status': 'results' if items else 'empty', 'question': question, 'items': items,
                 'generation': str(job.id), 'model': SPEC, 'heuristic_min_similarity': 0.78,
                 'notice': 'Candidate passages only; relevance is not correctness or claim support. Current applicability is not assumed.',

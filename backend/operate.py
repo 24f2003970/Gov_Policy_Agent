@@ -1,5 +1,6 @@
 """Native operations: preflight, idempotent start/status, verified-owner-only stop."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -65,6 +66,10 @@ def preflight():
         if not path.is_file():raise RuntimeError('Dependencies/model preparation missing; see SETUP')
     if json.loads((model_path(s)/'gov-model.json').read_text())!=SPEC:raise RuntimeError('Encoder pin mismatch')
     if json.loads((s.data_dir.parent/'ollama/prepared.json').read_text())!=json.loads((ROOT/'docs/llm_model.json').read_text()):raise RuntimeError('Generation model pin mismatch')
+    tokenizer=s.data_dir.parent/'ollama/tokenizer'
+    for name,digest in json.loads((ROOT/'docs/llm_model.json').read_text())['tokenizer_files'].items():
+        path=tokenizer/name
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:raise RuntimeError('Generation tokenizer checksum mismatch')
     from app.ocr import prepared
     prepared(s)
     print('Native dependency/config/schema/model-manifest/OCR preflight passed; no model loaded.')

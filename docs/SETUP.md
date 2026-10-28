@@ -59,7 +59,7 @@ Install [official Ollama for Windows](https://docs.ollama.com/windows) if absent
 .\.venv\Scripts\python.exe backend\prepare_llm.py
 ```
 
-This starts a temporary project-owned loopback server on 11435, downloads only `qwen3:4b-instruct-2507-q4_K_M` (about 2.5 GB) and the pinned Qwen tokenizer, then stops its process tree. Model/tag/digest/runtime/settings must match [llm_model.json](llm_model.json); unexpected changes fail rather than updating the record. Runtime startup is offline and does not pull weights. Files live in `%LOCALAPPDATA%\GovPolicyAgent\ollama`, separate from the personal Ollama cache. Stop the answer worker before preparation or evaluation; both use its exclusive owner lock. No cloud generation, CUDA Python installation or Stack Builder package is needed.
+This starts a temporary project-owned loopback server on 11435, downloads only `qwen3:4b-instruct-2507-q4_K_M` (about 2.5 GB) and the pinned Qwen tokenizer, then stops its process tree. If Hugging Face cannot be reached, preparation can use Qwen's ModelScope copy only when all tokenizer files match the SHA256 pins in [llm_model.json](llm_model.json). Model/tag/digest/runtime/settings must match the same file; unexpected changes fail rather than updating the record. Runtime startup is offline and does not pull weights. Files live in `%LOCALAPPDATA%\GovPolicyAgent\ollama`, separate from the personal Ollama cache. Stop the answer worker before preparation or evaluation; both use its exclusive owner lock. No cloud generation, CUDA Python installation or Stack Builder package is needed.
 
 ## Start
 

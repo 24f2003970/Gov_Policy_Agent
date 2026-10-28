@@ -1,5 +1,9 @@
 # Maintainer state
 
+## Presentation demo prep — 2026-10-28
+
+Added a Hinglish VS Code runbook at [VS_CODE_DEMO_RUNBOOK_HI.md](VS_CODE_DEMO_RUNBOOK_HI.md) for the user's upcoming project presentation. It distinguishes the prepared local-machine startup path from a genuinely fresh-machine install, documents expected command output and service readiness, includes one English and one Hindi verified live Ask example, gives safe shutdown/troubleshooting guidance, and warns against rerunning provisioning or using excluded scheme sources as evidence. The verified 8-question set and evidence limitations are in [PRESENTATION_QA.md](PRESENTATION_QA.md). Current reviewed corpus still supports only the historical 2024 PIB PM Internship Scheme factsheet; don't overstate current eligibility or all-scheme coverage.
+
 Updated 2026-10-11. Parts 1–12 have implementation delivered, with partial/unverified requirements recorded below and in the requirement matrix. Native free-demo preparation is authorized; the tunnel stayed stopped during readiness and was subsequently activated by a separate explicit request. No further numbered phase is authorized. Beginner learning/viva documents remain withdrawn.
 
 ## Part 12 recovered release state

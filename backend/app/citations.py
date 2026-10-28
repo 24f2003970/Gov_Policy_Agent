@@ -4,7 +4,7 @@ from copy import deepcopy
 from sqlalchemy import select
 from .grounding import RagError
 from .index_models import IndexGeneration,IndexPassage
-from .document_models import Document,DocumentVersion,ExtractedPage
+from .document_models import Document,DocumentVersion,ExtractedPage,metadata_dates
 from .eligibility import eligibility
 from .citation_models import AnswerClaim,ClaimCitation
 from .extraction_artifacts import page_for, metadata_for
@@ -47,11 +47,12 @@ def context_for(db,evidence,passage_snapshot):
     surrounding=page.paragraphs[max(0,first-1):last+2]
     context_start,context_end=surrounding[0]['start'],surrounding[-1]['end']
     doc=db.get(Document,version.document_id)
+    publication_date, effective_date, _=metadata_dates(db,version)
     metadata={'document_id':str(doc.id),'scheme_id':str(doc.scheme_id) if doc.scheme_id else None,'version_id':str(version.id),'version_number':version.version_number,
         'passage_id':str(passage.id),'page_id':str(page.id),'page_ordinal':page.ordinal,'pdf_page_number':page.pdf_page_number,
         'txt_source_start':page.source_start if version.format=='txt' else None,'title':doc.title,'issuer':doc.issuer,
-        'source_url':version.source_url,'publication_date':str(version.publication_date) if version.publication_date else None,
-        'effective_date':str(version.effective_date) if version.effective_date else None,'section_label':passage.section_label,
+        'source_url':version.source_url,'publication_date':str(publication_date) if publication_date else None,
+        'effective_date':str(effective_date) if effective_date else None,'section_label':passage.section_label,
         'section_is_heuristic':bool(passage.section_label),'clause':None,'continued_clause':passage.continued_clause,
         'index_generation':str(passage.generation_id),'review':passage_snapshot['verification'],
         'paragraph_spans':[{'start':p['start'],'end':p['end']} for p in spans],

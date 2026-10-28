@@ -1,5 +1,6 @@
 """Replaceable local retrieval/generation interfaces, exact Qwen raw prompt budgeting."""
 import asyncio
+import hashlib
 import json
 import time
 from typing import Protocol
@@ -41,6 +42,10 @@ class LocalGenerator:
         local=settings.data_dir.parent/'ollama'
         if not (local/'prepared.json').is_file() or json.loads((local/'prepared.json').read_text('utf-8'))!=self.manifest:
             raise RagError('llm_not_prepared')
+        for name,digest in self.manifest['tokenizer_files'].items():
+            path=local/'tokenizer'/name
+            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:
+                raise RagError('llm_tokenizer_mismatch')
         from transformers import AutoTokenizer
         self.tokenizer=AutoTokenizer.from_pretrained(str(local/'tokenizer'),local_files_only=True,trust_remote_code=False)
 
@@ -108,7 +113,7 @@ async def pipeline(question,language,filters,retriever,generator,verifier=None):
         return final_result(output,passages,language),passages,response.get('generation'),timings
     from .language import context_order
     original_count=len(passages)
-    passages,rules=context_order(question,passages) if language=='hi' else (passages,[])
+    passages,rules=context_order(question,passages)
     context_omitted=len(passages)<original_count
     timings['context_selection']={'rules':rules,'passage_order':[p['chunk_id'] for p in passages],
         'notice':'Complete source excerpts prioritized before token budgeting; this is not claim support.'}
@@ -127,18 +132,25 @@ async def pipeline(question,language,filters,retriever,generator,verifier=None):
             if exc.code not in failures: raise
             repair=exc.code
             continue
+        from .language import internship_eligibility_and_payment,hindi_internship_one_time_grant,hindi_internship_age_group
+        output,construction=internship_eligibility_and_payment(output,question,selected)
+        if not construction:output,construction=hindi_internship_one_time_grant(output,question,selected)
+        if not construction:output,construction=hindi_internship_age_group(output,question,selected)
+        if construction:timings['response_construction']=construction
         checks=[]
         if output.claims:
-            from .language import hindi_annual,hindi_chatbot
+            from .language import hindi_annual,hindi_chatbot,hindi_internship_assistance
             output,construction=hindi_annual(output,question,selected)
             if not construction:output,construction=hindi_chatbot(output,question,selected)
+            if not construction:output,construction=hindi_internship_assistance(output,question,selected)
             if construction:timings['response_construction']=construction
             if verifier is None:raise RagError('verification_unavailable')
             output,checks,verification=await verifier.evaluate(output,selected,response.get('generation'))
             timings['verification']=verification
-            if not output.claims and len(attempts)<2 and checks and all(c['assessment'].get('reason_code') in ('condition_omitted','scope_mismatch') for c in checks):
+            repairable_support_failures=('condition_omitted','scope_mismatch','amount_or_frequency','unrelated_evidence','insufficient_context')
+            if not output.claims and len(attempts)<2 and checks and all(c['assessment'].get('reason_code') in repairable_support_failures for c in checks):
                 rejected.extend(checks)
-                repair='support_condition_or_scope_omitted'
+                repair='support_'+checks[0]['assessment']['reason_code']
                 continue
         result=final_result(output,selected,language,omitted)
         result['_claim_checks']=rejected+checks

@@ -6,7 +6,7 @@ from fastapi import Request
 
 from .config import Settings
 
-SCHEMA_HEAD = "0009_answer_feedback"
+SCHEMA_HEAD = "0010_metadata_corrections"
 
 
 def database_url(settings: Settings, test: bool = False):
@@ -47,6 +47,7 @@ def schema_ready(engine) -> bool:
             connection.execute(text("SELECT id, version_id, ordinal, pdf_page_number, text FROM extracted_pages LIMIT 0"))
             connection.execute(text("SELECT id, version_id, page_id, start_offset, end_offset FROM chunks LIMIT 0"))
             connection.execute(text("SELECT id, decision, reuse_status, evidence_url FROM eligibility_reviews LIMIT 0"))
+            connection.execute(text("SELECT id, version_id, publication_date, effective_date, reason, evidence_url FROM document_metadata_corrections LIMIT 0"))
             connection.execute(text("SELECT id, state, spec, versions, lease_owner FROM index_generations LIMIT 0"))
             connection.execute(text("SELECT id, generation_id, page_id, start_offset, end_offset FROM index_passages LIMIT 0"))
             connection.execute(text("SELECT id, active_id FROM index_state LIMIT 0"))

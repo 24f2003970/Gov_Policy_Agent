@@ -37,6 +37,17 @@ def test_indian_numbers_relations_and_no_word_suffix_currency():
     assert guard('किसानों को ६,००० रुपये सालाना मिलते हैं।',[cite('Rs 6,000 per year')]) is None
 
 
+def test_monthly_stipend_components_inherit_frequency_but_one_time_grant_does_not():
+    source=('Interns will receive a monthly stipend of ₹5,000 throughout the internship duration. '
+        'This consists of: ₹500 contributed by partner companies, contingent on attendance and conduct. '
+        'The remaining ₹4,500 will be provided by the government via DBT. '
+        'Additionally, a one-time grant of ₹6,000 will be disbursed after joining.')
+    assert money_relations(source)==[('5E+3','INR','monthly'),('5E+2','INR','monthly'),
+        ('4.5E+3','INR','monthly'),('6E+3','INR',None)]
+    claim='The monthly stipend is split into ₹500 from partner companies and ₹4,500 from the government.'
+    assert guard(claim,[cite(source)]) is None
+
+
 def test_negation_objective_conditions_and_conflicts():
     c=cite('The financial benefit is transferred into the Aadhaar seeded bank accounts of farmers through Direct Benefit Transfer (DBT) mode.')
     assert guard('भूमिधारक किसानों की सहायता अधिकारी के खाते में ट्रांसफर की जाती है।',[c])[1]=='scope_mismatch'

@@ -122,23 +122,64 @@ def ask(body:AskInput,request:Request,user:User=Depends(current_user),db:Session
     return view(db,run)
 
 
+def _library_scope(user_id,saved):
+    query=select(AnswerRun)
+    if saved:
+        return query.join(SavedAnswer,(SavedAnswer.run_id==AnswerRun.id)&(SavedAnswer.user_id==AnswerRun.user_id)).where(
+            SavedAnswer.user_id==user_id,AnswerRun.created_at>now()-timedelta(days=30))
+    return query.where(AnswerRun.user_id==user_id)
+
+
+def _library_status(value):
+    state=func.coalesce(AnswerRun.result['status'].astext,AnswerRun.state)
+    groups={
+        'answered':state=='answered','partial':state=='partial',
+        'clarification':state.in_(['clarification_required','needs_clarification']),
+        'insufficient_evidence':state.in_(['insufficient_evidence','abstained']),
+        'failed':state.in_(['error','cancelled']),
+    }
+    return groups.get(value)
+
+
+def _library_counts(db,base,total):
+    state=func.coalesce(AnswerRun.result['status'].astext,AnswerRun.state)
+    rows=db.execute(base.with_only_columns(state,func.count()).group_by(state)).all()
+    counts={'all':total,'answered':0,'partial':0,'clarification':0,'insufficient_evidence':0,'failed':0}
+    for status,count in rows:
+        if status in ('answered','partial'):counts[status]+=count
+        elif status in ('clarification_required','needs_clarification'):counts['clarification']+=count
+        elif status in ('insufficient_evidence','abstained'):counts['insufficient_evidence']+=count
+        elif status in ('error','cancelled'):counts['failed']+=count
+    return counts
+
+
+def _library_page(page,user_id,saved,q,status,db):
+    base=_library_scope(user_id,saved)
+    total_all=db.scalar(select(func.count()).select_from(base.subquery())) or 0
+    counts=_library_counts(db,base,total_all)
+    query=base
+    if q:query=query.where(AnswerRun.question.ilike(f'%{q}%'))
+    predicate=_library_status(status)
+    if predicate is not None:query=query.where(predicate)
+    total=db.scalar(select(func.count()).select_from(query.subquery())) or 0
+    ordering=(SavedAnswer.created_at.desc(),SavedAnswer.run_id.desc()) if saved else (AnswerRun.created_at.desc(),AnswerRun.id.desc())
+    runs=db.scalars(query.order_by(*ordering).offset((page-1)*20).limit(20)).all()
+    items=[]
+    for run in runs:
+        item=view(db,run,False)
+        if saved:item['available']=not view(db,run)['source_access_withheld']
+        items.append(item)
+    return {'items':items,'page':page,'has_next':page*20<total,'total':total,'counts':counts}
+
+
 @router.get('/ask/history')
-def history(page:int=Query(default=1,ge=1),user:User=Depends(current_user),db:Session=Depends(get_db)):
-    runs=db.scalars(select(AnswerRun).where(AnswerRun.user_id==user.id).order_by(AnswerRun.created_at.desc(),AnswerRun.id.desc()).offset((page-1)*20).limit(20))
-    total=db.scalar(select(func.count()).select_from(AnswerRun).where(AnswerRun.user_id==user.id))
-    return {'items':[view(db,r,False) for r in runs],'page':page,'has_next':page*20<total,'total':total}
+def history(page:int=Query(default=1,ge=1),q:str=Query(default='',max_length=200),status:Literal['all','answered','partial','clarification','insufficient_evidence','failed']='all',user:User=Depends(current_user),db:Session=Depends(get_db)):
+    return _library_page(page,user.id,False,q.strip(),status,db)
 
 
 @router.get('/ask/saved')
-def saved_answers(page:int=Query(default=1,ge=1),user:User=Depends(current_user),db:Session=Depends(get_db)):
-    query=select(AnswerRun,SavedAnswer.created_at).join(SavedAnswer, (SavedAnswer.run_id==AnswerRun.id)&(SavedAnswer.user_id==AnswerRun.user_id)).where(
-        SavedAnswer.user_id==user.id,AnswerRun.created_at>now()-timedelta(days=30))
-    total=db.scalar(select(func.count()).select_from(query.subquery()))
-    items=[]
-    for run,saved_at in db.execute(query.order_by(SavedAnswer.created_at.desc(),SavedAnswer.run_id.desc()).offset((page-1)*20).limit(20)):
-        detail=view(db,run)  # Identical current source/citation gates; summaries have no excerpts/scores.
-        items.append({**view(db,run,False),'saved_at':saved_at,'available':not detail['source_access_withheld']})
-    return {'items':items,'page':page,'has_next':page*20<total,'total':total}
+def saved_answers(page:int=Query(default=1,ge=1),q:str=Query(default='',max_length=200),status:Literal['all','answered','partial','clarification','insufficient_evidence','failed']='all',user:User=Depends(current_user),db:Session=Depends(get_db)):
+    return _library_page(page,user.id,True,q.strip(),status,db)
 
 
 @router.put('/ask/history/{run_id}/saved',dependencies=[Depends(csrf)])
